@@ -1,0 +1,14 @@
+.venv*/
+logs/
+third_party/
+__pycache__/
+*.pyc
+# 가중치·데이터는 ~/models, ~/edgeqgate_data 에 둔다
+*.safetensors
+*.pt
+*.onnx
+*.tflite
+*.hef
+*.engine
+data/
+runs/
