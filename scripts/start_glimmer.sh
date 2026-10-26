@@ -78,6 +78,9 @@ PY
   exit 0
 fi
 
+# FlashInfer JIT-builds kernels at startup and looks up ninja (and nvcc) on PATH.
+export PATH="$(dirname "$VLLM_BIN"):/usr/local/cuda/bin:$PATH"
+
 echo "Serving $MODEL_DIR on :$PORT (max_len=$MAX_LEN, gpu_util=$GPU_UTIL)"
 exec "$VLLM_BIN" serve "$MODEL_DIR" \
   --served-model-name muse-glimmer \
