@@ -90,7 +90,7 @@ sam3_env() {
     git clone https://github.com/facebookresearch/sam3.git "$EDGEGATE_HOME/third_party/sam3"
   fi
   uv pip install --python "$PY" -e "$EDGEGATE_HOME/third_party/sam3"
-  uv pip install --python "$PY" einops pycocotools opencv-python-headless pillow numpy
+  uv pip install --python "$PY" einops pycocotools opencv-python-headless pillow numpy psutil
 }
 
 check() {
