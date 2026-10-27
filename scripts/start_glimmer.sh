@@ -23,6 +23,10 @@ PORT="${PORT:-8001}"
 MAX_LEN="${MAX_LEN:-65536}"
 GPU_UTIL="${GPU_UTIL:-0.65}"
 VLLM_BIN="${VLLM_BIN:-$HOME/edgegate/.venv-vllm/bin/vllm}"
+# Online quantization of the BF16 weights. Decode on the GX10 is memory-bandwidth
+# bound: BF16 ~4.3 tok/s / 55.8 GiB, FP8 ~7.9 tok/s / 32.4 GiB with the same
+# tool-call behaviour. QUANT= (empty) serves plain BF16.
+QUANT="${QUANT-fp8}"
 URL="http://localhost:$PORT/v1/chat/completions"
 
 if [ "${1:-}" = "test" ]; then
@@ -81,8 +85,9 @@ fi
 # FlashInfer JIT-builds kernels at startup and looks up ninja (and nvcc) on PATH.
 export PATH="$(dirname "$VLLM_BIN"):/usr/local/cuda/bin:$PATH"
 
-echo "Serving $MODEL_DIR on :$PORT (max_len=$MAX_LEN, gpu_util=$GPU_UTIL)"
+echo "Serving $MODEL_DIR on :$PORT (max_len=$MAX_LEN, gpu_util=$GPU_UTIL, quant=${QUANT:-none})"
 exec "$VLLM_BIN" serve "$MODEL_DIR" \
+  ${QUANT:+--quantization "$QUANT"} \
   --served-model-name muse-glimmer \
   --host 0.0.0.0 --port "$PORT" \
   --max-model-len "$MAX_LEN" \

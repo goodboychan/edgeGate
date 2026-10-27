@@ -8,6 +8,11 @@ Meta Global AI Developer Hackathon, 인디 트랙 "Push the Frontier".
 ## 해커톤 기간 작업
 
 이 저장소의 코드는 모두 해커톤 기간(2026-10-26 ~ 11-04)에 작성했다. 작업 시점은 커밋 기록으로 확인할 수 있다.
+기존 코드베이스는 이 저장소에 포함하지 않았다.
+
+- **기존에 있던 것:** 홈랩 하드웨어(GX10, 엣지 보드, 센서, Nova), 아래 오픈소스 도구, 공개 모델 가중치
+- **이번 주에 만든 것:** 이 저장소의 모든 코드 (라벨링·증류·컴파일·측정 파이프라인, 감사 에이전트와 MCP 도구, 제어·집 연동)
+
 아래 외부 도구는 수정 없이 그대로 사용한다.
 
 | 외부 도구 | 용도 |
@@ -28,7 +33,7 @@ Muse Glimmer 30B (로컬 감사 에이전트), Muse Spark / Muse Spark Open (계
 
 ```bash
 bash scripts/setup_gx10.sh               # 모델 다운로드 + SAM 3.1 env + 점검
-bash scripts/start_glimmer.sh            # Glimmer vLLM 서버 (:8001, vLLM >= 0.32)
+bash scripts/start_glimmer.sh            # Glimmer vLLM 서버 (:8001, vLLM >= 0.32, 기본 FP8)
 bash scripts/start_glimmer.sh test       # 응답 확인
 bash scripts/start_glimmer.sh toolcheck  # 도구 호출 1회 왕복
 ```
