@@ -48,4 +48,5 @@ bash scripts/start_glimmer.sh toolcheck  # one tool-call round trip
 python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in .env)
 .venv-tts/bin/python scripts/tts.py "Tell me when a package is left at the entrance." data/instruction.wav
 python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
+python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_API_KEY in .env)
 ```
