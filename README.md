@@ -24,6 +24,7 @@ Meta Global AI Developer Hackathon, 인디 트랙 "Push the Frontier".
 | edgetpu_compiler | Coral Edge TPU 컴파일 |
 | TensorRT | Jetson 컴파일 |
 | DepthAI | OAK-D Lite (Myriad X) |
+| Kokoro-82M | 마이크 없이 음성 지시 테스트용 TTS |
 
 ## 사용한 Meta 모델
 
@@ -37,4 +38,6 @@ bash scripts/start_glimmer.sh            # Glimmer vLLM 서버 (:8001, vLLM >= 0
 bash scripts/start_glimmer.sh test       # 응답 확인
 bash scripts/start_glimmer.sh toolcheck  # 도구 호출 1회 왕복
 python3 scripts/check_meta_api.py        # Meta Model API 확인 (.env의 META_API_KEY)
+.venv-tts/bin/python scripts/tts.py "Tell me when a package lands at the front door." data/instruction.wav
+python3 scripts/check_meta_api.py data/instruction.wav   # 음성 → Voice Transcribe
 ```

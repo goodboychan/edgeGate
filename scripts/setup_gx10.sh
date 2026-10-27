@@ -18,6 +18,7 @@
 # Usage:  bash setup_gx10.sh            # everything
 #         bash setup_gx10.sh download   # only model downloads
 #         bash setup_gx10.sh sam3env    # only the SAM 3.1 Python env
+#         bash setup_gx10.sh ttsenv     # only the Kokoro TTS env
 #         bash setup_gx10.sh check      # only smoke checks
 
 set -euo pipefail
@@ -28,6 +29,7 @@ GLIMMER_REPO="meta-models/Muse-Glimmer-30B"
 SAM_REPO="facebook/sam3.1"
 SAM_ENV="$EDGEGATE_HOME/.venv-sam3"
 TOOLS_ENV="$EDGEGATE_HOME/.venv-tools"
+TTS_ENV="$EDGEGATE_HOME/.venv-tts"
 TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu130}"
 
 log()  { printf '\n\033[1;36m[edgegate]\033[0m %s\n' "$*"; }
@@ -93,6 +95,15 @@ sam3_env() {
   uv pip install --python "$PY" einops pycocotools opencv-python-headless pillow numpy psutil
 }
 
+tts_env() {
+  log "Creating Kokoro TTS env at $TTS_ENV (test voice instructions without a mic)"
+  [ -d "$TTS_ENV" ] || uv venv "$TTS_ENV" --python 3.12
+  uv pip install --python "$TTS_ENV/bin/python" kokoro soundfile --torch-backend=cu130
+  # misaki (Kokoro's G2P) tries to download this spaCy model at runtime and fails under uv
+  uv pip install --python "$TTS_ENV/bin/python" \
+    "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
+}
+
 check() {
   log "Smoke check: SAM 3.1 env"
   if [ -x "$SAM_ENV/bin/python" ]; then
@@ -124,9 +135,10 @@ EOF
 }
 
 case "${1:-all}" in
-  all)      preflight; download_models; sam3_env; check ;;
+  all)      preflight; download_models; sam3_env; tts_env; check ;;
   download) preflight; download_models ;;
   sam3env)  preflight; sam3_env; check ;;
+  ttsenv)   preflight; tts_env ;;
   check)    check ;;
-  *) echo "usage: $0 [all|download|sam3env|check]"; exit 1 ;;
+  *) echo "usage: $0 [all|download|sam3env|ttsenv|check]"; exit 1 ;;
 esac

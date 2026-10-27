@@ -21,11 +21,13 @@ set -euo pipefail
 MODEL_DIR="${MODEL_DIR:-$HOME/models/Muse-Glimmer-30B}"
 PORT="${PORT:-8001}"
 MAX_LEN="${MAX_LEN:-65536}"
-GPU_UTIL="${GPU_UTIL:-0.65}"
+# vLLM reserves this fraction of the 121 GiB up front whatever the weights need.
+# 0.45 = ~54 GiB: FP8 weights 32 GiB + ~20 GiB KV (>1M tokens), leaving room for SAM 3.1.
+GPU_UTIL="${GPU_UTIL:-0.45}"
 VLLM_BIN="${VLLM_BIN:-$HOME/edgegate/.venv-vllm/bin/vllm}"
 # Online quantization of the BF16 weights. Decode on the GX10 is memory-bandwidth
 # bound: BF16 ~4.3 tok/s / 55.8 GiB, FP8 ~7.9 tok/s / 32.4 GiB with the same
-# tool-call behaviour. QUANT= (empty) serves plain BF16.
+# tool-call behaviour. QUANT= (empty) serves plain BF16; pair it with GPU_UTIL=0.65.
 QUANT="${QUANT-fp8}"
 URL="http://localhost:$PORT/v1/chat/completions"
 
