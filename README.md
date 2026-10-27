@@ -1,43 +1,42 @@
 # EdgeGate
 
-한 문장(음성 또는 텍스트)으로 집 안의 이기종 엣지 기기에 새 인식 능력을 가르치고, 배포 전에 칩별 위험을 감사 에이전트가 판정한다.
-Meta Global AI Developer Hackathon, 인디 트랙 "Push the Frontier".
+Teach a new perception skill to the mixed edge devices in a home with one sentence (spoken or typed), and let an audit agent decide, chip by chip, whether it is safe to deploy.
+Meta Global AI Developer Hackathon, Indie track, "Push the Frontier".
 
-**흐름:** "현관에 택배 상자가 놓이면 알려줘" → Muse Voice Transcribe → Muse Spark 계획 → SAM 3.1 자동 라벨 → 학생 검출기 증류 → 백엔드별 컴파일 → Muse Glimmer 감사 → 통과한 백엔드에만 배포 → Home Assistant 알림, Creoqode Nova가 목표를 바라봄.
+**Flow:** "Tell me when a package lands at the front door" → Muse Voice Transcribe → Muse Spark plans → SAM 3.1 auto-labels → student detector is distilled → compiled per backend → Muse Glimmer audits → deployed only to approved backends → Home Assistant notifies, and a Creoqode Nova head turns to look at the target.
 
-## 해커톤 기간 작업
+## Built during the hackathon
 
-이 저장소의 코드는 모두 해커톤 기간(2026-10-26 ~ 11-04)에 작성했다. 작업 시점은 커밋 기록으로 확인할 수 있다.
-기존 코드베이스는 이 저장소에 포함하지 않았다.
+All code in this repository was written during the hackathon (2026-10-26 to 11-04); the commit history shows when. No pre-existing codebase is included.
 
-- **기존에 있던 것:** 홈랩 하드웨어(GX10, 엣지 보드, 센서, Nova), 아래 오픈소스 도구, 공개 모델 가중치
-- **이번 주에 만든 것:** 이 저장소의 모든 코드 (라벨링·증류·컴파일·측정 파이프라인, 감사 에이전트와 MCP 도구, 제어·집 연동)
+- **Pre-existing:** home-lab hardware (GX10, edge boards, sensors, Nova), the open-source tools below, public model weights
+- **Built this week:** all code in this repository (labeling, distillation, compile and measurement pipeline, the audit agent and its MCP tools, control and home integration)
 
-아래 외부 도구는 수정 없이 그대로 사용한다.
+The external tools below are used as-is, without modification.
 
-| 외부 도구 | 용도 |
+| External tool | Used for |
 |---|---|
-| vLLM | Muse Glimmer 서빙 |
-| facebookresearch/sam3 | SAM 3.1 추론 |
-| Qualcomm QNN SDK | VENTUNO Q Hexagon 컴파일 |
-| HailoRT / Dataflow Compiler | Hailo-8 컴파일 |
-| edgetpu_compiler | Coral Edge TPU 컴파일 |
-| TensorRT | Jetson 컴파일 |
+| vLLM | Serving Muse Glimmer |
+| facebookresearch/sam3 | SAM 3.1 inference |
+| Qualcomm QNN SDK | VENTUNO Q Hexagon compile |
+| HailoRT / Dataflow Compiler | Hailo-8 compile |
+| edgetpu_compiler | Coral Edge TPU compile |
+| TensorRT | Jetson compile |
 | DepthAI | OAK-D Lite (Myriad X) |
-| Kokoro-82M | 마이크 없이 음성 지시 테스트용 TTS |
+| Kokoro-82M | TTS for testing spoken instructions without a mic |
 
-## 사용한 Meta 모델
+## Meta models used
 
-Muse Glimmer 30B (로컬 감사 에이전트), Muse Spark / Muse Spark Open (계획·검증), Muse Voice Transcribe (음성 지시), SAM 3.1 (교사 라벨), Muse Code (개발 보조).
+Muse Glimmer 30B (local audit agent), Muse Spark / Muse Spark Open (planning and verification), Muse Voice Transcribe (spoken instructions), SAM 3.1 (teacher labels), Muse Code (development).
 
-## GX10 환경
+## GX10 setup
 
 ```bash
-bash scripts/setup_gx10.sh               # 모델 다운로드 + SAM 3.1 env + 점검
-bash scripts/start_glimmer.sh            # Glimmer vLLM 서버 (:8001, vLLM >= 0.32, 기본 FP8)
-bash scripts/start_glimmer.sh test       # 응답 확인
-bash scripts/start_glimmer.sh toolcheck  # 도구 호출 1회 왕복
-python3 scripts/check_meta_api.py        # Meta Model API 확인 (.env의 META_API_KEY)
+bash scripts/setup_gx10.sh               # model downloads + SAM 3.1 env + TTS env + checks
+bash scripts/start_glimmer.sh            # Glimmer vLLM server (:8001, vLLM >= 0.32, FP8 by default)
+bash scripts/start_glimmer.sh test       # plain chat check
+bash scripts/start_glimmer.sh toolcheck  # one tool-call round trip
+python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in .env)
 .venv-tts/bin/python scripts/tts.py "Tell me when a package lands at the front door." data/instruction.wav
-python3 scripts/check_meta_api.py data/instruction.wav   # 음성 → Voice Transcribe
+python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
 ```

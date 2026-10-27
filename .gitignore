@@ -3,7 +3,7 @@ logs/
 third_party/
 __pycache__/
 *.pyc
-# 가중치·데이터는 ~/models, ~/edgeqgate_data 에 둔다
+# Weights and datasets live outside git (~/models, data/)
 *.safetensors
 *.pt
 *.onnx
