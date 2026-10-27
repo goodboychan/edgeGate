@@ -19,6 +19,7 @@
 #         bash setup_gx10.sh download   # only model downloads
 #         bash setup_gx10.sh sam3env    # only the SAM 3.1 Python env
 #         bash setup_gx10.sh ttsenv     # only the Kokoro TTS env
+#         bash setup_gx10.sh oakenv     # only the DepthAI env for the OAK-D Pro
 #         bash setup_gx10.sh check      # only smoke checks
 
 set -euo pipefail
@@ -30,6 +31,7 @@ SAM_REPO="facebook/sam3.1"
 SAM_ENV="$EDGEGATE_HOME/.venv-sam3"
 TOOLS_ENV="$EDGEGATE_HOME/.venv-tools"
 TTS_ENV="$EDGEGATE_HOME/.venv-tts"
+OAK_ENV="$EDGEGATE_HOME/.venv-oak"
 TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu130}"
 
 log()  { printf '\n\033[1;36m[edgegate]\033[0m %s\n' "$*"; }
@@ -104,6 +106,17 @@ tts_env() {
     "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
 }
 
+oak_env() {
+  log "Creating DepthAI env at $OAK_ENV (OAK-D Pro capture)"
+  [ -d "$OAK_ENV" ] || uv venv "$OAK_ENV" --python 3.12
+  uv pip install --python "$OAK_ENV/bin/python" "depthai==3.11.0" numpy opencv-python-headless
+  # Without this rule only root can open the camera (needs sudo, so it is only printed)
+  if [ ! -f /etc/udev/rules.d/80-movidius.rules ]; then
+    warn "Add the OAK udev rule, then replug the camera:"
+    echo "  echo 'SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"03e7\", MODE=\"0666\"' | sudo tee /etc/udev/rules.d/80-movidius.rules && sudo udevadm control --reload-rules && sudo udevadm trigger"
+  fi
+}
+
 check() {
   local failed=0
   log "Smoke check: SAM 3.1 env"
@@ -138,10 +151,11 @@ EOF
 }
 
 case "${1:-all}" in
-  all)      preflight; download_models; sam3_env; tts_env; check ;;
+  all)      preflight; download_models; sam3_env; tts_env; oak_env; check ;;
   download) preflight; download_models ;;
   sam3env)  preflight; sam3_env; check ;;
   ttsenv)   preflight; tts_env ;;
+  oakenv)   preflight; oak_env ;;
   check)    check ;;
-  *) echo "usage: $0 [all|download|sam3env|ttsenv|check]"; exit 1 ;;
+  *) echo "usage: $0 [all|download|sam3env|ttsenv|oakenv|check]"; exit 1 ;;
 esac

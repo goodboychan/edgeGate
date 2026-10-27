@@ -17,6 +17,7 @@ All code in this repository was written during the hackathon (2026-10-26 to 11-0
 | GX10 setup, Glimmer serving (FP8, tool-call parser) | Implemented |
 | Meta Model API check (Spark text/image, Voice Transcribe), Kokoro TTS | Implemented |
 | Glimmer tool calling | Wiring test only: `toolcheck` uses a stub tool with fixed numbers |
+| OAK-D Pro session capture (timestamped frames, outage log) | Implemented; 15 fps verified, reconnect path not yet tested by unplugging |
 | SAM 3.1 text-prompt labeling | Feasibility probe on sample images; no labeling script yet |
 | Rule engine (`policies/*.toml` → PASS/HOLD per backend) and event evaluator | Implemented, unit-tested on synthetic data only; no real measurements yet |
 | Student detector, per-backend compile and measurement | Planned |
@@ -32,7 +33,7 @@ The external tools below are used as-is, without modification.
 | HailoRT / Dataflow Compiler | Hailo-8 compile |
 | edgetpu_compiler | Coral Edge TPU compile |
 | TensorRT | Jetson compile |
-| DepthAI | OAK-D Lite (Myriad X) |
+| DepthAI | OAK-D Pro camera capture |
 | Kokoro-82M | TTS for testing spoken instructions without a mic |
 
 ## Meta models used
@@ -42,7 +43,7 @@ Muse Glimmer 30B (local audit agent), Muse Spark / Muse Spark Open (planning and
 ## GX10 setup
 
 ```bash
-bash scripts/setup_gx10.sh               # model downloads + SAM 3.1 env + TTS env + checks
+bash scripts/setup_gx10.sh               # model downloads + SAM 3.1, TTS and OAK envs + checks
 bash scripts/start_glimmer.sh            # Glimmer vLLM server (:8001, vLLM >= 0.32, FP8 by default)
 bash scripts/start_glimmer.sh test       # plain chat check
 bash scripts/start_glimmer.sh toolcheck  # one tool-call round trip
@@ -50,6 +51,7 @@ python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in
 .venv-tts/bin/python scripts/tts.py "Tell me when a package is left at the entrance." data/instruction.wav
 python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
 python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_API_KEY in .env)
+.venv-oak/bin/python scripts/capture_oak.py s01 --split eval --light day --minutes 10   # record a session (OAK-D Pro)
 ```
 
 ## Gate
