@@ -14,11 +14,15 @@
 #
 # Usage:  bash start_glimmer.sh             # serve
 #         bash start_glimmer.sh test        # plain chat check
-#         bash start_glimmer.sh toolcheck   # one tool call round trip
+#         bash start_glimmer.sh toolcheck   # one tool call round trip (stub tool)
 
 set -euo pipefail
 
 MODEL_DIR="${MODEL_DIR:-$HOME/models/Muse-Glimmer-30B}"
+# The audit agent runs on the GX10 itself, so the server only listens locally.
+# Set HOST=0.0.0.0 together with API_KEY to reach it from other machines.
+HOST="${HOST:-127.0.0.1}"
+API_KEY="${API_KEY:-}"
 PORT="${PORT:-8001}"
 MAX_LEN="${MAX_LEN:-65536}"
 # vLLM reserves this fraction of the 121 GiB up front whatever the weights need.
@@ -26,8 +30,10 @@ MAX_LEN="${MAX_LEN:-65536}"
 GPU_UTIL="${GPU_UTIL:-0.45}"
 VLLM_BIN="${VLLM_BIN:-$HOME/edgegate/.venv-vllm/bin/vllm}"
 # Online quantization of the BF16 weights. Decode on the GX10 is memory-bandwidth
-# bound: BF16 ~4.3 tok/s / 55.8 GiB, FP8 ~7.9 tok/s / 32.4 GiB with the same
-# tool-call behaviour. QUANT= (empty) serves plain BF16; pair it with GPU_UTIL=0.65.
+# bound: in the 10/27 server logs BF16 ran ~4.3 tok/s with 55.8 GiB of weights and
+# FP8 ~7.9 tok/s with 32.4 GiB. Not a controlled comparison, and FP8 tool-call
+# quality is only checked by toolcheck so far. QUANT= (empty) serves plain BF16;
+# pair it with GPU_UTIL=0.65.
 QUANT="${QUANT-fp8}"
 URL="http://localhost:$PORT/v1/chat/completions"
 
@@ -35,7 +41,7 @@ if [ "${1:-}" = "test" ]; then
   # Model card recommends temperature 1.0, top_p 0.95, top_k 64, and
   # "Reasoning strength: <low|medium|high|xhigh>" in the system prompt.
   curl -s "$URL" \
-    -H "Content-Type: application/json" \
+    -H "Content-Type: application/json" ${API_KEY:+-H "Authorization: Bearer $API_KEY"} \
     -d '{
       "model": "muse-glimmer",
       "messages": [
@@ -48,9 +54,11 @@ if [ "${1:-}" = "test" ]; then
 fi
 
 if [ "${1:-}" = "toolcheck" ]; then
-  # Day-1 done criterion: Glimmer calls a dummy tool, gets the result, answers.
-  python3 - "$URL" <<'PY'
-import json, sys, urllib.request
+  # Wiring test only: measure_backend is a stub that returns fixed numbers, so a
+  # pass says nothing about real measurements or audit quality. It checks that
+  # Glimmer picks the right tool with the right argument and reports the result.
+  API_KEY="$API_KEY" python3 - "$URL" <<'PY'
+import json, os, sys, urllib.request
 
 url = sys.argv[1]
 tools = [{"type": "function", "function": {
@@ -67,19 +75,29 @@ messages = [
 def chat():
     body = {"model": "muse-glimmer", "messages": messages, "tools": tools,
             "temperature": 1.0, "top_p": 0.95, "top_k": 64, "max_tokens": 1024}
-    req = urllib.request.Request(url, json.dumps(body).encode(), {"Content-Type": "application/json"})
+    headers = {"Content-Type": "application/json"}
+    if os.environ.get("API_KEY"):
+        headers["Authorization"] = "Bearer " + os.environ["API_KEY"]
+    req = urllib.request.Request(url, json.dumps(body).encode(), headers)
     return json.load(urllib.request.urlopen(req))["choices"][0]["message"]
 
 msg = chat()
 calls = msg.get("tool_calls") or []
-if not calls:
-    sys.exit(f"FAIL: no tool call. content={msg.get('content')!r}")
+if len(calls) != 1:
+    sys.exit(f"FAIL: expected 1 tool call, got {len(calls)}. content={msg.get('content')!r}")
 call = calls[0]
-print("tool call:", call["function"]["name"], call["function"]["arguments"])
+name, args = call["function"]["name"], json.loads(call["function"]["arguments"] or "{}")
+print("tool call:", name, args)
+if name != "measure_backend" or args != {"backend": "hailo8"}:
+    sys.exit("FAIL: wrong tool or arguments")
 messages.append(msg)
-messages.append({"role": "tool", "tool_call_id": call["id"],
+messages.append({"role": "tool", "tool_call_id": call["id"],  # stub values, not a measurement
                  "content": json.dumps({"backend": "hailo8", "box_l1_px": 3.7, "latency_ms": 11.2})})
-print("answer:", chat().get("content"))
+answer = chat().get("content") or ""
+print("answer:", answer)
+if "3.7" not in answer:
+    sys.exit("FAIL: answer does not report the tool result")
+print("PASS")
 PY
   exit 0
 fi
@@ -87,11 +105,17 @@ fi
 # FlashInfer JIT-builds kernels at startup and looks up ninja (and nvcc) on PATH.
 export PATH="$(dirname "$VLLM_BIN"):/usr/local/cuda/bin:$PATH"
 
-echo "Serving $MODEL_DIR on :$PORT (max_len=$MAX_LEN, gpu_util=$GPU_UTIL, quant=${QUANT:-none})"
+if [ "$HOST" != "127.0.0.1" ] && [ -z "$API_KEY" ]; then
+  echo "Refusing to listen on $HOST without API_KEY" >&2
+  exit 1
+fi
+
+echo "Serving $MODEL_DIR on $HOST:$PORT (max_len=$MAX_LEN, gpu_util=$GPU_UTIL, quant=${QUANT:-none})"
 exec "$VLLM_BIN" serve "$MODEL_DIR" \
   ${QUANT:+--quantization "$QUANT"} \
+  ${API_KEY:+--api-key "$API_KEY"} \
   --served-model-name muse-glimmer \
-  --host 0.0.0.0 --port "$PORT" \
+  --host "$HOST" --port "$PORT" \
   --max-model-len "$MAX_LEN" \
   --gpu-memory-utilization "$GPU_UTIL" \
   --enable-auto-tool-choice \

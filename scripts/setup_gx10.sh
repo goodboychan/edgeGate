@@ -105,25 +105,27 @@ tts_env() {
 }
 
 check() {
+  local failed=0
   log "Smoke check: SAM 3.1 env"
   if [ -x "$SAM_ENV/bin/python" ]; then
-    "$SAM_ENV/bin/python" - <<'PY' || true
+    "$SAM_ENV/bin/python" - <<'PY' || failed=1
 import torch
 print("torch", torch.__version__, "| cuda available:", torch.cuda.is_available())
 if torch.cuda.is_available():
     print("device:", torch.cuda.get_device_name(0), "| capability:", torch.cuda.get_device_capability(0))
     x = torch.randn(1024, 1024, device="cuda"); print("matmul ok:", float((x @ x).sum()) != 0.0)
+assert torch.cuda.is_available(), "CUDA not available"
 import sam3; print("sam3 import ok")
 PY
   else
-    warn "SAM env missing. Run: bash setup_gx10.sh sam3env"
+    warn "SAM env missing. Run: bash setup_gx10.sh sam3env"; failed=1
   fi
-  ls -lh "$MODELS_DIR/sam3.1" 2>/dev/null | grep -E '\.(pt|safetensors)$' || warn "SAM 3.1 checkpoint not found"
+  ls -lh "$MODELS_DIR/sam3.1" 2>/dev/null | grep -E '\.(pt|safetensors)$' || { warn "SAM 3.1 checkpoint not found"; failed=1; }
 
   log "Smoke check: Glimmer weights"
   ls "$MODELS_DIR/Muse-Glimmer-30B"/*.safetensors >/dev/null 2>&1 \
     && du -sh "$MODELS_DIR/Muse-Glimmer-30B" \
-    || warn "Glimmer weights not found"
+    || { warn "Glimmer weights not found"; failed=1; }
 
   cat <<EOF
 
@@ -132,6 +134,7 @@ If 'cuda available: False' above, the PyTorch wheel does not support this GPU ye
 Fallback: run SAM 3.1 inside the NGC PyTorch container instead:
   docker run --gpus all -it --rm -v $HOME:$HOME nvcr.io/nvidia/pytorch:<latest>-py3
 EOF
+  [ "$failed" -eq 0 ] || { warn "Smoke checks failed (see above)"; return 1; }
 }
 
 case "${1:-all}" in

@@ -10,7 +10,16 @@ Meta Global AI Developer Hackathon, Indie track, "Push the Frontier".
 All code in this repository was written during the hackathon (2026-10-26 to 11-04); the commit history shows when. No pre-existing codebase is included.
 
 - **Pre-existing:** home-lab hardware (GX10, edge boards, sensors, Nova), the open-source tools below, public model weights
-- **Built this week:** all code in this repository (labeling, distillation, compile and measurement pipeline, the audit agent and its MCP tools, control and home integration)
+- **Built this week:** all code in this repository. Status as of 10/27:
+
+| Part | Status |
+|---|---|
+| GX10 setup, Glimmer serving (FP8, tool-call parser) | Implemented |
+| Meta Model API check (Spark text/image, Voice Transcribe), Kokoro TTS | Implemented |
+| Glimmer tool calling | Wiring test only: `toolcheck` uses a stub tool with fixed numbers |
+| SAM 3.1 text-prompt labeling | Feasibility probe on sample images; no labeling script yet |
+| Student detector, per-backend compile and measurement | Planned |
+| Deployment gate (rules + audit agent), deployment, Nova, Home Assistant | Planned |
 
 The external tools below are used as-is, without modification.
 
