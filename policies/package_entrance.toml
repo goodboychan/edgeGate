@@ -1,0 +1,36 @@
+# Deployment policy for "Tell me when a package is left at the entrance".
+# The rule engine (edgegate/gate.py) decides PASS/HOLD per backend from this file
+# and the measurement records. Anything missing, stale, NaN or failed is a HOLD.
+# Threshold values are placeholders until the eval set exists (10/28).
+
+[task]
+name = "package-at-entrance"
+# sha256 of the eval set manifest; records measured on anything else are rejected.
+eval_set_sha256 = "unset"
+# Measurements older than this are stale.
+max_age_hours = 24
+# Backend whose record is the accuracy reference for max_drop checks.
+reference_backend = "onnx-gx10"
+
+# How per-frame detections become arrival alerts (edgegate/events.py).
+[events]
+# Normalized [0, 1] polygon; a box counts when its bottom-center is inside.
+zone = [[0.2, 0.5], [0.8, 0.5], [0.8, 1.0], [0.2, 1.0]]
+score_min = 0.5
+dwell_s = 2.0        # package must stay this long before alerting
+gap_s = 0.5          # missed frames shorter than this do not break presence
+clear_s = 5.0        # zone must be empty this long before the next alert
+match_window_s = 10.0
+
+# min / max are absolute limits; max_drop is the allowed drop below the reference.
+[thresholds]
+event_recall = { min = 0.9, max_drop = 0.05 }
+false_alerts_per_h = { max = 1.0 }
+duplicate_alerts = { max = 0 }
+detection_delay_s_p95 = { max = 5.0 }
+latency_ms_p95 = { max = 100.0 }
+peak_mem_mb = { max = 2048.0 }
+
+# Per-backend overrides replace the whole entry for that metric.
+[backends.hailo8]
+latency_ms_p95 = { max = 50.0 }

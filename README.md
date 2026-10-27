@@ -10,7 +10,7 @@ Meta Global AI Developer Hackathon, Indie track, "Push the Frontier".
 All code in this repository was written during the hackathon (2026-10-26 to 11-04); the commit history shows when. No pre-existing codebase is included.
 
 - **Pre-existing:** home-lab hardware (GX10, edge boards, sensors, Nova), the open-source tools below, public model weights
-- **Built this week:** all code in this repository. Status as of 10/27:
+- **Built this week:** all code in this repository. Status as of 10/27 (evening):
 
 | Part | Status |
 |---|---|
@@ -18,8 +18,9 @@ All code in this repository was written during the hackathon (2026-10-26 to 11-0
 | Meta Model API check (Spark text/image, Voice Transcribe), Kokoro TTS | Implemented |
 | Glimmer tool calling | Wiring test only: `toolcheck` uses a stub tool with fixed numbers |
 | SAM 3.1 text-prompt labeling | Feasibility probe on sample images; no labeling script yet |
+| Rule engine (`policies/*.toml` → PASS/HOLD per backend) and event evaluator | Implemented, unit-tested on synthetic data only; no real measurements yet |
 | Student detector, per-backend compile and measurement | Planned |
-| Deployment gate (rules + audit agent), deployment, Nova, Home Assistant | Planned |
+| Glimmer veto-only audit, deployment, Nova, Home Assistant | Planned |
 
 The external tools below are used as-is, without modification.
 
@@ -50,3 +51,13 @@ python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in
 python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
 python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_API_KEY in .env)
 ```
+
+## Gate
+
+```bash
+python3 -m unittest discover -s tests                     # rule engine + evaluator tests
+python3 -m edgegate.events policies/package_entrance.toml GT_DIR DETS_DIR   # detections → event metrics
+python3 -m edgegate.gate policies/package_entrance.toml runs/*.json --model-sha SHA --backends trt,hailo8
+```
+
+The rules decide; Glimmer can only veto a PASS and explain why. Missing, stale, NaN or failed measurements, a different model or eval set, or a policy without an eval set all give HOLD.
