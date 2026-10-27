@@ -3,7 +3,7 @@
 Teach a new perception skill to the mixed edge devices in a home with one sentence (spoken or typed), and let an audit agent decide, chip by chip, whether it is safe to deploy.
 Meta Global AI Developer Hackathon, Indie track, "Push the Frontier".
 
-**Flow:** "Tell me when a package lands at the front door" → Muse Voice Transcribe → Muse Spark plans → SAM 3.1 auto-labels → student detector is distilled → compiled per backend → Muse Glimmer audits → deployed only to approved backends → Home Assistant notifies, and a Creoqode Nova head turns to look at the target.
+**Flow:** "Tell me when a package is left at the entrance" → Muse Voice Transcribe → Muse Spark plans → SAM 3.1 auto-labels → student detector is distilled → compiled per backend → Muse Glimmer audits → deployed only to approved backends → Home Assistant notifies, and a Creoqode Nova head turns to look at the target.
 
 ## Built during the hackathon
 
@@ -46,6 +46,6 @@ bash scripts/start_glimmer.sh            # Glimmer vLLM server (:8001, vLLM >= 0
 bash scripts/start_glimmer.sh test       # plain chat check
 bash scripts/start_glimmer.sh toolcheck  # one tool-call round trip
 python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in .env)
-.venv-tts/bin/python scripts/tts.py "Tell me when a package lands at the front door." data/instruction.wav
+.venv-tts/bin/python scripts/tts.py "Tell me when a package is left at the entrance." data/instruction.wav
 python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
 ```
