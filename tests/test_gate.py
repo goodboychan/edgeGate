@@ -14,8 +14,13 @@ GOOD = {"event_recall": 0.95, "false_alerts_per_h": 0.2, "duplicate_alerts": 0,
         "detection_delay_s_p95": 3.0, "latency_ms_p95": 20.0, "peak_mem_mb": 300.0}
 
 
+def art(backend):
+    return backend[0] * 64
+
+
 def record(backend, **metric_overrides):
-    return {"schema": 1, "model_sha256": MODEL, "backend": backend, "device": "test",
+    return {"schema": 1, "model_sha256": MODEL, "artifact_sha256": art(backend),
+            "backend": backend, "device": "test",
             "eval_set_sha256": EVAL, "measured_at": "2026-10-31T10:00:00Z",
             "tool": {"ok": True, "error": None}, "metrics": {**GOOD, **metric_overrides}}
 
@@ -29,7 +34,7 @@ class GateTest(unittest.TestCase):
     def one(self, rec, backend=None, records=None):
         backend = backend or rec["backend"]
         recs = records if records is not None else [self.ref, rec]
-        return decide(self.policy, recs, MODEL, [backend], NOW)[0]
+        return decide(self.policy, recs, MODEL, {backend: art(backend)}, NOW)[0]
 
     def assertHeldFor(self, d, check):
         self.assertEqual(d.verdict, HOLD)
@@ -67,6 +72,13 @@ class GateTest(unittest.TestCase):
         rec = record("trt")
         rec["eval_set_sha256"] = "x" * 64
         self.assertHeldFor(self.one(rec), "eval_set")
+
+    def test_deployed_file_must_be_the_measured_one(self):
+        rec = record("trt")
+        rec["artifact_sha256"] = "z" * 64  # e.g. engine rebuilt after measuring
+        self.assertHeldFor(self.one(rec), "artifact")
+        d = decide(self.policy, [self.ref, record("trt")], MODEL, {"trt": None}, NOW)[0]
+        self.assertHeldFor(d, "artifact")
 
     def test_stale_holds(self):
         rec = record("trt")
@@ -113,7 +125,7 @@ class GateTest(unittest.TestCase):
 
     def test_veto_only_demotes(self):
         ds = decide(self.policy, [self.ref, record("trt"), record("hailo8", event_recall=0.5)],
-                    MODEL, ["trt", "hailo8"], NOW)
+                    MODEL, {"trt": art("trt"), "hailo8": art("hailo8")}, NOW)
         apply_veto(ds, {"trt": "boxes shifted left on night frames", "hailo8": "looks fine"})
         trt, hailo = ds
         self.assertHeldFor(trt, "veto")

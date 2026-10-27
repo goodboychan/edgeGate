@@ -6,6 +6,13 @@ Ground truth (one JSON file per session, marked by hand):
   {"session": "s03", "duration_s": 600.0,
    "events": [{"arrive": 41.2, "remove": 95.0}, {"arrive": 300.5, "remove": null}]}
 `remove` is null when the package is still there at the end of the session.
+Packages already there when a session starts are not events.
+
+Arrival rule: the number of packages in the zone rises and stays up for dwell_s.
+No new alert while it stays; a removed package placed again, or a second package
+set down next to the first, is a new arrival. After the camera starts or comes
+back (no frames for reconnect_s), packages already there are taken as the
+baseline and not alerted.
 
 Alert outcomes:
   matched    first alert within match_window_s after an arrival
@@ -34,26 +41,44 @@ def inside(pt, poly):
     return hit
 
 
-def present(dets, zone, score_min):
-    """True if any confident box has its bottom-center in the zone."""
-    return any(s >= score_min and inside(((x1 + x2) / 2, y2), zone) for x1, y1, x2, y2, s in dets)
+def count(dets, zone, score_min):
+    """Number of confident boxes with their bottom-center in the zone."""
+    return sum(s >= score_min and inside(((x1 + x2) / 2, y2), zone) for x1, y1, x2, y2, s in dets)
 
 
 def alerts(frames, p):
     """Alert times from [(t, dets)] sorted by t, using the [events] policy section."""
     out = []
-    armed, run_start, last_seen = True, None, None
+    stable = None        # accepted package count; None until it settles after (re)connect
+    level = since = None  # settling: count seen and since when
+    up_since = up_last = None  # run of frames above stable; dips shorter than gap_s are occlusion
+    down_since = None
+    last_t = None
     for t, dets in frames:
-        if last_seen is not None and t - last_seen >= p["clear_s"]:
-            armed = True
-        if not present(dets, p["zone"], p["score_min"]):
+        if last_t is not None and t - last_t > p["reconnect_s"]:
+            stable = level = up_since = down_since = None
+        last_t = t
+        n = count(dets, p["zone"], p["score_min"])
+        if stable is None:
+            if n != level:
+                level, since = n, t
+            elif t - since >= p["dwell_s"]:
+                stable = n
             continue
-        if last_seen is None or t - last_seen > p["gap_s"]:
-            run_start = t
-        last_seen = t
-        if armed and t - run_start >= p["dwell_s"]:
-            out.append(t)
-            armed = False
+        if n > stable:
+            if up_since is None or t - up_last > p["gap_s"]:
+                up_since = t
+            up_last = t
+            down_since = None
+            if t - up_since >= p["dwell_s"]:
+                out.append(t)
+                stable, up_since = n, None
+        elif n < stable:
+            down_since = t if down_since is None else down_since
+            if t - down_since >= p["clear_s"]:
+                stable, down_since = n, None
+        else:
+            down_since = None
     return out
 
 

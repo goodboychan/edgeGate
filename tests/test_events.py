@@ -7,23 +7,27 @@ from edgegate.events import alerts, evaluate, inside, percentile, score_session,
 from edgegate.gate import load_policy
 
 ROOT = Path(__file__).resolve().parent.parent
-BOX_IN = [0.4, 0.6, 0.6, 0.9, 0.9]     # bottom-center (0.5, 0.9) is in the zone
-BOX_OUT = [0.4, 0.1, 0.6, 0.3, 0.9]    # bottom-center (0.5, 0.3) is above it
+BOX_A = [0.3, 0.6, 0.45, 0.9, 0.9]     # bottom-center (0.375, 0.9) is in the zone
+BOX_B = [0.55, 0.6, 0.7, 0.9, 0.9]     # second package next to A
+BOX_OUT = [0.4, 0.1, 0.6, 0.3, 0.9]    # bottom-center (0.5, 0.3) is above the zone
 BOX_WEAK = [0.4, 0.6, 0.6, 0.9, 0.3]
 
 
-def timeline(spans, end, fps=10, box=BOX_IN):
-    """Frames at fps from 0 to end; `box` is present during [start, stop) spans."""
+def timeline(spans, end, fps=10, start=0.0):
+    """Frames at fps over [start, end); spans are (from, to, box) when that box is seen."""
     frames = []
-    for k in range(int(end * fps)):
+    for k in range(int(start * fps), int(end * fps)):
         t = k / fps
-        frames.append((t, [box] if any(a <= t < b for a, b in spans) else []))
+        frames.append((t, [box for a, b, box in spans if a <= t < b]))
     return frames
 
 
-class EventsTest(unittest.TestCase):
+class AlertRuleTest(unittest.TestCase):
     def setUp(self):
         self.p = load_policy(ROOT / "policies/package_entrance.toml")["events"]
+
+    def alerts(self, spans, end=100, **kw):
+        return alerts(timeline(spans, end, **kw), self.p)
 
     def test_inside(self):
         zone = self.p["zone"]
@@ -32,31 +36,46 @@ class EventsTest(unittest.TestCase):
         self.assertFalse(inside((0.1, 0.9), zone))
 
     def test_one_arrival_one_alert_after_dwell(self):
-        a = alerts(timeline([(10, 60)], 100), self.p)
+        a = self.alerts([(10, 60, BOX_A)])
         self.assertEqual(len(a), 1)
         self.assertAlmostEqual(a[0], 12.0, places=5)
 
-    def test_short_visit_does_not_alert(self):
-        self.assertEqual(alerts(timeline([(10, 11.5)], 100), self.p), [])
+    def test_walking_through_with_a_package_does_not_alert(self):
+        self.assertEqual(self.alerts([(10, 11.5, BOX_A)]), [])
 
     def test_out_of_zone_and_weak_boxes_ignored(self):
-        self.assertEqual(alerts(timeline([(10, 60)], 100, box=BOX_OUT), self.p), [])
-        self.assertEqual(alerts(timeline([(10, 60)], 100, box=BOX_WEAK), self.p), [])
+        self.assertEqual(self.alerts([(10, 60, BOX_OUT)]), [])
+        self.assertEqual(self.alerts([(10, 60, BOX_WEAK)]), [])
 
-    def test_flicker_within_gap_keeps_presence(self):
-        # 0.3 s dropouts are shorter than gap_s, so dwell keeps counting.
-        spans = [(10, 10.8), (11.1, 11.9), (12.2, 40)]
-        a = alerts(timeline(spans, 60), self.p)
-        self.assertEqual(len(a), 1)
-        self.assertLess(a[0], 12.5)
+    def test_occlusion_while_placing_gives_one_alert(self):
+        # The hand hides the box for 0.3-0.8 s at a time while it is set down.
+        spans = [(10, 10.8, BOX_A), (11.1, 11.9, BOX_A), (12.5, 40, BOX_A)]
+        self.assertEqual(len(self.alerts(spans)), 1)
 
     def test_brief_dropout_does_not_realert(self):
-        # 2 s dropout breaks presence but is shorter than clear_s.
-        self.assertEqual(len(alerts(timeline([(10, 30), (32, 60)], 100), self.p)), 1)
+        self.assertEqual(len(self.alerts([(10, 30, BOX_A), (32, 60, BOX_A)])), 1)
 
-    def test_long_absence_rearms(self):
-        self.assertEqual(len(alerts(timeline([(10, 30), (40, 60)], 100), self.p)), 2)
+    def test_removed_and_placed_again_is_a_new_arrival(self):
+        self.assertEqual(len(self.alerts([(10, 30, BOX_A), (40, 60, BOX_A)])), 2)
 
+    def test_second_package_next_to_the_first_is_a_new_arrival(self):
+        a = self.alerts([(10, 90, BOX_A), (40, 90, BOX_B)])
+        self.assertEqual(len(a), 2)
+        self.assertAlmostEqual(a[1], 42.0, places=5)
+
+    def test_package_present_at_start_is_not_alerted(self):
+        self.assertEqual(self.alerts([(0, 60, BOX_A)]), [])
+
+    def test_camera_reconnect_with_package_present_is_not_alerted(self):
+        frames = timeline([(10, 100, BOX_A)], 30) + timeline([(10, 100, BOX_A)], 60, start=40)
+        self.assertEqual(len(alerts(frames, self.p)), 1)  # only the original arrival at ~12 s
+
+    def test_arrival_after_reconnect_is_alerted(self):
+        frames = timeline([], 30) + timeline([(50, 90, BOX_A)], 90, start=40)
+        self.assertEqual(len(alerts(frames, self.p)), 1)
+
+
+class ScoringTest(unittest.TestCase):
     def test_score_session(self):
         events = [{"arrive": 10, "remove": 50}, {"arrive": 100, "remove": None},
                   {"arrive": 200, "remove": 260}]
@@ -89,7 +108,7 @@ class EventsTest(unittest.TestCase):
             Path(gt, "s01.json").write_text(json.dumps(
                 {"session": "s01", "duration_s": 100, "events": [{"arrive": 10, "remove": 60}]}))
             with open(Path(dets, "s01.jsonl"), "w") as f:
-                for t, d in timeline([(10, 60)], 100):
+                for t, d in timeline([(10, 60, BOX_A)], 100):
                     f.write(json.dumps({"t": t, "dets": d}) + "\n")
             metrics, _ = evaluate(policy, gt, dets)
             self.assertEqual(metrics["event_recall"], 1.0)

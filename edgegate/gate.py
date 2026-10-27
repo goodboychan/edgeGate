@@ -4,12 +4,17 @@ The rules alone decide. Glimmer can only veto (turn a PASS into a HOLD) and
 explain; it can never approve a backend the rules held.
 
 A measurement record (one JSON file per model x backend):
-  {"schema": 1, "model_sha256": "...", "backend": "hailo8", "device": "pi5-hailo",
-   "eval_set_sha256": "...", "measured_at": "2026-10-31T12:00:00Z",
+  {"schema": 1, "model_sha256": "...", "artifact_sha256": "...", "backend": "hailo8",
+   "device": "pi5-hailo", "eval_set_sha256": "...", "measured_at": "2026-10-31T12:00:00Z",
    "tool": {"ok": true, "error": null},
    "metrics": {"event_recall": 0.93, "latency_ms_p95": 21.4, ...}}
 
-Usage:  python3 -m edgegate.gate POLICY --model-sha SHA RECORD.json... [--backends a,b] [--now ISO]
+model_sha256 is the trained model (ONNX); artifact_sha256 is the compiled file that
+was measured (engine, HEF). A backend is only judged against the file that would be
+deployed to it, so a measured file that differs from the deployed one holds.
+
+Usage:  python3 -m edgegate.gate POLICY RECORD.json... --model-sha SHA \
+            --artifact trt=build/student.engine --artifact hailo8=build/student.hef [--now ISO]
 """
 import argparse
 import hashlib
@@ -103,14 +108,14 @@ def _latest(records, backend):
     return max(mine, key=lambda r: _parse_time(r.get("measured_at")) or epoch)
 
 
-def decide(policy, records, model_sha, backends, now=None):
-    """One Decision per backend in `backends`."""
+def decide(policy, records, model_sha, artifacts, now=None):
+    """One Decision per backend in `artifacts` ({backend: sha256 of the file to deploy})."""
     now = now or datetime.now(timezone.utc)
     ref_name = policy["task"].get("reference_backend")
     ref = _latest(records, ref_name) if ref_name else None
     ref_ok = ref is not None and not _valid_record(ref, model_sha, policy, now)
     decisions = []
-    for backend in backends:
+    for backend, artifact_sha in artifacts.items():
         d = Decision(backend)
         decisions.append(d)
         if policy["task"].get("eval_set_sha256") in (None, "", "unset"):
@@ -122,6 +127,8 @@ def decide(policy, records, model_sha, backends, now=None):
             continue
         for check, detail in _valid_record(rec, model_sha, policy, now):
             d.hold(check, detail)
+        if not artifact_sha or rec.get("artifact_sha256") != artifact_sha:
+            d.hold("artifact", "the file to deploy is not the file that was measured")
         if d.verdict == HOLD:
             continue
         limits = {**policy.get("thresholds", {}), **policy.get("backends", {}).get(backend, {})}
@@ -158,18 +165,26 @@ def main():
     ap.add_argument("policy")
     ap.add_argument("records", nargs="*")
     ap.add_argument("--model-sha", required=True)
-    ap.add_argument("--backends", help="comma-separated; default: every backend in the records")
+    ap.add_argument("--artifact", action="append", default=[], metavar="BACKEND=PATH",
+                    help="file that would be deployed to BACKEND; repeat per backend")
     ap.add_argument("--now", help="ISO time to judge staleness against (default: now)")
     ap.add_argument("--json", help="also write the decisions to this file")
     a = ap.parse_args()
     policy = load_policy(a.policy)
     records = load_records(a.records)
-    backends = a.backends.split(",") if a.backends else sorted({r.get("backend") for r in records} - {None})
+    artifacts = {}
+    for spec in a.artifact:
+        backend, _, path = spec.partition("=")
+        if not path:
+            sys.exit(f"bad --artifact {spec!r} (need BACKEND=PATH)")
+        artifacts[backend] = sha256_file(path)
+    if not artifacts:
+        sys.exit("give at least one --artifact BACKEND=PATH")
     now = _parse_time(a.now) if a.now else None
     if a.now and now is None:
         sys.exit(f"bad --now {a.now!r} (need ISO time with timezone)")
     out = []
-    for d in decide(policy, records, a.model_sha, backends, now):
+    for d in decide(policy, records, a.model_sha, artifacts, now):
         print(f"{d.backend:12s} {d.verdict}" + "".join(f"\n    {c}: {t}" for c, t in d.reasons))
         out.append({"backend": d.backend, "verdict": d.verdict, "reasons": d.reasons})
     if a.json:

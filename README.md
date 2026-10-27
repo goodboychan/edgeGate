@@ -57,7 +57,10 @@ python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_A
 ```bash
 python3 -m unittest discover -s tests                     # rule engine + evaluator tests
 python3 -m edgegate.events policies/package_entrance.toml GT_DIR DETS_DIR   # detections → event metrics
-python3 -m edgegate.gate policies/package_entrance.toml runs/*.json --model-sha SHA --backends trt,hailo8
+python3 -m edgegate.gate policies/package_entrance.toml runs/*.json --model-sha SHA \
+    --artifact trt=build/student.engine --artifact hailo8=build/student.hef
 ```
 
-The rules decide; Glimmer can only veto a PASS and explain why. Missing, stale, NaN or failed measurements, a different model or eval set, or a policy without an eval set all give HOLD.
+The rules decide; Glimmer can only veto a PASS and explain why. Missing, stale, NaN or failed measurements, a different model or eval set, a deployed file that is not the one measured, or a policy without an eval set all give HOLD.
+
+An arrival is a rise in the number of packages in the zone that lasts `dwell_s`: one alert per package, a second package next to the first is a new arrival, and packages already there when the camera starts or reconnects are not alerted. The values in the policy are proposals until confirmed.
