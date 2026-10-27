@@ -36,4 +36,5 @@ bash scripts/setup_gx10.sh               # 모델 다운로드 + SAM 3.1 env + �
 bash scripts/start_glimmer.sh            # Glimmer vLLM 서버 (:8001, vLLM >= 0.32, 기본 FP8)
 bash scripts/start_glimmer.sh test       # 응답 확인
 bash scripts/start_glimmer.sh toolcheck  # 도구 호출 1회 왕복
+python3 scripts/check_meta_api.py        # Meta Model API 확인 (.env의 META_API_KEY)
 ```
