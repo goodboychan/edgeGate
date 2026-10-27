@@ -18,7 +18,7 @@ All code in this repository was written during the hackathon (2026-10-26 to 11-0
 | Meta Model API check (Spark text/image, Voice Transcribe), Kokoro TTS | Implemented |
 | Glimmer tool calling | Wiring test only: `toolcheck` uses a stub tool with fixed numbers |
 | OAK-D Pro session capture (timestamped frames, outage log) | Implemented; 15 fps verified, reconnect path not yet tested by unplugging |
-| SAM 3.1 text-prompt labeling | Feasibility probe on sample images; no labeling script yet |
+| SAM 3.1 text-prompt labeling (package, person) | Implemented; tested on the sam3 sample video only (0.9 s/frame for two prompts, 22 GB peak) |
 | Rule engine (`policies/*.toml` → PASS/HOLD per backend) and event evaluator | Implemented, unit-tested on synthetic data only; no real measurements yet |
 | Student detector, per-backend compile and measurement | Planned |
 | Glimmer veto-only audit, deployment, Nova, Home Assistant | Planned |
@@ -52,6 +52,7 @@ python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in
 python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
 python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_API_KEY in .env)
 .venv-oak/bin/python scripts/capture_oak.py s01 --split eval --light day --minutes 10   # record a session (OAK-D Pro)
+.venv-sam3/bin/python scripts/label_sam.py data/sessions/s01   # SAM 3.1 teacher boxes for package and person
 ```
 
 ## Gate
