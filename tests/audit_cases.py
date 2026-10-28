@@ -75,7 +75,7 @@ def record(case, backend):
     metrics = summarize(per_session, sum(s["duration_s"] for s in per_session))
     lat = {"onnx-gx10": 32.0, "trt": 23.0, "hailo8": 60.0 if case == "rule_hold" else 14.0}[backend]
     metrics.update(latency_ms_p50=lat, latency_ms_p95=lat * 1.1, peak_mem_mb=400.0)
-    return {"schema": 1, "backend": backend, "runtime": backend, "device": f"synthetic-{backend}",
+    return {"schema": 1, "backend": backend, "runtime": backend, "device": {"onnx-gx10": "gx10", "trt": "jetson-orin", "hailo8": "pi5-hailo"}[backend],
             "model_sha256": MODEL, "artifact_sha256": ARTIFACTS.get(backend, "e" * 64), "eval_set_sha256": EVAL,
             "sessions": [s["session"] for s in per_session], "measured_at": MEASURED_AT,
             "tool": {"ok": True, "error": None}, "metrics": metrics, "per_session": per_session, "synthetic": True}

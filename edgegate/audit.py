@@ -120,12 +120,20 @@ class Audit:
             return self._cite("slice_metrics", backend, {"error": f"by must be one of {list(SLICES)}"})
         rec = self.records.get(backend)
         if backend not in self.records or rec is None:
-            return self._cite("slice_metrics", backend, {"error": f"no record for backend {backend!r}"})
+            known = [b for b, r in self.records.items() if r]
+            return self._cite("slice_metrics", backend, {
+                "error": f"no record for backend {backend!r}; use a backend name, not a device label: {known}"})
         edges = self.policy.get("slices", {}).get("size_edges", [0.08, 0.15])
         ref = self.records.get(self.ref_name)
+        rows = slice_rows(rec, by, edges)
+        ref_rows = slice_rows(ref, by, edges) if ref else {}
+        for k, r in rows.items():
+            # A count, not a ratio: one event in a small slice is one event.
+            if k in ref_rows:
+                r["on_time_minus_reference"] = r["on_time"] - ref_rows[k]["on_time"]
         return self._cite("slice_metrics", backend, {
-            "backend": backend, "by": by, "slices": slice_rows(rec, by, edges),
-            "reference": {"backend": self.ref_name, "slices": slice_rows(ref, by, edges) if ref else None}})
+            "backend": backend, "by": by, "slices": rows,
+            "reference": {"backend": self.ref_name, "slices": ref_rows or None}})
 
     def propose_hold(self, backend, reason, evidence):
         """Veto a backend the rules passed; accepted only with evidence from this audit."""

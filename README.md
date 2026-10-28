@@ -22,8 +22,11 @@ All code in this repository was written during the hackathon (2026-10-26 to 11-0
 | Rule engine (`policies/*.toml` → PASS/HOLD per backend) and event evaluator | Implemented, unit-tested on synthetic data only; no real measurements yet |
 | Toolchain path to both devices (public YOLOv8n, not yet trained on our data) | Compile and run on both; on 33 public sample frames TensorRT FP16 matches ONNX 116/116 boxes, Hailo-8 INT8 111/116 (mean IoU 0.977); end to end per frame (letterbox, inference, decoding, NMS) p50 23 ms Jetson (15W mode), 14 ms Hailo Pi |
 | Measurement harness (device run → event metrics → record the gate reads) | Implemented; exercised end to end on a fake session with no marked events, where both devices are held for missing recall. No real eval data yet |
+| Glimmer audit tools (MCP: rule verdicts, eval coverage, per-slice recall; veto-only `propose_hold` with evidence ids) | Implemented; wiring check on 5 synthetic cases (made-up numbers, one run each, not evidence): Glimmer FP8 gave the expected verdict in all 5, no HOLD on the control, 3.5 to 6 min per audit. Its HOLD reasons name the planted slice but also cite one-event lighting gaps. Not yet run on measured candidates, no repeat runs yet |
+| GT marking tool (browser) | Implemented; save and validation tested, page not yet used on a real session |
+| Fault-injected builds (BGR swap, no normalization, 4-bit weights, 10 calibration images) | Built for both devices from the public YOLOv8n; on 33 public frames vs ONNX: no normalization 0 boxes matched, 4-bit weights 65/116, BGR 100/116 (Hailo) and 104/116 (TRT), 10 calibration images 112/116, about the same as the clean build |
 | Student training | Planned |
-| Glimmer veto-only audit, deployment, Nova, Home Assistant | Planned |
+| Deployment, Nova, Home Assistant | Planned |
 
 The external tools below are used as-is, without modification.
 

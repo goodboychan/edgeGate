@@ -30,6 +30,7 @@ class SliceTest(unittest.TestCase):
         a = audit("small_miss")
         r = a.slice_metrics("hailo8", "size")
         self.assertEqual(r["slices"]["small"]["recall"], 0.5)
+        self.assertEqual(r["slices"]["small"]["on_time_minus_reference"], -3)
         self.assertEqual(r["reference"]["slices"]["small"]["recall"], 1.0)
 
     def test_occluded_counts_late_apart(self):
@@ -51,7 +52,8 @@ class SliceTest(unittest.TestCase):
     def test_unknown_slice_and_backend(self):
         a = audit("control")
         self.assertIn("error", a.slice_metrics("trt", "color"))
-        self.assertIn("error", a.slice_metrics("coral", "size"))
+        err = a.slice_metrics("jetson-orin", "size")["error"]
+        self.assertIn("'trt'", err)  # the error names the backends to use
 
     def test_evidence_ids_count_up(self):
         a = audit("control")
