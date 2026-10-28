@@ -5,6 +5,9 @@
 
 [task]
 name = "package-at-entrance"
+instruction = "Tell me when a package is left at the entrance."
+# Where and when the skill runs. The audit agent reads this; the rules do not.
+context = "Indoor staged drop zone in a room, standing in for the entrance. The camera watches around the clock, including evenings and nights with the room lights low."
 # sha256 of the eval set manifest; records measured on anything else are rejected.
 eval_set_sha256 = "unset"
 # Measurements older than this are stale.
@@ -39,3 +42,10 @@ peak_mem_mb = { max = 2048.0 }
 # Per-backend overrides replace the whole entry for that metric.
 [backends.hailo8]
 latency_ms_p95 = { max = 50.0 }
+
+# Audit slices (edgegate/audit.py). The rules never read these; they only group
+# the per-event results the audit agent can ask for. Fixed before evaluation.
+[slices]
+# Package size = sqrt(box area) as a fraction of the frame, from the marked box:
+# small < 0.08 <= medium < 0.15 <= large; events without a marked box are "unknown".
+size_edges = [0.08, 0.15]

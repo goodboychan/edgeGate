@@ -32,6 +32,7 @@ SAM_ENV="$EDGEGATE_HOME/.venv-sam3"
 TOOLS_ENV="$EDGEGATE_HOME/.venv-tools"
 TTS_ENV="$EDGEGATE_HOME/.venv-tts"
 OAK_ENV="$EDGEGATE_HOME/.venv-oak"
+AUDIT_ENV="$EDGEGATE_HOME/.venv-audit"
 TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu130}"
 
 log()  { printf '\n\033[1;36m[edgegate]\033[0m %s\n' "$*"; }
@@ -117,6 +118,12 @@ oak_env() {
   fi
 }
 
+audit_env() {
+  log "Creating audit env at $AUDIT_ENV (MCP audit tools for Glimmer)"
+  [ -d "$AUDIT_ENV" ] || uv venv "$AUDIT_ENV" --python 3.12
+  uv pip install --python "$AUDIT_ENV/bin/python" "mcp==2.3.0"
+}
+
 check() {
   local failed=0
   log "Smoke check: SAM 3.1 env"
@@ -151,11 +158,12 @@ EOF
 }
 
 case "${1:-all}" in
-  all)      preflight; download_models; sam3_env; tts_env; oak_env; check ;;
+  all)      preflight; download_models; sam3_env; tts_env; oak_env; audit_env; check ;;
   download) preflight; download_models ;;
   sam3env)  preflight; sam3_env; check ;;
   ttsenv)   preflight; tts_env ;;
   oakenv)   preflight; oak_env ;;
+  auditenv) preflight; audit_env ;;
   check)    check ;;
-  *) echo "usage: $0 [all|download|sam3env|ttsenv|oakenv|check]"; exit 1 ;;
+  *) echo "usage: $0 [all|download|sam3env|ttsenv|oakenv|auditenv|check]"; exit 1 ;;
 esac

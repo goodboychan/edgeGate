@@ -8,6 +8,8 @@ Ground truth (one JSON file per session, marked by hand):
    "events": [{"arrive": 41.2, "remove": 95.0}, {"arrive": 300.5, "remove": null}]}
 `arrive` is when the hand lets go of the package; `remove` is null if it is still
 there at the end. Packages already there when a session starts are not events.
+Optional per event, for the audit slices only (never for the gate metrics):
+`box` [x1, y1, x2, y2] where the package rests, and `tags`, e.g. ["occluded"].
 
 Arrival rule (MVP: a first package into an empty zone; times, not frame counts):
   - empty zone, then a package seen for dwell_s -> one alert
@@ -131,6 +133,7 @@ def alerts(frames, p):
 def score_session(alert_times, events, window, notify_s=0.0, outages=()):
     """Classify alerts against the marked events of one session."""
     matched = {}  # event index -> effective alert time
+    late_at = {}  # event index -> first late alert time
     dup = late = false = 0
 
     def there(e, a):
@@ -138,19 +141,29 @@ def score_session(alert_times, events, window, notify_s=0.0, outages=()):
 
     for a in (a + notify_s for a in alert_times):
         cand = [i for i, e in enumerate(events) if i not in matched and e["arrive"] <= a <= e["arrive"] + window]
+        waiting = [i for i, e in enumerate(events) if i not in matched and there(e, a)]
         if cand:
             matched[min(cand, key=lambda i: events[i]["arrive"])] = a
-        elif any(there(e, a) for i, e in enumerate(events) if i not in matched):
+        elif waiting:
             late += 1
+            late_at.setdefault(waiting[0], a)
         elif any(there(e, a) for e in events):
             dup += 1
         else:
             false += 1
-    outage_misses = sum(1 for i, e in enumerate(events) if i not in matched
-                        and any(s <= e["arrive"] <= t for s, t in outages))
+    outage = {i for i, e in enumerate(events) if i not in matched
+              and any(s <= e["arrive"] <= t for s, t in outages)}
     delays = [a - events[i]["arrive"] for i, a in matched.items()]
+    # One row per marked event, so the audit can slice recall by size, scene or session.
+    per_event = []
+    for i, e in enumerate(events):
+        a = matched.get(i, late_at.get(i))
+        per_event.append({"arrive": e["arrive"],
+                          "outcome": "on_time" if i in matched else "late" if i in late_at else "missed",
+                          "delay": None if a is None else a - e["arrive"], "outage": i in outage,
+                          **{k: e[k] for k in ("box", "tags") if k in e}})
     return {"events": len(events), "matched": len(matched), "duplicate": dup, "late": late,
-            "false": false, "outage_misses": outage_misses, "delays": delays}
+            "false": false, "outage_misses": len(outage), "delays": delays, "per_event": per_event}
 
 
 def percentile(xs, q):
@@ -202,6 +215,7 @@ def evaluate(policy, gt_dir, dets_dir):
         times, outages = alerts(read_frames(dets_path), p)
         s = score_session(times, gt["events"], p["match_window_s"], p["notify_s"], outages)
         s["session"] = gt["session"]
+        s["duration_s"] = gt["duration_s"]
         per_session.append(s)
         duration += gt["duration_s"]
     if not per_session:

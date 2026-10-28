@@ -57,6 +57,7 @@ python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_A
 .venv-modal/bin/modal run scripts/check_modal.py   # Modal GPU check (after `modal setup`)
 .venv-oak/bin/python scripts/capture_oak.py s01 --split eval --light day --minutes 10   # record a session (OAK-D Pro)
 .venv-sam3/bin/python scripts/label_sam.py data/sessions/s01   # SAM 3.1 teacher boxes for package and person
+python3 scripts/mark_gt.py data/sessions/e01   # mark arrivals by hand in the browser (127.0.0.1:8765) -> data/gt/e01.json
 ```
 
 ## Gate
@@ -69,6 +70,17 @@ python3 scripts/measure.py hailo build/student.hef --onnx build/student.onnx --h
 python3 -m edgegate.gate policies/package_entrance.toml runs/records/*.json --model-sha SHA \
     --artifact trt=build/student.engine --artifact hailo8=build/student.hef
 ```
+
+Audit (after the rules): Glimmer gets the MCP tools in `edgegate/audit_mcp.py` (rule verdicts, eval coverage, per-slice recall by lighting, package size, scene tag or session) and can only propose a HOLD for a backend the rules passed, citing the evidence ids of tool results from that audit.
+
+```bash
+bash scripts/setup_gx10.sh auditenv       # MCP SDK env for the audit
+.venv-audit/bin/python scripts/audit.py policies/package_entrance.toml runs/records/*.json --model-sha SHA \
+    --artifact trt=build/student.engine --artifact hailo8=build/student.hef --repeats 5 --label fp8
+python3 tests/audit_cases.py /tmp/cases   # synthetic wiring cases (made-up numbers, not evidence)
+```
+
+Fault-injected candidates (judged only by their measured metrics): `scripts/inject_fault.py` (BGR swap or missing normalization, built into the ONNX given to the compiler) and the `compile_hailo.py` flags `--calib-limit`, `--precision a8_w4`, `--no-normalization`.
 
 The rules decide; Glimmer can only veto a PASS and explain why. Missing, stale, NaN or failed measurements, a different model or eval set, a deployed file that is not the one measured, or a policy without an eval set all give HOLD.
 

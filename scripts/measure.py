@@ -7,9 +7,10 @@ arrival alerts and score them against the hand-marked events (edgegate/events.py
 and write a measurement record. Any failure still writes a record, with
 tool.ok = false, so the gate holds with the reason instead of finding nothing.
 
-Eval sessions live in data/sessions/<name>/ (frames/, frames.csv) and their marks in
-data/gt/<name>.json. The eval set hash covers both, so changing a mark or a session
-changes the hash and older records stop counting.
+Eval sessions live in data/sessions/<name>/ (frames/, frames.csv, meta.json) and their
+marks in data/gt/<name>.json. The eval set hash covers all three (meta.json holds the
+lighting the audit slices by), so changing a mark or a session changes the hash and
+older records stop counting.
 
 Usage:  python3 scripts/measure.py trt build/student_fp16.engine --onnx build/student.onnx \
             --host jetson --sessions e01,e02 --classes package,person
@@ -46,6 +47,8 @@ def eval_set_hash(sessions, data):
         h.update(s.encode())
         h.update(sha256_file(data / "gt" / f"{s}.json").encode())
         h.update(sha256_file(data / "sessions" / s / "frames.csv").encode())
+        meta = data / "sessions" / s / "meta.json"
+        h.update(sha256_file(meta).encode() if meta.exists() else b"no meta")
     return h.hexdigest()
 
 
@@ -144,6 +147,9 @@ def main():
                 to_event_dets(out_dir, sdir, a.classes.split(","), dets_dir)
                 shutil.copy(data / "gt" / f"{s}.json", gt_dir)
             metrics, per_session = evaluate(policy, gt_dir, dets_dir)
+        for ps in per_session:  # for the audit's lighting slices
+            meta = data / "sessions" / ps["session"] / "meta.json"
+            ps["lighting"] = json.loads(meta.read_text()).get("lighting", "unknown") if meta.exists() else "unknown"
         # Worst session, not the mean: a device that is slow on one session is slow.
         metrics.update({"latency_ms_p50": max(p50), "latency_ms_p95": max(p95), "peak_mem_mb": max(rss)})
         record["metrics"] = metrics
