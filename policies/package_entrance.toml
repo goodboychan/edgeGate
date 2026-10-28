@@ -20,7 +20,10 @@ reference_backend = "onnx-gx10"
 # and delays on real sessions; change them only before an evaluation, never after.
 [events]
 # Normalized [0, 1] polygon; a box counts when its bottom-center is inside.
-zone = [[0.2, 0.5], [0.8, 0.5], [0.8, 1.0], [0.2, 1.0]]
+# Drawn on the mounted camera (10/29) before any session was recorded: from the
+# doorway threshold over the light floor and the front of the gray mat, clear of
+# the fixed boxes and bag on the left and the desk on the right. The door stays open.
+zone = [[0.39, 0.5625], [0.54, 0.5625], [0.69, 0.72], [0.69, 0.92], [0.37, 0.92]]
 score_min = 0.5
 dwell_s = 2.0        # package seen this long in an empty zone = arrival
 gap_s = 1.0          # missed detections shorter than this do not restart the dwell
