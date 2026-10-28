@@ -8,7 +8,10 @@ Layout: data/sessions/<session>/
   latest.jpg              refreshed about once a second while recording, to check framing
 
 Times come from the host-synced frame timestamps, so they stay on one clock when
-the camera is unplugged and comes back; the gap is logged as an outage. Train,
+the camera is unplugged and comes back; the gap is logged as an outage. The link
+is held at USB 2 with NV12 frames (about 21 MB/s at 720p15): on this desk's cable
+and hub the camera boots but never comes back at USB 3, and every session should
+record the same way. Train,
 calibration and eval are separate sessions, never mixed within one.
 
 Usage:  .venv-oak/bin/python scripts/capture_oak.py SESSION --split eval --light day \
@@ -78,7 +81,7 @@ def main():
 
     meta = {"session": a.session, "split": a.split, "lighting": a.light, "note": a.note,
             "started_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "resolution": list(SIZE), "fps": FPS, "camera": "CAM_A (RGB)", "depthai": dai.__version__,
+            "resolution": list(SIZE), "fps": FPS, "camera": "CAM_A (RGB, NV12 over USB 2)", "depthai": dai.__version__,
             "devices": [], "outages": []}
     state = {"t0": dai.Clock.now(), "n": 0, "last_t": None,
              "deadline": time.monotonic() + a.minutes * 60}
@@ -87,12 +90,12 @@ def main():
         writer.writerow(["seq", "t"])
         while not stop and time.monotonic() < state["deadline"]:
             try:
-                with dai.Pipeline() as p:
+                dev = dai.Device(dai.UsbSpeed.HIGH)
+                with dai.Pipeline(dev) as p:
                     cam = p.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_A)
-                    q = cam.requestOutput(SIZE, dai.ImgFrame.Type.BGR888i, fps=FPS).createOutputQueue(
+                    q = cam.requestOutput(SIZE, dai.ImgFrame.Type.NV12, fps=FPS).createOutputQueue(
                         maxSize=30, blocking=False)
                     p.start()
-                    dev = p.getDefaultDevice()
                     info = {"product": dev.getProductName(), "id": dev.getDeviceId(),
                             "usb": str(dev.getUsbSpeed()).split(".")[-1]}
                     if info not in meta["devices"]:
