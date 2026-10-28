@@ -51,6 +51,7 @@ python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in
 .venv-tts/bin/python scripts/tts.py "Tell me when a package is left at the entrance." data/instruction.wav
 python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
 python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_API_KEY in .env)
+.venv-modal/bin/modal run scripts/check_modal.py   # Modal GPU check (after `modal setup`)
 .venv-oak/bin/python scripts/capture_oak.py s01 --split eval --light day --minutes 10   # record a session (OAK-D Pro)
 .venv-sam3/bin/python scripts/label_sam.py data/sessions/s01   # SAM 3.1 teacher boxes for package and person
 ```
