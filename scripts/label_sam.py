@@ -9,11 +9,18 @@ class prompt. Writes, next to the frames:
 Coordinates are normalized to [0, 1], the format edgegate/events.py reads, so the
 teacher's own alerts can be scored against the hand-marked events too.
 
+Each box is the bounding box of the largest connected piece of SAM's mask, not
+SAM's own box: on the first recording, a mask on one box of the fixed stack also
+held a stray patch on the desk boxes, and its box spanned 70% of the frame.
+The default package prompt is "cardboard box": with "package", the fixed shopping
+bag was labeled too and the spanning boxes were more frequent (140 vs 80 of 171
+frames, before the mask fix).
+
 Long sessions are chunked because the predictor keeps every frame of a session
 in memory. Objects are re-detected at each chunk start, so track ids are not kept.
 
 Usage:  .venv-sam3/bin/python scripts/label_sam.py SESSION_DIR [--stride 5] [--chunk 150]
-            [--prompt package="cardboard box"] [--prompt person=person]
+            [--prompt package="cardboard box"] [--prompt person=person]   (these are the defaults)
 """
 import argparse
 import csv
@@ -23,6 +30,8 @@ import tempfile
 import time
 from pathlib import Path
 
+import cv2
+import numpy as np
 import torch
 
 from sam3.model_builder import build_sam3_predictor
@@ -41,6 +50,17 @@ def load_predictor():
     return pred
 
 
+def mask_box(mask):
+    """Normalized [x1, y1, x2, y2] of the largest connected piece of a binary mask, or None."""
+    m = np.asarray(mask, dtype=np.uint8).squeeze()
+    n, _, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
+    if n < 2:
+        return None
+    x, y, w, h, _ = stats[1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))]
+    H, W = m.shape
+    return [x / W, y / H, (x + w) / W, (y + h) / H]
+
+
 def label_chunk(pred, frame_paths, prompt, thresh):
     """Boxes per chunk index for one text prompt."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -56,9 +76,9 @@ def label_chunk(pred, frame_paths, prompt, thresh):
                                                  "propagation_direction": "forward",
                                                  "output_prob_thresh": thresh}):
                 o = r["outputs"]
-                out[r["frame_index"]] = [
-                    [float(x), float(y), float(x + w), float(y + h), float(s)]
-                    for (x, y, w, h), s in zip(o["out_boxes_xywh"], o["out_probs"])]
+                boxes = [mask_box(m) for m in o["out_binary_masks"]]
+                out[r["frame_index"]] = [[*map(float, b), float(s)]
+                                         for b, s in zip(boxes, o["out_probs"]) if b is not None]
             return out
         finally:
             pred.handle_request({"type": "close_session", "session_id": sid})
@@ -72,7 +92,7 @@ def main():
     ap.add_argument("--thresh", type=float, default=0.5)
     ap.add_argument("--prompt", action="append", default=[], metavar="CLASS=TEXT")
     a = ap.parse_args()
-    prompts = dict(p.split("=", 1) for p in a.prompt) or {"package": "package", "person": "person"}
+    prompts = dict(p.split("=", 1) for p in a.prompt) or {"package": "cardboard box", "person": "person"}
 
     sess = Path(a.session_dir)
     rows = list(csv.DictReader(open(sess / "frames.csv")))[::a.stride]
@@ -99,6 +119,7 @@ def main():
             f.write(json.dumps({"seq": int(r["seq"]), "t": float(r["t"]), "dets": d}) + "\n")
     meta = {"model": "SAM 3.1 multiplex", "checkpoint": str(CKPT), "prompts": prompts,
             "stride": a.stride, "chunk": a.chunk, "thresh": a.thresh, "frames": len(rows),
+            "box": "largest connected piece of the mask",
             "load_s": round(load_s, 1), "label_s": round(label_s, 1),
             "gpu_peak_gb": round(torch.cuda.max_memory_allocated() / 1e9, 2)}
     (sess / "labels_sam.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
