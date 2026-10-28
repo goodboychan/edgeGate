@@ -21,7 +21,8 @@ All code in this repository was written during the hackathon (2026-10-26 to 11-0
 | SAM 3.1 text-prompt labeling (package, person) | Implemented; tested on the sam3 sample video only (0.9 s/frame for two prompts, 22 GB peak) |
 | Rule engine (`policies/*.toml` → PASS/HOLD per backend) and event evaluator | Implemented, unit-tested on synthetic data only; no real measurements yet |
 | Toolchain path to both devices (public YOLOv8n, not yet trained on our data) | Compile and run on both; on 33 public sample frames TensorRT FP16 matches ONNX 116/116 boxes, Hailo-8 INT8 111/116 (mean IoU 0.977); end to end per frame (letterbox, inference, decoding, NMS) p50 23 ms Jetson (15W mode), 14 ms Hailo Pi |
-| Student training, measurement harness | Planned |
+| Measurement harness (device run → event metrics → record the gate reads) | Implemented; exercised end to end on a fake session with no marked events, where both devices are held for missing recall. No real eval data yet |
+| Student training | Planned |
 | Glimmer veto-only audit, deployment, Nova, Home Assistant | Planned |
 
 The external tools below are used as-is, without modification.
@@ -63,7 +64,9 @@ python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_A
 ```bash
 python3 -m unittest discover -s tests                     # rule engine + evaluator tests
 python3 -m edgegate.events policies/package_entrance.toml GT_DIR DETS_DIR   # detections → event metrics
-python3 -m edgegate.gate policies/package_entrance.toml runs/*.json --model-sha SHA \
+python3 scripts/measure.py hailo build/student.hef --onnx build/student.onnx --host chans@192.168.50.151 \
+    --sessions e01,e02          # device run -> runs/records/*.json (any failure is recorded as a tool failure)
+python3 -m edgegate.gate policies/package_entrance.toml runs/records/*.json --model-sha SHA \
     --artifact trt=build/student.engine --artifact hailo8=build/student.hef
 ```
 
