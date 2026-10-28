@@ -20,7 +20,8 @@ All code in this repository was written during the hackathon (2026-10-26 to 11-0
 | OAK-D Pro session capture (timestamped frames, outage log) | Implemented; 15 fps verified, reconnect path not yet tested by unplugging |
 | SAM 3.1 text-prompt labeling (package, person) | Implemented; tested on the sam3 sample video only (0.9 s/frame for two prompts, 22 GB peak) |
 | Rule engine (`policies/*.toml` → PASS/HOLD per backend) and event evaluator | Implemented, unit-tested on synthetic data only; no real measurements yet |
-| Student detector, per-backend compile and measurement | Planned |
+| Toolchain path to both devices (public YOLOv8n, not yet trained on our data) | ONNX export, TensorRT FP16 on the Jetson and HEF via the Hailo DFC both compile and run; output correctness and host-side decoding not checked yet |
+| Student training, measurement harness | Planned |
 | Glimmer veto-only audit, deployment, Nova, Home Assistant | Planned |
 
 The external tools below are used as-is, without modification.
@@ -33,6 +34,7 @@ The external tools below are used as-is, without modification.
 | HailoRT / Dataflow Compiler | Hailo-8 compile |
 | edgetpu_compiler | Coral Edge TPU compile |
 | TensorRT | Jetson compile |
+| Ultralytics YOLOv8 (AGPL-3.0) and its public COCO weights | Student detector architecture; the COCO weights only for toolchain tests |
 | DepthAI | OAK-D Pro camera capture |
 | Kokoro-82M | TTS for testing spoken instructions without a mic |
 

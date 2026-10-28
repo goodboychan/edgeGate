@@ -11,5 +11,6 @@ __pycache__/
 *.hef
 *.engine
 data/
+build/
 runs/
 .env
