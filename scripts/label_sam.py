@@ -9,8 +9,9 @@ class prompt. Writes, next to the frames:
 Coordinates are normalized to [0, 1], the format edgegate/events.py reads, so the
 teacher's own alerts can be scored against the hand-marked events too.
 
-Each box is the bounding box of the largest connected piece of SAM's mask, not
-SAM's own box: on the first recording, a mask on one box of the fixed stack also
+Each box is the bounding box of the main piece of SAM's mask (pieces within 2% of
+the frame width joined, since a label across a box splits its mask), not SAM's own
+box: on the first recording, a mask on one box of the fixed stack also
 held a stray patch on the desk boxes, and its box spanned 70% of the frame.
 The default package prompt is "box": with "package", the fixed shopping bag was
 labeled too and the spanning boxes were more frequent (140 vs 80 of 171 frames,
@@ -52,15 +53,23 @@ def load_predictor():
     return pred
 
 
-def mask_box(mask):
-    """Normalized [x1, y1, x2, y2] of the largest connected piece of a binary mask, or None."""
+def mask_box(mask, gap=0.02):
+    """Normalized [x1, y1, x2, y2] of the main piece of a binary mask, or None.
+
+    Pieces closer than gap (fraction of the frame width) count as one: a label or
+    tape across a box splits its mask, and the box is the whole of it. A stray
+    patch further away is left out.
+    """
     m = np.asarray(mask, dtype=np.uint8).squeeze()
-    n, _, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
-    if n < 2:
+    if not m.any():
         return None
-    x, y, w, h, _ = stats[1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))]
+    k = max(1, round(gap * m.shape[1]))
+    joined = cv2.dilate(m, np.ones((k, k), np.uint8))
+    n, labels = cv2.connectedComponents(joined, connectivity=8)
+    piece = labels == 1 + int(np.argmax([np.count_nonzero(m[labels == i]) for i in range(1, n)]))
+    ys, xs = np.nonzero(m & piece)
     H, W = m.shape
-    return [x / W, y / H, (x + w) / W, (y + h) / H]
+    return [xs.min() / W, ys.min() / H, (xs.max() + 1) / W, (ys.max() + 1) / H]
 
 
 def label_chunk(pred, frame_paths, prompt, thresh):
@@ -121,7 +130,7 @@ def main():
             f.write(json.dumps({"seq": int(r["seq"]), "t": float(r["t"]), "dets": d}) + "\n")
     meta = {"model": "SAM 3.1 multiplex", "checkpoint": str(CKPT), "prompts": prompts,
             "stride": a.stride, "chunk": a.chunk, "thresh": a.thresh, "frames": len(rows),
-            "box": "largest connected piece of the mask",
+            "box": "main piece of the mask, pieces within 2% of the frame width joined",
             "load_s": round(load_s, 1), "label_s": round(label_s, 1),
             "gpu_peak_gb": round(torch.cuda.max_memory_allocated() / 1e9, 2)}
     (sess / "labels_sam.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
