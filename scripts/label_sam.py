@@ -12,15 +12,17 @@ teacher's own alerts can be scored against the hand-marked events too.
 Each box is the bounding box of the largest connected piece of SAM's mask, not
 SAM's own box: on the first recording, a mask on one box of the fixed stack also
 held a stray patch on the desk boxes, and its box spanned 70% of the frame.
-The default package prompt is "cardboard box": with "package", the fixed shopping
-bag was labeled too and the spanning boxes were more frequent (140 vs 80 of 171
-frames, before the mask fix).
+The default package prompt is "box": with "package", the fixed shopping bag was
+labeled too and the spanning boxes were more frequent (140 vs 80 of 171 frames,
+before the mask fix). "cardboard box" missed a black rigid gift box set in the
+zone on 10/29; "box" found it and the same six cardboard boxes, and still left
+the bag out.
 
 Long sessions are chunked because the predictor keeps every frame of a session
 in memory. Objects are re-detected at each chunk start, so track ids are not kept.
 
 Usage:  .venv-sam3/bin/python scripts/label_sam.py SESSION_DIR [--stride 5] [--chunk 150]
-            [--prompt package="cardboard box"] [--prompt person=person]   (these are the defaults)
+            [--prompt package=box] [--prompt person=person]   (these are the defaults)
 """
 import argparse
 import csv
@@ -92,7 +94,7 @@ def main():
     ap.add_argument("--thresh", type=float, default=0.5)
     ap.add_argument("--prompt", action="append", default=[], metavar="CLASS=TEXT")
     a = ap.parse_args()
-    prompts = dict(p.split("=", 1) for p in a.prompt) or {"package": "cardboard box", "person": "person"}
+    prompts = dict(p.split("=", 1) for p in a.prompt) or {"package": "box", "person": "person"}
 
     sess = Path(a.session_dir)
     rows = list(csv.DictReader(open(sess / "frames.csv")))[::a.stride]
