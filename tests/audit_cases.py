@@ -22,6 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from edgegate.events import summarize  # noqa: E402
+from edgegate.gate import eval_config_sha256  # noqa: E402
 
 MODEL = "a" * 64
 EVAL = "b" * 64
@@ -32,6 +33,28 @@ BOXES = {"small": [0.48, 0.70, 0.53, 0.75], "medium": [0.45, 0.65, 0.55, 0.78], 
 EXPECTED = {"control": {"trt": "PASS", "hailo8": "PASS"}, "night_gap": {"trt": "HOLD", "hailo8": "HOLD"},
             "small_miss": {"trt": "PASS", "hailo8": "HOLD"}, "occluded": {"trt": "HOLD", "hailo8": "PASS"},
             "rule_hold": {"trt": "PASS", "hailo8": "HOLD"}}
+
+
+def policy_text():
+    """The real policy, with the synthetic eval set and alert delivery marked measured."""
+    text = (ROOT / "policies/package_entrance.toml").read_text()
+    for old, new in (('eval_set_sha256 = "unset"', f'eval_set_sha256 = "{EVAL}"'),
+                     ("notify_measured = false", "notify_measured = true")):
+        assert old in text, old
+        text = text.replace(old, new)
+    return text
+
+
+def policy():
+    import tomllib
+    return tomllib.loads(policy_text())
+
+
+def device(backend):
+    """A device block that matches the policy's target for the backend."""
+    t = policy()["targets"][backend]
+    return {"label": {"onnx-gx10": "gx10", "trt": "jetson-orin", "hailo8": "pi5-hailo"}[backend],
+            "device_id": t["device_id"], "runtime": t["runtime"]}
 
 
 def sessions(case):
@@ -75,19 +98,19 @@ def record(case, backend):
     metrics = summarize(per_session, sum(s["duration_s"] for s in per_session))
     lat = {"onnx-gx10": 32.0, "trt": 23.0, "hailo8": 60.0 if case == "rule_hold" else 14.0}[backend]
     metrics.update(latency_ms_p50=lat, latency_ms_p95=lat * 1.1, peak_mem_mb=400.0)
-    return {"schema": 1, "backend": backend, "runtime": backend, "device": {"onnx-gx10": "gx10", "trt": "jetson-orin", "hailo8": "pi5-hailo"}[backend],
+    return {"schema": 2, "backend": backend, "runtime": backend, "device": device(backend),
             "model_sha256": MODEL, "artifact_sha256": ARTIFACTS.get(backend, "e" * 64), "eval_set_sha256": EVAL,
+            "eval_config_sha256": eval_config_sha256(policy()),
             "sessions": [s["session"] for s in per_session], "measured_at": MEASURED_AT,
             "tool": {"ok": True, "error": None}, "metrics": metrics, "per_session": per_session, "synthetic": True}
 
 
 def write(out):
-    policy = (ROOT / "policies/package_entrance.toml").read_text().replace(
-        'eval_set_sha256 = "unset"', f'eval_set_sha256 = "{EVAL}"')
+    text = policy_text()
     for case, expected in EXPECTED.items():
         d = Path(out) / case
         (d / "records").mkdir(parents=True, exist_ok=True)
-        (d / "policy.toml").write_text(policy)
+        (d / "policy.toml").write_text(text)
         for b in ("onnx-gx10", "trt", "hailo8"):
             (d / "records" / f"{b}.json").write_text(json.dumps(record(case, b), indent=2) + "\n")
         (d / "case.json").write_text(json.dumps({"case": case, "synthetic": True, "expected": expected,

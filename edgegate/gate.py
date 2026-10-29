@@ -4,14 +4,24 @@ The rules alone decide. Glimmer can only veto (turn a PASS into a HOLD) and
 explain; it can never approve a backend the rules held.
 
 A measurement record (one JSON file per model x backend):
-  {"schema": 1, "model_sha256": "...", "artifact_sha256": "...", "backend": "hailo8",
-   "device": "pi5-hailo", "eval_set_sha256": "...", "measured_at": "2026-10-31T12:00:00Z",
+  {"schema": 2, "model_sha256": "...", "artifact_sha256": "...", "backend": "hailo8",
+   "device": {"label": "pi5-hailo", "device_id": "...", "runtime": "hailort 4.20.0", ...},
+   "eval_set_sha256": "...", "eval_config_sha256": "...", "measured_at": "2026-10-31T12:00:00Z",
    "tool": {"ok": true, "error": null},
    "metrics": {"event_recall": 0.93, "latency_ms_p95": 21.4, ...}}
 
-model_sha256 is the trained model (ONNX); artifact_sha256 is the compiled file that
-was measured (engine, HEF). A backend is only judged against the file that would be
-deployed to it, so a measured file that differs from the deployed one holds.
+A record counts only for the exact thing it measured:
+  model_sha256        the trained model (ONNX)
+  artifact_sha256     the compiled file that ran (engine, HEF); it must be the file to deploy
+  device              the policy's target device for that backend and its runtime version
+  eval_set_sha256     the eval set manifest, which hashes every frame (scripts/measure.py)
+  eval_config_sha256  the policy's [events] and [measure] tables, which turn detections
+                      into metrics; changing the zone, dwell or classes voids older records
+Thresholds are not in the config hash: they are applied to the metrics at decision time.
+
+The metrics come from recorded sessions: alert times are the recorded frame times, and
+device latency is a separate metric. Alert delivery (event to notification received)
+is not in them until [events] notify_measured is true, so until then every backend holds.
 
 Usage:  python3 -m edgegate.gate POLICY RECORD.json... --model-sha SHA \
             --artifact trt=build/student.engine --artifact hailo8=build/student.hef [--now ISO]
@@ -76,11 +86,31 @@ def _parse_time(s):
     return t if t.tzinfo else None  # naive timestamps are ambiguous
 
 
+def eval_config_sha256(policy):
+    """Hash of the settings that turn detections into metrics: [events] and [measure]."""
+    cfg = {"events": policy.get("events", {}), "measure": policy.get("measure", {})}
+    return hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()).hexdigest()
+
+
+def _target_problems(rec, policy):
+    """The record must come from the backend's target device and runtime in the policy."""
+    target = policy.get("targets", {}).get(rec.get("backend"))
+    if not target or target.get("device_id") in (None, "", "unset"):
+        return [("target", "policy names no target device for this backend")]
+    dev = rec.get("device") if isinstance(rec.get("device"), dict) else {}
+    problems = []
+    if dev.get("device_id") != target["device_id"]:
+        problems.append(("device", f"measured on {dev.get('hostname') or dev.get('label')!r}, not the target device"))
+    if dev.get("runtime") != target.get("runtime"):
+        problems.append(("runtime", f"measured with {dev.get('runtime')!r}, the target runs {target.get('runtime')!r}"))
+    return problems
+
+
 def _valid_record(rec, model_sha, policy, now):
     """Problems that make a record unusable, as (check, detail) pairs."""
     task = policy["task"]
     problems = []
-    if rec.get("schema") != 1:
+    if rec.get("schema") != 2:
         problems.append(("schema", f"unknown schema {rec.get('schema')!r}"))
     tool = rec.get("tool") or {}
     if tool.get("ok") is not True:
@@ -89,6 +119,9 @@ def _valid_record(rec, model_sha, policy, now):
         problems.append(("model", "measured a different model"))
     if rec.get("eval_set_sha256") != task["eval_set_sha256"]:
         problems.append(("eval_set", "measured on a different eval set"))
+    if rec.get("eval_config_sha256") != eval_config_sha256(policy):
+        problems.append(("eval_config", "measured with different event or measurement settings"))
+    problems += _target_problems(rec, policy)
     t = _parse_time(rec.get("measured_at"))
     if t is None:
         problems.append(("time", f"bad measured_at {rec.get('measured_at')!r}"))
@@ -118,6 +151,9 @@ def decide(policy, records, model_sha, artifacts, now=None):
     for backend, artifact_sha in artifacts.items():
         d = Decision(backend)
         decisions.append(d)
+        if policy.get("events", {}).get("notify_measured") is not True:
+            d.hold("alert_delivery", "alert delivery delay not measured; the metrics cover "
+                   "recorded sessions only, not the 10 s from release to a received alert")
         if policy["task"].get("eval_set_sha256") in (None, "", "unset"):
             d.hold("policy", "policy names no eval set")
             continue
@@ -125,11 +161,12 @@ def decide(policy, records, model_sha, artifacts, now=None):
         if rec is None:
             d.hold("missing", "no measurement record")
             continue
-        for check, detail in _valid_record(rec, model_sha, policy, now):
-            d.hold(check, detail)
+        problems = _valid_record(rec, model_sha, policy, now)
         if not artifact_sha or rec.get("artifact_sha256") != artifact_sha:
-            d.hold("artifact", "the file to deploy is not the file that was measured")
-        if d.verdict == HOLD:
+            problems.append(("artifact", "the file to deploy is not the file that was measured"))
+        for check, detail in problems:
+            d.hold(check, detail)
+        if problems:  # the metrics are not about this candidate; judging them would mislead
             continue
         limits = {**policy.get("thresholds", {}), **policy.get("backends", {}).get(backend, {})}
         metrics = rec.get("metrics") or {}

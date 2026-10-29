@@ -15,6 +15,20 @@ max_age_hours = 24
 # Backend whose record is the accuracy reference for max_drop checks.
 reference_backend = "onnx-gx10"
 
+# Deployment target per backend: a record counts only if it was measured on this
+# device with this runtime. device_id is sha256("edgegate:" + /etc/machine-id)[:32],
+# so the raw machine id never leaves the device (scripts/run_backend.py). A new
+# device, a reinstalled OS or a runtime upgrade means measuring again.
+[targets]
+onnx-gx10 = { device_id = "f2c8a7b13d7e38457fbe9cf87fe9120e", runtime = "onnxruntime 1.31.1" }
+trt = { device_id = "28e2cf10ddf70d2ef8221c82c013d27d", runtime = "tensorrt 10.3.0" }
+hailo8 = { device_id = "8db76e25b0fb515f0893a1d0c62e06d7", runtime = "hailort 4.20.0" }
+
+# How the device output is read. Hashed with [events] into eval_config_sha256.
+[measure]
+classes = ["package", "person"]  # model output order (scripts/train_student.py)
+det_conf = 0.25                  # detections below this are dropped on the device
+
 # How per-frame detections become arrival alerts (edgegate/events.py).
 # Fixed for the first version (10/27): not tuned values. Check false alerts, misses
 # and delays on real sessions; change them only before an evaluation, never after.
@@ -32,6 +46,9 @@ hidden_overlap = 0.3 # a person box covering this much of the package = hidden, 
 reconnect_s = 2.0    # no frames this long = camera away, zone state unknown
 match_window_s = 10.0  # release to alert received, dwell included
 notify_s = 0.0       # measured alert delivery delay, added before the 10 s check
+# Until the live path is measured (release -> inference -> event -> alert received),
+# notify_s is not a measurement and the gate holds every backend.
+notify_measured = false
 
 # min / max are absolute limits; max_drop is the allowed drop below the reference.
 [thresholds]

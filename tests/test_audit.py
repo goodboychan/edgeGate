@@ -1,15 +1,13 @@
 import unittest
 
 from edgegate.audit import Audit, slice_rows
-from edgegate.gate import HOLD, PASS, _parse_time, load_policy
+from edgegate.gate import HOLD, PASS, _parse_time
 
 from tests import audit_cases as cases
-from tests.test_gate import ROOT
 
 
 def audit(case):
-    policy = load_policy(ROOT / "policies/package_entrance.toml")
-    policy["task"]["eval_set_sha256"] = cases.EVAL
+    policy = cases.policy()
     records = [cases.record(case, b) for b in ("onnx-gx10", "trt", "hailo8")]
     return Audit(policy, records, cases.MODEL, cases.ARTIFACTS, _parse_time(cases.NOW))
 

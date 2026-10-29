@@ -8,14 +8,24 @@ and write a measurement record. Any failure still writes a record, with
 tool.ok = false, so the gate holds with the reason instead of finding nothing.
 
 Eval sessions live in data/sessions/<name>/ (frames/, frames.csv, meta.json) and their
-marks in data/gt/<name>.json. The eval set hash covers all three (meta.json holds the
-lighting the audit slices by), so changing a mark or a session changes the hash and
-older records stop counting.
+marks in data/gt/<name>.json. The eval set hash is the hash of a manifest that lists,
+per session, the marks, frames.csv, meta.json (the lighting the audit slices by) and
+a digest over every frame's own sha256. --eval-set-hash writes the full manifest,
+one line per frame, to data/manifests/<hash>.json, so a changed image can be found.
+Changing any frame, mark or session changes the hash and older records stop counting.
+The device hashes the frames it actually read (run_backend.py); a digest that differs
+from the manifest fails the measurement.
+
+The record also carries which device and runtime ran (checked against the policy's
+[targets]) and eval_config_sha256 over the policy's [events] and [measure] tables.
+Its metrics are a recorded-session evaluation: alert times come from the recorded
+frame times, device latency is a separate metric, and alert delivery is only in
+them through a measured notify_s.
 
 Usage:  python3 scripts/measure.py trt build/student_fp16.engine --onnx build/student.onnx \
-            --host jetson --sessions e01,e02 --classes package,person
+            --host jetson --sessions e01,e02
         python3 scripts/measure.py hailo build/student.hef --onnx build/student.onnx \
-            --host chans@192.168.50.151 --sessions e01,e02 --classes package,person
+            --host chans@192.168.50.151 --sessions e01,e02
         python3 scripts/measure.py onnx build/student.onnx --onnx build/student.onnx --host local ...
         python3 scripts/measure.py --eval-set-hash --sessions e01,e02   # value for the policy
 """
@@ -34,22 +44,38 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from edgegate.events import evaluate  # noqa: E402
-from edgegate.gate import load_policy, sha256_file  # noqa: E402
+from edgegate.gate import eval_config_sha256, load_policy, sha256_file  # noqa: E402
 
 REMOTE = "edgegate_hackathon"
 # Runtime -> backend name used by the policy and the gate.
 GATE_NAME = {"onnx": "onnx-gx10", "trt": "trt", "hailo": "hailo8"}
 
 
-def eval_set_hash(sessions, data):
-    h = hashlib.sha256()
+def frame_lines(frames_dir):
+    """One "NAME SHA256" line per frame in name order (same formula as run_backend.py)."""
+    return [f"{p.name} {sha256_file(p)}" for p in sorted(Path(frames_dir).glob("*.jpg"))]
+
+
+def eval_manifest(sessions, data):
+    """{session: {gt, frames_csv, meta, frames, frames_sha256}} and the per-frame lines."""
+    manifest, lines = {}, {}
     for s in sorted(sessions):
-        h.update(s.encode())
-        h.update(sha256_file(data / "gt" / f"{s}.json").encode())
-        h.update(sha256_file(data / "sessions" / s / "frames.csv").encode())
-        meta = data / "sessions" / s / "meta.json"
-        h.update(sha256_file(meta).encode() if meta.exists() else b"no meta")
-    return h.hexdigest()
+        sdir = data / "sessions" / s
+        lines[s] = frame_lines(sdir / "frames")
+        meta = sdir / "meta.json"
+        split = json.loads(meta.read_text()).get("split") if meta.exists() else None
+        if split != "eval":
+            raise ValueError(f"session {s} is a {split!r} session, not eval")
+        manifest[s] = {"gt": sha256_file(data / "gt" / f"{s}.json"),
+                       "frames_csv": sha256_file(sdir / "frames.csv"),
+                       "meta": sha256_file(meta) if meta.exists() else None,
+                       "frames": len(lines[s]),
+                       "frames_sha256": hashlib.sha256("".join(x + "\n" for x in lines[s]).encode()).hexdigest()}
+    return manifest, lines
+
+
+def eval_set_hash(manifest):
+    return hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()
 
 
 # One shared ssh connection per host: the Pi resets bursts of new connections.
@@ -75,7 +101,7 @@ def run_on_device(a, session_dir, out_dir):
     if a.host == "local":
         py = str(LOCAL_PY) if LOCAL_PY.exists() else sys.executable
         sh([py, str(ROOT / "scripts/run_backend.py"), a.backend, a.model,
-            str(session_dir / "frames"), str(out_dir / name)])
+            str(session_dir / "frames"), str(out_dir / name), "--conf", str(a.conf)])
     else:
         rdir = f"{REMOTE}/measure"
         rsync = ["rsync", "-a", "-e", " ".join(SSH)]
@@ -85,7 +111,7 @@ def run_on_device(a, session_dir, out_dir):
                     a.model, f"{a.host}:{REMOTE}/run/"])
         sh(SSH + [a.host,
             f"cd {REMOTE} && python3 run/run_backend.py {a.backend} run/{Path(a.model).name} "
-            f"measure/frames/{name} measure/{name}"])
+            f"measure/frames/{name} measure/{name} --conf {a.conf}"])
         sh(rsync + [f"{a.host}:{rdir}/{name}.jsonl", f"{a.host}:{rdir}/{name}.json", f"{out_dir}/"])
     return json.loads((out_dir / f"{name}.json").read_text())
 
@@ -108,7 +134,6 @@ def main():
     ap.add_argument("--device", help="device label in the record (default: host)")
     ap.add_argument("--name", help="backend name for the gate (default: onnx-gx10, trt, hailo8)")
     ap.add_argument("--sessions", required=True, help="comma-separated eval session names")
-    ap.add_argument("--classes", default="package,person", help="class names in model order")
     ap.add_argument("--policy", default=str(ROOT / "policies/package_entrance.toml"))
     ap.add_argument("--data", default=str(ROOT / "data"))
     ap.add_argument("--out", default=str(ROOT / "runs/records"))
@@ -116,19 +141,28 @@ def main():
     a = ap.parse_args()
     data, sessions = Path(a.data), a.sessions.split(",")
     if a.eval_set_hash:
-        print(eval_set_hash(sessions, data))
+        manifest, lines = eval_manifest(sessions, data)
+        h = eval_set_hash(manifest)
+        (data / "manifests").mkdir(exist_ok=True)
+        (data / "manifests" / f"{h}.json").write_text(json.dumps(
+            {"eval_set_sha256": h, "sessions": manifest, "frames": lines}, indent=1) + "\n")
+        print(h)
         return
     if not (a.backend and a.model and a.onnx):
         ap.error("backend, model and --onnx are required")
 
-    record = {"schema": 1, "backend": a.name or GATE_NAME[a.backend], "runtime": a.backend,
-              "device": a.device or a.host,
+    policy = load_policy(a.policy)
+    classes, a.conf = policy["measure"]["classes"], policy["measure"]["det_conf"]
+    record = {"schema": 2, "backend": a.name or GATE_NAME[a.backend], "runtime": a.backend,
+              "device": {"label": a.device or a.host},
               "model_sha256": sha256_file(a.onnx), "artifact_sha256": sha256_file(a.model),
-              "eval_set_sha256": None, "sessions": sessions,
-              "measured_at": None, "tool": {"ok": False, "error": None}, "metrics": {}}
+              "eval_set_sha256": None, "eval_config_sha256": eval_config_sha256(policy),
+              "evaluation": "recorded sessions; alert delivery only through notify_s",
+              "sessions": sessions, "measured_at": None, "tool": {"ok": False, "error": None}, "metrics": {}}
     try:
-        record["eval_set_sha256"] = eval_set_hash(sessions, data)
-        policy = load_policy(a.policy)
+        manifest, _ = eval_manifest(sessions, data)
+        record["eval_set_sha256"] = eval_set_hash(manifest)
+        record["eval_manifest"] = manifest
         with tempfile.TemporaryDirectory() as tmp:
             out_dir, dets_dir = Path(tmp, "out"), Path(tmp, "dets")
             out_dir.mkdir()
@@ -141,10 +175,16 @@ def main():
                 summary = run_on_device(a, sdir, out_dir)
                 if summary["model_sha256"] != record["artifact_sha256"]:
                     raise RuntimeError(f"device ran {summary['model_sha256'][:12]}, not the file given")
+                if summary["frames_sha256"] != manifest[s]["frames_sha256"]:
+                    raise RuntimeError(f"device read different frames for {s} than the eval manifest")
+                dev = record["device"]
+                if "device_id" in dev and summary["device"] != {k: dev[k] for k in summary["device"]}:
+                    raise RuntimeError(f"session {s} ran on a different device or runtime")
+                dev.update(summary["device"])
                 p50.append(summary["latency_ms_p50"])
                 p95.append(summary["latency_ms_p95"])
                 rss.append(summary["peak_rss_mb"])
-                to_event_dets(out_dir, sdir, a.classes.split(","), dets_dir)
+                to_event_dets(out_dir, sdir, classes, dets_dir)
                 shutil.copy(data / "gt" / f"{s}.json", gt_dir)
             metrics, per_session = evaluate(policy, gt_dir, dets_dir)
         for ps in per_session:  # for the audit's lighting slices
