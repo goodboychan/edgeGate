@@ -147,6 +147,17 @@ class GateTest(unittest.TestCase):
         del self.policy["targets"]["trt"]
         self.assertHeldFor(self.one(record("trt")), "target")
 
+    def test_missing_runtime_on_both_sides_holds(self):
+        # None == None must not count as a match
+        rec = record("trt")
+        del rec["device"]["runtime"]
+        self.assertHeldFor(self.one(rec), "runtime")
+        del self.policy["targets"]["trt"]["runtime"]
+        self.assertHeldFor(self.one(rec), "target")
+        self.policy["targets"]["trt"]["runtime"] = ""
+        rec["device"]["runtime"] = ""
+        self.assertHeldFor(self.one(rec), "target")
+
     def test_reference_from_another_device_is_no_reference(self):
         ref = copy.deepcopy(self.ref)
         ref["device"]["device_id"] = "0" * 32

@@ -92,16 +92,23 @@ def eval_config_sha256(policy):
     return hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()).hexdigest()
 
 
+def _unset(value):
+    return value in (None, "", "unset")
+
+
 def _target_problems(rec, policy):
     """The record must come from the backend's target device and runtime in the policy."""
-    target = policy.get("targets", {}).get(rec.get("backend"))
-    if not target or target.get("device_id") in (None, "", "unset"):
-        return [("target", "policy names no target device for this backend")]
+    target = policy.get("targets", {}).get(rec.get("backend")) or {}
+    # Both sides must name a value: two missing runtimes would otherwise compare equal.
+    if _unset(target.get("device_id")) or _unset(target.get("runtime")):
+        return [("target", "policy names no target device and runtime for this backend")]
     dev = rec.get("device") if isinstance(rec.get("device"), dict) else {}
     problems = []
     if dev.get("device_id") != target["device_id"]:
         problems.append(("device", f"measured on {dev.get('hostname') or dev.get('label')!r}, not the target device"))
-    if dev.get("runtime") != target.get("runtime"):
+    if _unset(dev.get("runtime")):
+        problems.append(("runtime", "record names no runtime"))
+    elif dev.get("runtime") != target["runtime"]:
         problems.append(("runtime", f"measured with {dev.get('runtime')!r}, the target runs {target.get('runtime')!r}"))
     return problems
 
