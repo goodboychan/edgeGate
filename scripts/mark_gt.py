@@ -16,7 +16,9 @@ Usage:  python3 scripts/mark_gt.py data/sessions/e01 [--port 8765]
         then open http://127.0.0.1:8765 (from another machine: ssh -L 8765:127.0.0.1:8765 gx10)
 Keys:   left/right 1 frame, shift 1 s, A arrive (new event at this frame), R remove
         (selected event), drag on the image = box of the selected event, O toggle
-        "occluded", Delete remove event, N/P next/previous suggestion, S save
+        "occluded", Delete remove event, N/P next/previous suggestion, S save,
+        B brighten (display only, a gamma curve for the low-light sessions; the
+        frames and the marks are unchanged)
 """
 import argparse
 import csv
@@ -156,18 +158,20 @@ small{color:#999}
 <div id="main">
   <div id="wrap"><canvas id="cv"></canvas></div>
   <div id="bar"><span id="time"></span><input id="slider" type="range" min="0" value="0">
-    <label><input id="showsam" type="checkbox" checked> SAM boxes</label></div>
+    <label><input id="showsam" type="checkbox" checked> SAM boxes</label>
+    <label>brighten <select id="bright"><option value="1">off</option><option value="1.8">γ 1.8</option>
+      <option value="2.5">γ 2.5</option><option value="3.5">γ 3.5</option></select></label></div>
 </div>
 <div id="side">
   <b id="title"></b><div><small id="meta"></small></div>
-  <p><small>A arrive · R remove · drag box · O occluded · Del delete · N/P suggestion · S save · ←/→ frame, shift 1 s</small></p>
+  <p><small>A arrive · R remove · drag box · O occluded · Del delete · N/P suggestion · S save · B brighten · ←/→ frame, shift 1 s</small></p>
   <div><button onclick="save()">Save (S)</button> <span id="dirty"></span></div>
   <div id="msg"></div>
   <h4>Events</h4><div id="events"></div>
   <h4>Suggestions <small>(teacher boxes, may miss events)</small></h4><div id="sugg"></div>
 </div>
 <script>
-let S, i = 0, sel = -1, events = [], dirty = false, img = new Image(), sam = null, drag = null;
+let S, i = 0, sel = -1, events = [], dirty = false, img = new Image(), sam = null, drag = null, lut = null;
 const cv = document.getElementById('cv'), cx = cv.getContext('2d'), slider = document.getElementById('slider');
 const fmt = t => t == null ? '—' : (Math.floor(t / 60) + ':' + (t % 60).toFixed(2).padStart(5, '0'));
 const idxAt = t => { let k = S.frames.findIndex(f => f[1] >= t); return k < 0 ? S.frames.length - 1 : k; };
@@ -192,6 +196,9 @@ function draw() {
   cv.width = img.naturalWidth; cv.height = img.naturalHeight;
   const W = cv.width, H = cv.height, t = S.frames[i][1];
   cx.drawImage(img, 0, 0);
+  if (lut) { const px = cx.getImageData(0, 0, W, H), a = px.data;
+    for (let k = 0; k < a.length; k += 4) { a[k] = lut[a[k]]; a[k + 1] = lut[a[k + 1]]; a[k + 2] = lut[a[k + 2]]; }
+    cx.putImageData(px, 0, 0); }
   cx.lineWidth = 2; cx.strokeStyle = '#ff0'; cx.setLineDash([8, 6]); cx.beginPath();
   S.zone.forEach(([x, y], k) => k ? cx.lineTo(x * W, y * H) : cx.moveTo(x * W, y * H)); cx.closePath(); cx.stroke();
   cx.setLineDash([]);
@@ -219,6 +226,9 @@ function save() {
 }
 slider.oninput = () => go(+slider.value);
 document.getElementById('showsam').onchange = () => go(i);
+const bright = document.getElementById('bright');
+bright.onchange = () => { const g = +bright.value;  // display only: a gamma curve, the frame file is untouched
+  lut = g > 1 ? Uint8ClampedArray.from({length: 256}, (_, v) => 255 * Math.pow(v / 255, 1 / g)) : null; draw(); };
 document.onkeydown = ev => {
   const t = S.frames[i][1], step = ev.shiftKey ? 15 : 1;
   if (ev.key === 'ArrowRight') go(i + step);
@@ -232,6 +242,7 @@ document.onkeydown = ev => {
   else if (ev.key === 'n' || ev.key === 'N') { const s = S.suggestions.find(x => x - S.dwell_s - 1 > t + 0.01); if (s != null) go(idxAt(s - S.dwell_s - 1)); }
   else if (ev.key === 'p' || ev.key === 'P') { const s = [...S.suggestions].reverse().find(x => x - S.dwell_s - 1 < t - 0.01); if (s != null) go(idxAt(s - S.dwell_s - 1)); }
   else if (ev.key === 's' || ev.key === 'S') save();
+  else if (ev.key === 'b' || ev.key === 'B') { bright.selectedIndex = (bright.selectedIndex + 1) % bright.options.length; bright.onchange(); }
   else return;
   ev.preventDefault();
 };
