@@ -21,6 +21,7 @@ Usage:  .venv-oak/bin/python scripts/capture_oak.py SESSION --split eval --light
 Stop early with Ctrl-C; the frames written so far are kept.
 """
 import argparse
+import contextlib
 import csv
 import json
 import shutil
@@ -113,41 +114,53 @@ def main():
             "devices": [], "outages": []}
     state = {"t0": dai.Clock.now(), "n": 0, "last_t": None,
              "deadline": time.monotonic() + a.minutes * 60}
-    with open(sess / "frames.csv", "w", newline="") as fcsv:
-        writer = csv.writer(fcsv)
-        writer.writerow(["seq", "t"])
-        while not stop and time.monotonic() < state["deadline"]:
-            try:
-                dev = dai.Device(dai.UsbSpeed.HIGH)
-                with dai.Pipeline(dev) as p:
-                    cam = p.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_A)
-                    cam.initialControl.setManualFocus(LENS_POS)
-                    ctrl = cam.inputControl.createInputQueue()
-                    q = cam.requestOutput(SIZE, dai.ImgFrame.Type.NV12, fps=FPS).createOutputQueue(
-                        maxSize=30, blocking=False)
-                    p.start()
-                    # The region needs the sensor-side mapping, known from the first frame.
-                    c = dai.CameraControl()
-                    c.setAutoExposureRegion(*sensor_rect(q.get(), meta["exposure_box"]))
-                    ctrl.send(c)
-                    info = {"product": dev.getProductName(), "id": dev.getDeviceId(),
-                            "usb": str(dev.getUsbSpeed()).split(".")[-1]}
-                    if info not in meta["devices"]:
-                        meta["devices"].append(info)
-                    if meta["outages"] and meta["outages"][-1]["end"] is None:
-                        meta["outages"][-1]["end"] = round((dai.Clock.now() - state["t0"]).total_seconds(), 3)
-                    print(f"recording {a.session} from {info['product']} ({info['usb']})", flush=True)
-                    record(dev, q, writer, sess, state)
-            except RuntimeError as e:
-                # Camera unplugged or crashed: log the outage and keep trying to reconnect.
-                if not meta["outages"] or meta["outages"][-1]["end"] is not None:
-                    meta["outages"].append({"start": state["last_t"], "end": None, "error": str(e)[:200]})
-                    print(f"camera lost at t={state['last_t']}: {e}; retrying", flush=True)
-                fcsv.flush()
-                time.sleep(1.0)
-    meta["frames"] = state["n"]
-    meta["duration_s"] = state["last_t"]
-    (sess / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
+    try:
+        with open(sess / "frames.csv", "w", newline="") as fcsv:
+            writer = csv.writer(fcsv)
+            writer.writerow(["seq", "t"])
+            while not stop and time.monotonic() < state["deadline"]:
+                dev = None
+                try:
+                    dev = dai.Device(dai.UsbSpeed.HIGH)
+                    with dai.Pipeline(dev) as p:
+                        cam = p.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_A)
+                        cam.initialControl.setManualFocus(LENS_POS)
+                        ctrl = cam.inputControl.createInputQueue()
+                        q = cam.requestOutput(SIZE, dai.ImgFrame.Type.NV12, fps=FPS).createOutputQueue(
+                            maxSize=30, blocking=False)
+                        p.start()
+                        # The region needs the sensor-side mapping, known from the first frame.
+                        c = dai.CameraControl()
+                        c.setAutoExposureRegion(*sensor_rect(q.get(), meta["exposure_box"]))
+                        ctrl.send(c)
+                        info = {"product": dev.getProductName(), "id": dev.getDeviceId(),
+                                "usb": str(dev.getUsbSpeed()).split(".")[-1]}
+                        if info not in meta["devices"]:
+                            meta["devices"].append(info)
+                        if meta["outages"] and meta["outages"][-1]["end"] is None:
+                            meta["outages"][-1]["end"] = round((dai.Clock.now() - state["t0"]).total_seconds(), 3)
+                        print(f"recording {a.session} from {info['product']} ({info['usb']})", flush=True)
+                        record(dev, q, writer, sess, state)
+                except (RuntimeError, dai.MessageQueue.QueueException) as e:
+                    # Camera unplugged or crashed: log the outage and keep trying to reconnect.
+                    # A link that drops mid-stream closes the output queue (QueueException,
+                    # not a RuntimeError); that ended e01 on 10/29 without a meta.json.
+                    if not meta["outages"] or meta["outages"][-1]["end"] is not None:
+                        meta["outages"].append({"start": state["last_t"], "end": None, "error": str(e)[:200]})
+                        print(f"camera lost at t={state['last_t']}: {e}; retrying", flush=True)
+                    fcsv.flush()
+                    if dev is not None:
+                        with contextlib.suppress(Exception):
+                            dev.close()
+                    time.sleep(1.0)
+    except BaseException as e:
+        # Anything else still leaves a meta.json, marked as stopped early.
+        meta["aborted"] = f"{type(e).__name__}: {e}"[:200]
+        raise
+    finally:
+        meta["frames"] = state["n"]
+        meta["duration_s"] = state["last_t"]
+        (sess / "meta.json").write_text(json.dumps(meta, indent=2) + "\n")
     print(f"saved {state['n']} frames, {state['last_t'] or 0:.1f} s, "
           f"{len(meta['outages'])} outages -> {sess}  ({shutil.disk_usage(sess).free / 1e9:.0f} GB free)")
 
