@@ -37,8 +37,6 @@ import math
 import sys
 from pathlib import Path
 
-from edgegate.gate import load_policy
-
 
 def inside(pt, poly):
     """Ray-casting point-in-polygon test."""
@@ -229,6 +227,10 @@ def main():
     ap.add_argument("gt_dir")
     ap.add_argument("dets_dir")
     a = ap.parse_args()
+    # Imported here: the rest of this file also runs on the devices (scripts/live_device.py),
+    # whose Python 3.10 has no tomllib for the policy file.
+    from edgegate.gate import load_policy
+
     try:
         metrics, per_session = evaluate(load_policy(a.policy), a.gt_dir, a.dets_dir)
     except FileNotFoundError as e:

@@ -97,6 +97,31 @@ The rules decide; Glimmer can only veto a PASS and explain why. Missing, stale, 
 - **its eval set:** the eval set hash is a manifest of every frame's sha256 plus the marks, `frames.csv` and `meta.json`. A changed image changes the hash, and the device's digest of the frames it read must match it.
 - **its evaluation settings:** `eval_config_sha256` covers the policy's `[events]` (zone, dwell, windows) and `[measure]` (class order, detection threshold). Changing them voids older records; thresholds are applied at decision time and are not in it.
 
-**What the metrics are:** a recorded-session evaluation. Alert times come from the recorded frame times, and device latency is a separate metric. Alert delivery is not in them: `notify_s` stays 0 and `notify_measured = false`, so the gate holds every backend until the live path is measured. That measurement will log release (marked) → frame → inference done → event → alert received by Home Assistant → alert shown on the phone, each as its own timestamp.
+**What the metrics are:** a recorded-session evaluation. Alert times come from the recorded frame times, and device latency is a separate metric. Alert delivery is not in them: `notify_s` stays 0 and `notify_measured = false`, so the gate holds every backend until the live path is measured (below). `notify_s` is part of `[events]`, so it has to be measured before the candidates are: setting it voids older records.
 
 Arrival rule (first version, fixed before evaluation, not tuned): a package seen for 2 s in an empty zone is an arrival, and the alert must be received within 10 s of the package being let go, dwell included; later alerts are recorded as late, not as successes. One alert while it stays; a new arrival needs the zone empty, not just hidden by a person, for 2 s. Scope: a first package into an empty zone; a second package next to the first is not detected. Known limit: when the camera drops out the zone state is unknown, not empty, and packages already there on reconnect are not alerted, so a package that arrived during the outage is never alerted.
+
+## Live path
+
+Only the backends the gate passed run live. `scripts/deploy.py` takes the same records and files as the gate (and an audit record, whose vetoes can only add HOLDs). A HOLD prints its reasons and deploys nothing; there is no override. A PASS writes an approval record to `runs/approvals/` (model, file, device, runtime, eval set, rule settings, the metrics that passed, the record and the audit behind them), copies the file and the runner to the device and starts it. The runner (`scripts/live_device.py`) checks that the approval names its device, its runtime and that exact file, then runs the approved rule settings: frames in, the same letterbox, inference, decoding, NMS and zone rule the measurement scored, and an HTTP POST per arrival (an ntfy topic or a Home Assistant webhook URL).
+
+The camera host streams the same JPEG bytes it records (`capture_oak.py --stream`, `edgegate/stream.py`); `scripts/replay.py` streams a recorded session the same way, for tests and for showing what a held build would have done, labeled as a replay.
+
+```bash
+python3 scripts/deploy.py policies/package_entrance.toml runs/records/s1/reference/*.json runs/records/s1/clean/*.json \
+    --model-sha SHA --artifact trt=build/s1/student_fp16.engine --artifact hailo8=build/s1/student.hef \
+    [--audit runs/audits/X.json] --notify URL
+.venv-oak/bin/python scripts/capture_oak.py l01 --split live --light night --stream JETSON_IP:8790 --stream PI_IP:8790
+python3 scripts/replay.py data/sessions/e01 --stream JETSON_IP:8790    # a recorded session instead of the camera
+python3 scripts/deploy.py --stop trt,hailo8
+```
+
+**Alert delivery (`notify_s`)** is measured before any approval, with the runner in measurement mode: no approval, alerts say TEST, nothing is deployed. The phone lies face up in view next to the zone, and delivery is the time from the frame that decided the arrival to the frame where the phone's screen lights up, both on the camera's clock, so no device clocks need to agree and the phone's own push delay is included.
+
+```bash
+python3 scripts/measure_delivery.py start trt build/s1/student_fp16.engine --notify URL
+.venv-oak/bin/python scripts/capture_oak.py m01 --split live --light night --stream JETSON_IP:8790   # place packages
+.venv-train/bin/python scripts/measure_delivery.py report data/sessions/m01 alerts.jsonl --phone X1,Y1,X2,Y2
+```
+
+Dry run 10/30 (s0, a stand-in session of 359 held-out t01 frames, a test policy; not an evaluation): under the real policy both devices were held and nothing was deployed. Under the test policy both passed, started from their approvals and, streamed the session, alerted at exactly the three frame times the recorded-session scoring gives. A model file or device the approval does not name was refused.
