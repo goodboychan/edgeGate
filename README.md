@@ -70,6 +70,7 @@ python3 scripts/measure.py --eval-set-hash --sessions e01,e02   # eval set hash 
 
 ```bash
 python3 -m unittest discover -s tests                     # rule engine + evaluator tests
+.venv-train/bin/python -m unittest discover -s tests      # also the detector post-processing (numpy, OpenCV)
 python3 -m edgegate.events policies/package_entrance.toml GT_DIR DETS_DIR   # detections → event metrics
 python3 scripts/measure.py hailo build/student.hef --onnx build/student.onnx --host chans@192.168.50.151 \
     --sessions e01,e02          # device run -> runs/records/*.json (any failure is recorded as a tool failure)

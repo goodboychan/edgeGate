@@ -23,8 +23,10 @@ import argparse
 import hashlib
 import json
 import platform
+import queue
 import resource
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -130,6 +132,31 @@ def pct(xs, q):
     return float(np.percentile(xs, q)) if xs else None
 
 
+def read_ahead(frames, depth=8):
+    """Yield (path, raw bytes, BGR frame), reading and decoding the next few in a thread.
+
+    Decoding is not in the timed path, so this only cuts wall time: on the Pi and the
+    Jetson a 720p JPEG takes 8-11 ms, about half the timed path, and a live camera
+    hands frames over while the previous one runs anyway.
+    """
+    q = queue.Queue(depth)
+
+    def work():
+        try:
+            for p in frames:
+                raw = p.read_bytes()
+                q.put((p, raw, cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)))
+            q.put(None)
+        except BaseException as e:  # noqa: BLE001 - raised again in the main thread
+            q.put(e)
+
+    threading.Thread(target=work, daemon=True).start()
+    while (item := q.get()) is not None:
+        if isinstance(item, BaseException):
+            raise item
+        yield item
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("backend", choices=["onnx", "trt", "hailo"])
@@ -152,10 +179,8 @@ def main():
     total, infer = [], []
     digest = hashlib.sha256()
     with open(a.out + ".jsonl", "w") as f:
-        for p in frames:
-            raw = p.read_bytes()
+        for p, raw, bgr in read_ahead(frames):
             digest.update(f"{p.name} {hashlib.sha256(raw).hexdigest()}\n".encode())
-            bgr = cv2.imdecode(np.frombuffer(raw, np.uint8), cv2.IMREAD_COLOR)
             t0 = time.perf_counter()
             rgb, lb = detect.letterbox(bgr)
             t1 = time.perf_counter()

@@ -26,12 +26,20 @@ def letterbox(bgr, size=IMGSZ):
     return out[:, :, ::-1], (r, left, top)
 
 
-def nms(boxes, scores, iou=0.45):
+# NMS limits, the usual deployed values (TensorRT's NMS plugins take the top 1000,
+# Ultralytics keeps 300). A working model never reaches them; a build that fires
+# everywhere would otherwise spend ~80 ms a frame in NMS and stretch a measurement
+# over hours.
+MAX_CANDIDATES = 1000  # highest-scoring boxes that go into NMS
+MAX_DET = 300          # boxes kept per frame
+
+
+def nms(boxes, scores, iou=0.45, max_keep=MAX_DET):
     """Indices kept by greedy non-maximum suppression; boxes are x1, y1, x2, y2."""
     order = scores.argsort()[::-1]
     area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
     keep = []
-    while order.size:
+    while order.size and len(keep) < max_keep:
         i = order[0]
         keep.append(i)
         xx1 = np.maximum(boxes[i, 0], boxes[order[1:], 0])
@@ -45,12 +53,18 @@ def nms(boxes, scores, iou=0.45):
 
 def _select(boxes, best, cls, iou):
     """Per-class NMS over candidate boxes -> [[x1, y1, x2, y2, score, cls], ...]."""
+    if best.size > MAX_CANDIDATES:
+        top = np.argpartition(best, -MAX_CANDIDATES)[-MAX_CANDIDATES:]
+        boxes, best, cls = boxes[top], best[top], cls[top]
     out = []
     for c in np.unique(cls):
         idx = np.where(cls == c)[0]
         for k in nms(boxes[idx], best[idx], iou):
             j = idx[k]
             out.append([*map(float, boxes[j]), float(best[j]), int(c)])
+    if len(out) > MAX_DET:
+        out.sort(key=lambda d: -d[4])
+        del out[MAX_DET:]
     return out
 
 
