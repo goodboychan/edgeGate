@@ -98,10 +98,13 @@ def sh(cmd, timeout=3600, tries=3):
 def run_on_device(a, session_dir, out_dir):
     """Run the backend over one session's frames; returns the summary dict."""
     name = session_dir.name
+    # A 2-hour session is ~110k frames, over an hour at ~50 ms a frame (the slowest
+    # builds, or the GX10 under load), so the time limit grows with the session.
+    limit = 600 + 0.5 * sum(1 for _ in (session_dir / "frames").glob("*.jpg"))
     if a.host == "local":
         py = str(LOCAL_PY) if LOCAL_PY.exists() else sys.executable
         sh([py, str(ROOT / "scripts/run_backend.py"), a.backend, a.model,
-            str(session_dir / "frames"), str(out_dir / name), "--conf", str(a.conf)])
+            str(session_dir / "frames"), str(out_dir / name), "--conf", str(a.conf)], timeout=limit)
     else:
         rdir = f"{REMOTE}/measure"
         rsync = ["rsync", "-a", "-e", " ".join(SSH)]
@@ -111,7 +114,7 @@ def run_on_device(a, session_dir, out_dir):
                     a.model, f"{a.host}:{REMOTE}/run/"])
         sh(SSH + [a.host,
             f"cd {REMOTE} && python3 run/run_backend.py {a.backend} run/{Path(a.model).name} "
-            f"measure/frames/{name} measure/{name} --conf {a.conf}"])
+            f"measure/frames/{name} measure/{name} --conf {a.conf}"], timeout=limit)
         sh(rsync + [f"{a.host}:{rdir}/{name}.jsonl", f"{a.host}:{rdir}/{name}.json", f"{out_dir}/"])
     return json.loads((out_dir / f"{name}.json").read_text())
 

@@ -76,6 +76,8 @@ python3 scripts/measure.py hailo build/student.hef --onnx build/student.onnx --h
     --sessions e01,e02          # device run -> runs/records/*.json (any failure is recorded as a tool failure)
 python3 -m edgegate.gate policies/package_entrance.toml runs/records/*.json --model-sha SHA \
     --artifact trt=build/student.engine --artifact hailo8=build/student.hef
+scripts/build_candidates.sh s1 runs/train/s1/student.pt build/calib.npy   # clean + fault builds: 3 engines, 5 HEFs
+python3 scripts/measure_candidates.py s1 --sessions e01,e02   # every candidate on its device -> rule verdict table
 ```
 
 Audit (after the rules): Glimmer gets the MCP tools in `edgegate/audit_mcp.py` (rule verdicts, eval coverage, per-slice recall by lighting, package size, scene tag or session) and can only propose a HOLD for a backend the rules passed, citing the evidence ids of tool results from that audit.
