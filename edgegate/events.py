@@ -16,7 +16,8 @@ Arrival rule (MVP: a first package into an empty zone; times, not frame counts):
   - no further alert while it stays; it is removed once the zone has been empty
     (not hidden) for clear_s, and a package placed after that is a new arrival
   - hidden (a person box covers the package) is not empty
-  - a second package next to the first is not detected (out of MVP scope)
+  - a second package next to the first is not detected (out of MVP scope): a marked
+    arrival while another marked package is still there is scored apart, not in recall
   - no frames for reconnect_s = camera away: the zone state is unknown, not empty.
     After it comes back, packages already there are the baseline and not alerted,
     so a package that arrived while the camera was away is never alerted.
@@ -28,6 +29,9 @@ within match_window_s of the release; dwell_s is part of that budget.
   duplicate  another alert while only already-alerted packages are there
   false      alert with no package there
 Arrivals during a camera outage are misses, also counted as outage_misses.
+Second packages (arrival while another is there) still make the zone occupied for
+duplicate/false, and an alert in their window is theirs, but they are counted in
+out_of_scope / out_of_scope_matched, not in events / matched or the delays.
 
 Usage:  python3 -m edgegate.events POLICY GT_DIR DETS_DIR   (files paired by session name)
 """
@@ -137,6 +141,8 @@ def score_session(alert_times, events, window, notify_s=0.0, outages=()):
     def there(e, a):
         return e["arrive"] <= a <= (math.inf if e.get("remove") is None else e["remove"])
 
+    second = {i for i, e in enumerate(events) if any(j != i and o["arrive"] < e["arrive"] and there(o, e["arrive"])
+                                                     for j, o in enumerate(events))}
     for a in (a + notify_s for a in alert_times):
         cand = [i for i, e in enumerate(events) if i not in matched and e["arrive"] <= a <= e["arrive"] + window]
         waiting = [i for i, e in enumerate(events) if i not in matched and there(e, a)]
@@ -151,7 +157,7 @@ def score_session(alert_times, events, window, notify_s=0.0, outages=()):
             false += 1
     outage = {i for i, e in enumerate(events) if i not in matched
               and any(s <= e["arrive"] <= t for s, t in outages)}
-    delays = [a - events[i]["arrive"] for i, a in matched.items()]
+    delays = [a - events[i]["arrive"] for i, a in matched.items() if i not in second]
     # One row per marked event, so the audit can slice recall by size, scene or session.
     per_event = []
     for i, e in enumerate(events):
@@ -159,9 +165,11 @@ def score_session(alert_times, events, window, notify_s=0.0, outages=()):
         per_event.append({"arrive": e["arrive"],
                           "outcome": "on_time" if i in matched else "late" if i in late_at else "missed",
                           "delay": None if a is None else a - e["arrive"], "outage": i in outage,
-                          **{k: e[k] for k in ("box", "tags") if k in e}})
-    return {"events": len(events), "matched": len(matched), "duplicate": dup, "late": late,
-            "false": false, "outage_misses": len(outage), "delays": delays, "per_event": per_event}
+                          "second": i in second, **{k: e[k] for k in ("box", "tags") if k in e}})
+    return {"events": len(events) - len(second), "matched": len(set(matched) - second),
+            "out_of_scope": len(second), "out_of_scope_matched": len(set(matched) & second),
+            "duplicate": dup, "late": late, "false": false, "outage_misses": len(outage - second),
+            "delays": delays, "per_event": per_event}
 
 
 def percentile(xs, q):
@@ -186,6 +194,7 @@ def summarize(per_session, duration_s):
         "duplicate_alerts": sum(s["duplicate"] for s in per_session),
         "late_alerts": sum(s["late"] for s in per_session),
         "outage_misses": sum(s.get("outage_misses", 0) for s in per_session),
+        "second_packages": sum(s.get("out_of_scope", 0) for s in per_session),
         "detection_delay_s_p50": percentile(delays, 50),
         "detection_delay_s_p95": percentile(delays, 95),
     }

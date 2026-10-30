@@ -43,6 +43,8 @@ dwell_s = 2.0        # package seen this long in an empty zone = arrival
 gap_s = 1.0          # missed detections shorter than this do not restart the dwell
 clear_s = 2.0        # zone empty (not hidden) this long = package removed
 hidden_overlap = 0.3 # a person box covering this much of the package = hidden, not empty
+# Scope: a first package into an empty zone. A marked arrival while another marked
+# package is still there is scored apart (second_packages), not in recall (events.py).
 reconnect_s = 2.0    # no frames this long = camera away, zone state unknown
 match_window_s = 10.0  # release to alert received, dwell included
 notify_s = 1.2       # measured alert delivery delay, added before the 10 s check

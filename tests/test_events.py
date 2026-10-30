@@ -112,6 +112,18 @@ class ScoringTest(unittest.TestCase):
         s = score_session([18], events, window=10, notify_s=2.5)  # received at 20.5 s
         self.assertEqual((s["matched"], s["late"]), (0, 1))
 
+    def test_second_package_is_scored_apart_from_recall(self):
+        # #1 arrives while #0 is still there (removed together at 60); #2 comes after both.
+        events = [{"arrive": 10, "remove": 60}, {"arrive": 20, "remove": 60}, {"arrive": 100, "remove": None}]
+        s = score_session([12, 103], events, window=10)  # the rule does not alert for #1
+        self.assertEqual((s["events"], s["matched"], s["out_of_scope"], s["out_of_scope_matched"]), (2, 2, 1, 0))
+        self.assertEqual([e["second"] for e in s["per_event"]], [False, True, False])
+        self.assertEqual(summarize([s], 600)["second_packages"], 1)
+        # An alert in #1's window is #1's, not a duplicate or false, and not in recall or delays.
+        s = score_session([12, 22, 103], events, window=10)
+        self.assertEqual((s["matched"], s["out_of_scope_matched"], s["duplicate"], s["false"]), (2, 1, 0, 0))
+        self.assertEqual(sorted(s["delays"]), [2, 3])
+
     def test_summarize_pools_sessions(self):
         a = {"events": 3, "matched": 3, "duplicate": 0, "late": 0, "false": 1, "delays": [1, 2, 3]}
         b = {"events": 1, "matched": 0, "duplicate": 1, "late": 0, "false": 0, "delays": []}
