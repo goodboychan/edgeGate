@@ -9,9 +9,10 @@ Layout: data/sessions/<session>/
 
 Times come from the host-synced frame timestamps, so they stay on one clock when
 the camera is unplugged and comes back; the gap is logged as an outage. The link
-is held at USB 2 with NV12 frames (about 21 MB/s at 720p15): on this desk's cable
-and hub the camera boots but never comes back at USB 3, and every session should
-record the same way. Focus is fixed at the zone's distance (no hunting when someone
+is held at USB 2 with NV12 frames (about 21 MB/s at 720p15): every session should
+record the same way, and the first sessions had to, since the camera never came back
+at USB 3 on the desk's passive cable (it does through the active repeater used since
+10/30). Focus is fixed at the zone's distance (no hunting when someone
 walks past), and auto exposure meters on the policy's zone, so a bright hallway or
 a dark monitor does not set the exposure for the drop zone. Train,
 calibration and eval are separate sessions, never mixed within one.
