@@ -196,8 +196,7 @@ class GateTest(unittest.TestCase):
         from edgegate.gate import load_policy
         shipped = load_policy(ROOT / "policies/package_entrance.toml")
         d = decide(shipped, [self.ref, record("trt")], MODEL, {"trt": art("trt")}, NOW)[0]
-        self.assertHeldFor(d, "alert_delivery")
-        self.assertHeldFor(d, "policy")
+        self.assertHeldFor(d, "policy")  # no eval set named yet
 
     def test_veto_only_demotes(self):
         ds = decide(self.policy, [self.ref, record("trt"), record("hailo8", event_recall=0.5)],

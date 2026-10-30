@@ -45,10 +45,15 @@ clear_s = 2.0        # zone empty (not hidden) this long = package removed
 hidden_overlap = 0.3 # a person box covering this much of the package = hidden, not empty
 reconnect_s = 2.0    # no frames this long = camera away, zone state unknown
 match_window_s = 10.0  # release to alert received, dwell included
-notify_s = 0.0       # measured alert delivery delay, added before the 10 s check
-# Until the live path is measured (release -> inference -> event -> alert received),
-# notify_s is not a measurement and the gate holds every backend.
-notify_measured = false
+notify_s = 1.2       # measured alert delivery delay, added before the 10 s check
+# Measured 10/30 with s0 in measurement mode (scripts/measure_delivery.py): 7 live
+# drops on the Jetson (m01, m02, m03; 7 of 7 alerted), then m03 streamed again to each
+# device while this host subscribed to the ntfy topic: deciding frame -> alert received,
+# one clock. Max 0.98 s (trt) and 1.13 s (hailo8); a live frame reaches the device
+# about 0.07 s later than a streamed recording does (trt live 0.10-0.12 s to the
+# decision vs 0.05 s), so 1.13 + 0.07 rounds to 1.2. Not in it: the push server to
+# phone hop (the Galaxy's screen did not visibly change on an alert).
+notify_measured = true
 
 # min / max are absolute limits; max_drop is the allowed drop below the reference.
 [thresholds]

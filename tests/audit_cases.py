@@ -38,11 +38,9 @@ EXPECTED = {"control": {"trt": "PASS", "hailo8": "PASS"}, "night_gap": {"trt": "
 def policy_text():
     """The real policy, with the synthetic eval set and alert delivery marked measured."""
     text = (ROOT / "policies/package_entrance.toml").read_text()
-    for old, new in (('eval_set_sha256 = "unset"', f'eval_set_sha256 = "{EVAL}"'),
-                     ("notify_measured = false", "notify_measured = true")):
-        assert old in text, old
-        text = text.replace(old, new)
-    return text
+    assert 'eval_set_sha256 = "unset"' in text
+    text = text.replace('eval_set_sha256 = "unset"', f'eval_set_sha256 = "{EVAL}"')
+    return text.replace("notify_measured = false", "notify_measured = true")
 
 
 def policy():
