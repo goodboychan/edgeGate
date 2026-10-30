@@ -93,8 +93,9 @@ class Notifier:
         at = datetime.fromtimestamp(wall).strftime("%H:%M:%S")
         text = (f"TEST: package seen at the entrance at {at}. Delivery measurement, not an approved deployment."
                 if self.test else f"A package was left at the entrance at {at}.")
+        # ntfy's top priority: the one tested (10/30) to wake a locked phone, so delivery is seen
         req = urllib.request.Request(self.url, data=text.encode(),
-                                     headers={"Title": self.title, "Priority": "high", "Tags": "package"})
+                                     headers={"Title": self.title, "Priority": "urgent", "Tags": "package"})
         sent = time.time()
         try:
             with urllib.request.urlopen(req, timeout=10) as r:
