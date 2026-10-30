@@ -62,6 +62,7 @@ python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_A
 .venv-sam3/bin/python scripts/label_sam.py data/sessions/s01   # SAM 3.1 teacher boxes for package and person
 python3 scripts/mark_gt.py data/sessions/e01   # mark arrivals by hand in the browser (127.0.0.1:8765) -> data/gt/e01.json
 .venv-train/bin/python scripts/train_student.py data/sessions/t01 data/sessions/t02 --out runs/train/s1   # student
+scripts/make_student.sh s1 data/sessions/t01 data/sessions/t02 data/sessions/t03   # both: label what is unlabeled, then train
 .venv-train/bin/python scripts/make_calib.py data/sessions/c01 build/calib.npy   # Hailo calibration images
 python3 scripts/measure.py --eval-set-hash --sessions e01,e02   # eval set hash for the policy; manifest in data/manifests/
 ```
