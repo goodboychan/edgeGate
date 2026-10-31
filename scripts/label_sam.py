@@ -19,11 +19,18 @@ before the mask fix). "cardboard box" missed a black rigid gift box set in the
 zone on 10/29; "box" found it and the same six cardboard boxes, and still left
 the bag out.
 
+--gamma brightens the frames SAM sees (out = 255 * (in / 255) ** gamma), for sessions
+too dark for the prompts: on t03 (room lights off, 10/31), the black boxes on the dark
+carpet got no box at all, and with 0.5 a stacked pair on the carpet was found in 61% of
+its frames instead of none. Only the teacher's input changes; the student still trains
+on the recorded frames.
+
 Long sessions are chunked because the predictor keeps every frame of a session
 in memory. Objects are re-detected at each chunk start, so track ids are not kept.
 
 Usage:  .venv-sam3/bin/python scripts/label_sam.py SESSION_DIR [--stride 5] [--chunk 150]
             [--prompt package=box] [--prompt person=person]   (these are the defaults)
+            [--gamma 0.5]   (low-light sessions)
 """
 import argparse
 import csv
@@ -72,11 +79,16 @@ def mask_box(mask, gap=0.02):
     return [xs.min() / W, ys.min() / H, (xs.max() + 1) / W, (ys.max() + 1) / H]
 
 
-def label_chunk(pred, frame_paths, prompt, thresh):
+def label_chunk(pred, frame_paths, prompt, thresh, gamma=1.0):
     """Boxes per chunk index for one text prompt."""
+    lut = np.array([255 * (v / 255) ** gamma for v in range(256)], np.uint8)
     with tempfile.TemporaryDirectory() as tmp:
         for i, p in enumerate(frame_paths):
-            os.symlink(p, os.path.join(tmp, f"{i}.jpg"))
+            if gamma == 1.0:
+                os.symlink(p, os.path.join(tmp, f"{i}.jpg"))
+            else:
+                cv2.imwrite(os.path.join(tmp, f"{i}.jpg"), cv2.LUT(cv2.imread(p), lut),
+                            [cv2.IMWRITE_JPEG_QUALITY, 95])
         sid = pred.handle_request({"type": "start_session", "resource_path": tmp,
                                    "offload_video_to_cpu": True})["session_id"]
         try:
@@ -95,6 +107,26 @@ def label_chunk(pred, frame_paths, prompt, thresh):
             pred.handle_request({"type": "close_session", "session_id": sid})
 
 
+def label_span(pred, frame_paths, prompt, thresh, gamma, retries):
+    """label_chunk, retried as two halves when the tracker fails on a chunk.
+
+    On t03 with --gamma 0.5 (10/31), the tracker raised "No points are provided" on one
+    chunk of 150 frames, inside propagate_in_video; the same frames as shorter chunks
+    label normally. Each retry is counted in the meta.
+    """
+    try:
+        return label_chunk(pred, frame_paths, prompt, thresh, gamma)
+    except RuntimeError as e:
+        if "No points are provided" not in str(e) or len(frame_paths) < 2:
+            raise
+        retries.append({"prompt": prompt, "frames": len(frame_paths), "first": frame_paths[0]})
+        half = len(frame_paths) // 2
+        out = label_span(pred, frame_paths[:half], prompt, thresh, gamma, retries)
+        out.update({half + i: b for i, b in label_span(pred, frame_paths[half:], prompt, thresh, gamma,
+                                                       retries).items()})
+        return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("session_dir")
@@ -102,6 +134,7 @@ def main():
     ap.add_argument("--chunk", type=int, default=150, help="kept frames per predictor session")
     ap.add_argument("--thresh", type=float, default=0.5)
     ap.add_argument("--prompt", action="append", default=[], metavar="CLASS=TEXT")
+    ap.add_argument("--gamma", type=float, default=1.0, help="brighten what SAM sees; 0.5 for dark sessions")
     a = ap.parse_args()
     prompts = dict(p.split("=", 1) for p in a.prompt) or {"package": "box", "person": "person"}
 
@@ -115,11 +148,12 @@ def main():
     pred = load_predictor()
     load_s = time.time() - t0
     dets = [[] for _ in rows]
+    retries = []
     t1 = time.time()
     for start in range(0, len(rows), a.chunk):
         chunk = paths[start:start + a.chunk]
         for cls, text in prompts.items():
-            for i, boxes in label_chunk(pred, chunk, text, a.thresh).items():
+            for i, boxes in label_span(pred, chunk, text, a.thresh, a.gamma, retries).items():
                 dets[start + i] += [b + [cls] for b in boxes]
         done = min(start + a.chunk, len(rows))
         print(f"{done}/{len(rows)} frames, {(time.time() - t1) / done:.2f} s/frame", flush=True)
@@ -129,9 +163,9 @@ def main():
         for r, d in zip(rows, dets):
             f.write(json.dumps({"seq": int(r["seq"]), "t": float(r["t"]), "dets": d}) + "\n")
     meta = {"model": "SAM 3.1 multiplex", "checkpoint": str(CKPT), "prompts": prompts,
-            "stride": a.stride, "chunk": a.chunk, "thresh": a.thresh, "frames": len(rows),
+            "stride": a.stride, "chunk": a.chunk, "thresh": a.thresh, "gamma": a.gamma, "frames": len(rows),
             "box": "main piece of the mask, pieces within 2% of the frame width joined",
-            "load_s": round(load_s, 1), "label_s": round(label_s, 1),
+            "retried_chunks": retries, "load_s": round(load_s, 1), "label_s": round(label_s, 1),
             "gpu_peak_gb": round(torch.cuda.max_memory_allocated() / 1e9, 2)}
     (sess / "labels_sam.meta.json").write_text(json.dumps(meta, indent=2) + "\n")
     counts = {c: sum(1 for d in dets for b in d if b[5] == c) for c in prompts}
