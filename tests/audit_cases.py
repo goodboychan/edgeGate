@@ -16,6 +16,7 @@ Write the cases to disk (policy.toml, records/*.json, case.json per case):
   python3 tests/audit_cases.py OUT_DIR
 """
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -38,8 +39,8 @@ EXPECTED = {"control": {"trt": "PASS", "hailo8": "PASS"}, "night_gap": {"trt": "
 def policy_text():
     """The real policy, with the synthetic eval set and alert delivery marked measured."""
     text = (ROOT / "policies/package_entrance.toml").read_text()
-    assert 'eval_set_sha256 = "unset"' in text
-    text = text.replace('eval_set_sha256 = "unset"', f'eval_set_sha256 = "{EVAL}"')
+    text, n = re.subn(r'eval_set_sha256 = "[^"]*"', f'eval_set_sha256 = "{EVAL}"', text)
+    assert n == 1
     return text.replace("notify_measured = false", "notify_measured = true")
 
 
