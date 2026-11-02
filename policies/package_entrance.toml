@@ -2,7 +2,9 @@
 # The rule engine (edgegate/gate.py) decides PASS/HOLD per backend from this file
 # and the measurement records. Anything missing, stale, NaN or failed is a HOLD.
 # The eval set and the thresholds were frozen 11/1, before any candidate was
-# measured on it; the thresholds are the 10/28 values, unchanged.
+# measured on it; the thresholds are the 10/28 values, unchanged. v2 (11/2) adds
+# e06, recorded and marked after s1-s4 were measured on v1 and frozen before any
+# candidate was measured on it; v1 was 8c78e3a4... (e01-e05, u01).
 
 [task]
 name = "package-at-entrance"
@@ -10,10 +12,10 @@ instruction = "Tell me when a package is left at the entrance."
 # Where and when the skill runs. The audit agent reads this; the rules do not.
 context = "Indoor staged drop zone in a room, standing in for the entrance. The camera watches around the clock, including evenings and nights with the room lights low."
 # sha256 of the eval set manifest; records measured on anything else are rejected.
-# e01-e05 and u01 (2 h 40 min: night with one lamp, room lights on, a rainy day,
+# e01-e06 and u01 (2 h 50 min: night with one lamp, room lights on, a rainy day,
 # and 2 h unattended with no package): scripts/measure.py --eval-set-hash
-# --sessions e01,e02,e03,e04,e05,u01
-eval_set_sha256 = "8c78e3a4bfdc6b640b6d10f19590de49ce7df9eef3028e37b8c37c1ce7f220c0"
+# --sessions e01,e02,e03,e04,e05,e06,u01
+eval_set_sha256 = "b7e333a9b347e66123e017752350c0aafcc242247a64241c43f75f52571fa4ec"
 # Measurements older than this are stale.
 max_age_hours = 24
 # Backend whose record is the accuracy reference for max_drop checks.

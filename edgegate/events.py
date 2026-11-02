@@ -215,6 +215,9 @@ def evaluate(policy, gt_dir, dets_dir):
     per_session, duration = [], 0.0
     for gt_path in sorted(Path(gt_dir).glob("*.json")):
         gt = json.loads(gt_path.read_text())
+        if gt["session"] != gt_path.stem:
+            # A copied GT file that still names its source would score that session twice.
+            raise ValueError(f"{gt_path.name} marks session {gt['session']}")
         dets_path = Path(dets_dir) / f"{gt['session']}.jsonl"
         if not dets_path.exists():
             # A missing session would silently raise recall, so refuse to score.
