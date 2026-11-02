@@ -13,7 +13,7 @@ it and the metrics. runs/records/RUN/table.json has the same with the full reaso
 
 Usage:  python3 scripts/measure_candidates.py s1 --sessions e01,e02,... [--only reference,clean]
         python3 scripts/measure_candidates.py s1 --table-only     # judge the records already there
-Hosts: JETSON (default jetson) and HAILO_PI (default chans@192.168.50.151).
+Hosts: JETSON (default jetson) and HAILO_PI (default hailo, an ssh alias).
 """
 import argparse
 import json
@@ -51,7 +51,7 @@ def run_queue(jobs, logs):
 
 def measure(a, names, build, out):
     hosts = {"onnx": "local", "trt": os.environ.get("JETSON", "jetson"),
-             "hailo": os.environ.get("HAILO_PI", "chans@192.168.50.151")}
+             "hailo": os.environ.get("HAILO_PI", "hailo")}
     onnx = build / "student.onnx"
 
     def cmd(runtime, model, dest):

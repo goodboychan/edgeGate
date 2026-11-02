@@ -29,7 +29,7 @@ class StreamTest(unittest.TestCase):
         self.assertEqual((sender.sent, sender.dropped), (20, 0))
 
     def test_target(self):
-        self.assertEqual(stream.target("192.168.50.67:8790"), ("192.168.50.67", 8790))
+        self.assertEqual(stream.target("192.0.2.10:8790"), ("192.0.2.10", 8790))
         with self.assertRaises(ValueError):
             stream.target("jetson")
 

@@ -25,7 +25,7 @@ them through a measured notify_s.
 Usage:  python3 scripts/measure.py trt build/student_fp16.engine --onnx build/student.onnx \
             --host jetson --sessions e01,e02
         python3 scripts/measure.py hailo build/student.hef --onnx build/student.onnx \
-            --host chans@192.168.50.151 --sessions e01,e02
+            --host hailo --sessions e01,e02
         python3 scripts/measure.py onnx build/student.onnx --onnx build/student.onnx --host local ...
         python3 scripts/measure.py --eval-set-hash --sessions e01,e02   # value for the policy
 """
@@ -157,7 +157,7 @@ def main():
     policy = load_policy(a.policy)
     classes, a.conf = policy["measure"]["classes"], policy["measure"]["det_conf"]
     record = {"schema": 2, "backend": a.name or GATE_NAME[a.backend], "runtime": a.backend,
-              "device": {"label": a.device or a.host},
+              "device": {"label": a.device or a.name or GATE_NAME[a.backend]},
               "model_sha256": sha256_file(a.onnx), "artifact_sha256": sha256_file(a.model),
               "eval_set_sha256": None, "eval_config_sha256": eval_config_sha256(policy),
               "evaluation": "recorded sessions; alert delivery only through notify_s",

@@ -19,7 +19,7 @@ Usage:  python3 scripts/deploy.py POLICY RECORD.json... --model-sha SHA \
             [--audit runs/audits/X.json] --notify https://ntfy.sh/TOPIC
         python3 scripts/deploy.py --stop trt,hailo8
 Then stream the camera to each started device: capture_oak.py ... --stream HOST:8790
-Hosts: JETSON (default jetson) and HAILO_PI (default chans@192.168.50.151).
+Hosts: JETSON (default jetson) and HAILO_PI (default hailo, an ssh alias).
 """
 import argparse
 import json
@@ -36,7 +36,7 @@ from edgegate.gate import (PASS, _latest, _parse_time, apply_veto, decide, eval_
                            load_policy, sha256_file)
 
 RUNTIME = {"trt": "trt", "hailo8": "hailo"}
-HOSTS = {"trt": os.environ.get("JETSON", "jetson"), "hailo8": os.environ.get("HAILO_PI", "chans@192.168.50.151")}
+HOSTS = {"trt": os.environ.get("JETSON", "jetson"), "hailo8": os.environ.get("HAILO_PI", "hailo")}
 LIVE = "edgegate_hackathon/live"
 SSH = ["ssh", "-o", "BatchMode=yes"]
 FILES = ["scripts/live_device.py", "scripts/run_backend.py", "edgegate/detect.py", "edgegate/events.py",

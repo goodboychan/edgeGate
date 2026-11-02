@@ -30,7 +30,7 @@ Usage:  python3 scripts/measure_delivery.py start trt build/s1/student_fp16.engi
             --phone 0.70,0.80,0.78,0.95
         python3 scripts/measure_delivery.py listen URL received.jsonl
         python3 scripts/measure_delivery.py report data/sessions/m03 alerts.jsonl --received received.jsonl
-Hosts: JETSON (default jetson) and HAILO_PI (default chans@192.168.50.151).
+Hosts: JETSON (default jetson) and HAILO_PI (default hailo, an ssh alias).
 """
 import argparse
 import csv
