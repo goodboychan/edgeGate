@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 330" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13">
+  <style>
+    .box { fill: #fcfcfb; stroke: #52514e; stroke-width: 1.2; rx: 6; }
+    .dev { fill: #e7f1fb; stroke: #2a78d6; }
+    .gate { fill: #e5f4e4; stroke: #008300; }
+    .fault { fill: #f9ece7; stroke: #eb6834; stroke-dasharray: 4 3; }
+    .hold { fill: #f0efec; stroke: #898781; }
+    .t { fill: #0b0b0b; }
+    .s { fill: #52514e; font-size: 11px; }
+    .a { stroke: #52514e; stroke-width: 1.4; fill: none; marker-end: url(#m); }
+    .veto { stroke: #008300; stroke-width: 1.4; fill: none; marker-end: url(#mg); stroke-dasharray: 5 3; }
+    @media (prefers-color-scheme: dark) {
+      .box { fill: #1a1a19; stroke: #c3c2b7; } .dev { fill: #13263d; stroke: #3987e5; } .gate { fill: #11301a; stroke: #2ea043; }
+      .fault { fill: #3a1f14; stroke: #d95926; } .hold { fill: #2c2c2a; stroke: #898781; }
+      .t { fill: #f0efec; } .s { fill: #c3c2b7; } .a { stroke: #c3c2b7; } .veto { stroke: #2ea043; }
+    }
+  </style>
+  <defs>
+    <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#52514e"/></marker>
+    <marker id="mg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#008300"/></marker>
+  </defs>
+
+  <!-- row 1: teach the skill -->
+  <text class="s" x="16" y="22">1. Teach the skill (GX10)</text>
+  <rect class="box" x="16" y="32" width="150" height="56"/>
+  <text class="t" x="91" y="54" text-anchor="middle">"Tell me when a package</text>
+  <text class="t" x="91" y="72" text-anchor="middle">is left at the entrance"</text>
+
+  <rect class="box" x="196" y="32" width="150" height="56"/>
+  <text class="t" x="271" y="54" text-anchor="middle">OAK-D recordings</text>
+  <text class="s" x="271" y="72" text-anchor="middle">train · calib · eval (frozen)</text>
+
+  <rect class="box" x="376" y="32" width="150" height="56"/>
+  <text class="t" x="451" y="54" text-anchor="middle">SAM 3.1 labels</text>
+  <text class="s" x="451" y="72" text-anchor="middle">train sessions only</text>
+
+  <rect class="box" x="556" y="32" width="150" height="56"/>
+  <text class="t" x="631" y="54" text-anchor="middle">Student YOLOv8n</text>
+  <text class="s" x="631" y="72" text-anchor="middle">distilled, exported to ONNX</text>
+
+  <rect class="dev" x="736" y="18" width="208" height="38"/>
+  <text class="t" x="840" y="42" text-anchor="middle">TensorRT FP16 · Jetson Orin Nano</text>
+  <rect class="dev" x="736" y="66" width="208" height="38"/>
+  <text class="t" x="840" y="90" text-anchor="middle">Hailo-8 INT8 · Raspberry Pi 5</text>
+  <rect class="fault" x="736" y="114" width="208" height="38"/>
+  <text class="t" x="840" y="130" text-anchor="middle">fault builds, on purpose</text>
+  <text class="s" x="840" y="145" text-anchor="middle">bgr · no_norm · w4 · calib10</text>
+
+  <path class="a" d="M166 60H190"/>
+  <path class="a" d="M346 60H370"/>
+  <path class="a" d="M526 60H550"/>
+  <path class="a" d="M706 56C720 56 720 37 730 37"/>
+  <path class="a" d="M706 64C720 64 720 85 730 85"/>
+  <path class="a" d="M706 72C722 72 718 133 730 133"/>
+
+  <!-- row 2: the gate -->
+  <text class="s" x="16" y="196">2. The gate: measured on the device, decided by rules, vetoed only by Glimmer</text>
+  <rect class="box" x="16" y="206" width="180" height="60"/>
+  <text class="t" x="106" y="228" text-anchor="middle">Measure on each device</text>
+  <text class="s" x="106" y="244" text-anchor="middle">frozen eval set, 2 h 50 min</text>
+  <text class="s" x="106" y="258" text-anchor="middle">→ signed measurement record</text>
+
+  <rect class="gate" x="226" y="206" width="180" height="60"/>
+  <text class="t" x="316" y="228" text-anchor="middle">Rules (policy TOML)</text>
+  <text class="s" x="316" y="244" text-anchor="middle">recall · false/h · dup · delay</text>
+  <text class="s" x="316" y="258" text-anchor="middle">latency · memory · age · hashes</text>
+
+  <rect class="gate" x="436" y="206" width="180" height="60"/>
+  <text class="t" x="526" y="228" text-anchor="middle">Glimmer audit (GX10)</text>
+  <text class="s" x="526" y="244" text-anchor="middle">slices, coverage; can only</text>
+  <text class="s" x="526" y="258" text-anchor="middle">turn a PASS into a HOLD</text>
+
+  <rect class="box" x="646" y="178" width="150" height="46"/>
+  <text class="t" x="721" y="197" text-anchor="middle">PASS → deploy.py</text>
+  <text class="s" x="721" y="213" text-anchor="middle">approval record, runner starts</text>
+  <rect class="hold" x="646" y="244" width="150" height="46"/>
+  <text class="t" x="721" y="263" text-anchor="middle">HOLD → nothing ships</text>
+  <text class="s" x="721" y="279" text-anchor="middle">reasons printed, no override</text>
+
+  <rect class="dev" x="826" y="178" width="118" height="46"/>
+  <text class="t" x="885" y="197" text-anchor="middle">Live on device</text>
+  <text class="s" x="885" y="213" text-anchor="middle">alert → phone (ntfy)</text>
+
+  <path class="a" d="M196 236H220"/>
+  <path class="a" d="M406 236H430"/>
+  <path class="a" d="M616 228C630 228 630 201 640 201"/>
+  <path class="a" d="M616 244C630 244 630 267 640 267"/>
+  <path class="a" d="M796 201H820"/>
+  <path class="veto" d="M526 206C526 190 400 190 330 203"/>
+  <text class="s" x="430" y="186" text-anchor="middle">veto only, never approve</text>
+
+  <!-- builds flow down into the measurement -->
+  <path class="a" d="M840 152C840 170 110 160 106 200"/>
+  <text class="s" x="470" y="172" text-anchor="middle">every build, every backend</text>
+
+  <text class="s" x="16" y="312">Everything measured on the eval set is written to runs/records; only a record for this exact model, file, device, runtime, eval set and settings, less than 24 h old, counts.</text>
+</svg>
