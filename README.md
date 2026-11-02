@@ -1,134 +1,170 @@
 # EdgeGate
 
-Teach a new perception skill to the mixed edge devices in a home with one sentence (spoken or typed), and let an audit agent decide, chip by chip, whether it is safe to deploy.
-Meta Global AI Developer Hackathon, Indie track, "Push the Frontier".
+Teach a new perception skill to the mixed edge chips in a home from one sentence, and let a gate decide, chip by chip, whether the result may ship: the rules decide from measurements taken on the device itself, and an audit agent (Muse Glimmer, running locally) can only add a HOLD, never remove one.
 
-**Flow:** "Tell me when a package is left at the entrance" → Muse Voice Transcribe → Muse Spark plans → SAM 3.1 auto-labels → student detector is distilled → compiled per backend → Muse Glimmer audits → deployed only to approved backends → Home Assistant notifies, and a Creoqode Nova head turns to look at the target.
+Meta Global AI Developer Hackathon, Indie track, "Push the Frontier". Everything in this repository was written between 2026-10-26 and 2026-11-04; the commit history shows when.
 
-## Built during the hackathon
+**What happened:** the task was "Tell me when a package is left at the entrance". We recorded our own sessions, labeled them with SAM 3.1, distilled a small detector, compiled it for a Jetson (TensorRT) and a Raspberry Pi 5 with a Hailo-8, and measured every build on its device over 2 h 50 min of frozen eval recordings. **The gate held every build**, including our best one (recall 0.96, but 4.2 false alerts per hour against a limit of 1), and every one of the twelve builds we broke on purpose. Nothing was deployed. Section [Results](#results) has the numbers, [What we chose after seeing results](#what-we-chose-after-seeing-results) what a judge should know before trusting them.
 
-All code in this repository was written during the hackathon (2026-10-26 to 11-04); the commit history shows when. No pre-existing codebase is included.
+![Pipeline](docs/pipeline.svg)
 
-- **Pre-existing:** home-lab hardware (GX10, edge boards, sensors, Nova), the open-source tools below, public model weights
-- **Built this week:** all code in this repository. Status as of 10/29:
+## Results
 
-| Part | Status |
+Eval set v2: sessions e01–e06 and u01, 2 h 50 min, 26 scored arrivals (night with one floor lamp, night with the room lights on, a rainy day, and 2 h unattended with no package). Thresholds: event recall ≥ 0.9, ≤ 1 false alert per hour, 0 duplicate alerts, detection delay p95 ≤ 5 s, per-frame latency p95 ≤ 100 ms (Hailo-8: 50 ms), peak memory ≤ 2048 MB, record younger than 24 h. Every row below is one build measured on the device named, scored by `edgegate/events.py` from the device's own detections.
+
+| student | trained on | backend | recall | false/h | dup | delay p95 | latency p95 | verdict, held for |
+|---|---|---|---|---|---|---|---|---|
+| s1 (YOLOv8n) | t01–t03 | trt | 0.885 | 5.65 | 1 | 3.4 s | 19.4 ms | HOLD: recall, false alerts, duplicates |
+| | | hailo8 | 0.846 | 7.06 | 1 | 4.3 s | 15.5 ms | HOLD: recall, false alerts, duplicates |
+| s2 (YOLOv8n) | t01, t02, t03 relabeled | trt | 0.731 | 3.18 | 0 | 3.2 s | 19.4 ms | HOLD: recall, false alerts |
+| | | hailo8 | 0.731 | 2.12 | 0 | 3.2 s | 15.1 ms | HOLD: recall, false alerts |
+| **s3 (YOLOv8n)** | t01–t05 | trt | **0.962** | 4.24 | 0 | 3.3 s | 19.5 ms | HOLD: false alerts |
+| | | hailo8 | **0.962** | 4.59 | 1 | 3.0 s | 15.9 ms | HOLD: false alerts, duplicates |
+| s4 (YOLOv8s) | t01–t05 | trt | 0.846 | 4.95 | 0 | 3.8 s | 22.9 ms | HOLD: recall, false alerts |
+| | | hailo8 | 0.885 | 4.95 | 0 | 3.3 s | 20.9 ms | HOLD: recall, false alerts |
+
+Measured 11/2–11/3 (`logs/measure_*_v2.log`, records in `runs/records/`). s3 is the one improvement round: after s1 missed arrivals in the dark, two more training nights were recorded (t04 under one floor lamp, t05 hard negatives with the lights on) and s3 and s4 were trained once on t01–t05. Recall went from 0.885 to 0.962 and the duplicate alert went away; the false alerts did not. The ONNX reference on the GX10 gives the same recall and false alerts as the TensorRT build, so the false alerts come from the model, not from the conversion. Half of them are in e03 (room lights on, eight minutes of drops and walk-throughs); the two-hour unattended session has none.
+
+On e06, recorded after s1–s4 had been measured on the first eval set and never trained on, every student caught all four arrivals; s3 raised two false alerts there, both from one box that was set down across the zone's edge and then lifted (see the known limitation below).
+
+**Fault builds.** From the same s3 and s4 students we also built, on purpose: `bgr` (color channels swapped before the compiler), `no_norm` (input normalization left out), `w4` (4-bit weights on the Hailo-8) and `calib10` (10 calibration images instead of 64). They are candidates like any other and are judged only by their measured metrics. On eval set v1 (e01–e05, u01; a v2 re-measurement is running on 11/3) all twelve were held:
+
+| student | build | backend | recall | false/h | dup | delay p95 | held for |
+|---|---|---|---|---|---|---|---|
+| s3 | bgr | trt | 0.727 | 3.00 | 1 | 3.5 s | recall, false alerts, duplicates |
+| s3 | bgr | hailo8 | 0.773 | 3.38 | 1 | 3.5 s | recall, false alerts, duplicates |
+| s3 | no_norm | trt | 0 | 0 | 0 | – | recall, delay (no alert at all) |
+| s3 | no_norm | hailo8 | 0 | 0 | 0 | – | recall, delay (no alert at all) |
+| s3 | w4 | hailo8 | 0.636 | 3.75 | 4 | 6.8 s | recall, false alerts, duplicates, delay |
+| s3 | calib10 | hailo8 | 0.909 | 4.88 | 1 | 3.1 s | false alerts, duplicates |
+| s4 | bgr | trt | 0.636 | 4.50 | 1 | 3.3 s | recall, false alerts, duplicates |
+| s4 | bgr | hailo8 | 0.727 | 2.63 | 2 | 3.5 s | recall, false alerts, duplicates |
+| s4 | no_norm | trt | 0 | 0 | 0 | – | recall, delay (no alert at all) |
+| s4 | no_norm | hailo8 | 0.318 | 3.38 | 0 | 2.5 s | recall, false alerts |
+| s4 | w4 | hailo8 | 0.273 | **0.375** | 0 | 3.4 s | recall |
+| s4 | calib10 | hailo8 | 0.864 | 3.38 | 2 | 3.1 s | recall, false alerts, duplicates |
+
+Two of them say why a gate needs more than one number. `s4 w4` has the fewest false alerts of any build we made, because it misses 73% of the packages: a gate that only watched false alerts would ship it. `s3 calib10` passes recall (0.909) and is held for false alerts and a duplicate; the same fault built from the public YOLOv8n had looked as good as the clean build on 33 public sample frames (112 of 116 boxes matched).
+
+**The four ways to decide**, from the same records (`scripts/compare_gates.py`): always deploy would have shipped all 8 clean builds measured on v2, of which 6 miss more than 10% of arrivals and 8 raise more than one false alert an hour; a false-alert-only gate ships 0 of them (and would ship w4 and the silent no_norm builds); the rules ship 0; the rules plus Glimmer ship 0, with Glimmer's audit of s3 confirming the HOLD and noting that no veto was possible because the rules had already held it. `scripts/dashboard.py` writes all of this to one page (`runs/dashboard.html`).
+
+## How it works
+
+1. **Teach.** The instruction is the policy's `task.instruction`. `scripts/teach.py` takes it typed or spoken (Muse Voice Transcribe), has Muse Spark write the task spec (a name, the classes to detect as SAM text prompts, what alerts, what must not, what to watch) and checks that spec against the policy; it never writes the policy (added 11/3, see below). The OAK-D Pro records sessions as timestamped JPEG frames (`scripts/capture_oak.py`): train sessions with one set of boxes, eval sessions with a different set the student never sees, and a calibration session. SAM 3.1 labels the train sessions from the text prompts "package" and "person" (`scripts/label_sam.py`); a YOLOv8n student is trained on those labels (`scripts/train_student.py`) and exported to a fixed-shape ONNX.
+2. **Build.** `scripts/build_candidates.sh` compiles the ONNX into a TensorRT FP16 engine on the Jetson and an INT8 HEF for the Hailo-8 with the Hailo Dataflow Compiler, plus the fault builds (`scripts/inject_fault.py`, `scripts/compile_hailo.py` flags).
+3. **Measure.** `scripts/measure.py` runs a build on its device over every eval frame (`scripts/run_backend.py`: letterbox, inference, decoding and NMS on the device, timed per frame), turns the detections into arrival alerts with the policy's event rule, scores them against the human marks and writes a record: model and file hashes, device id and runtime, the eval set hash, the metrics, per-session and per-event rows. `scripts/measure_candidates.py` does it for every build of one student.
+4. **Decide.** `edgegate/gate.py` reads the policy and the records and prints PASS or HOLD per backend with reasons. Missing, stale, NaN or failed measurements, another model, another eval set, other event settings, another device or runtime, or a file to deploy that is not the file measured are all HOLD.
+5. **Audit.** `scripts/audit.py` gives Glimmer the MCP tools in `edgegate/audit_mcp.py` (rule verdicts, eval coverage, recall per slice by lighting, package size, tag or session) and lets it propose a HOLD for a backend the rules passed, citing evidence ids from that audit. A proposal without evidence is rejected; an audit that does not finish holds every backend the rules passed.
+6. **Deploy.** `scripts/deploy.py` takes the same records and files as the gate, plus an audit record if there is one. HOLD prints the reasons and starts nothing; there is no override. PASS writes an approval record and starts the runner on the device, which checks that the approval names its device, its runtime and that exact file before it runs. Arrival alerts go out as an HTTP POST (an ntfy topic on the phone).
+
+Run on 11/3 with the s3 records:
+
+```
+$ python3 scripts/deploy.py policies/package_entrance.toml runs/records/s3/reference/*.json runs/records/s3/clean/*.json \
+    --model-sha 3672c7b8… --artifact trt=build/s3/student_fp16.engine --artifact hailo8=build/s3/student.hef --notify https://ntfy.sh/…
+trt: HOLD, not deployed
+    false_alerts_per_h: 4.23877 > max 1
+hailo8: HOLD, not deployed
+    false_alerts_per_h: 4.592 > max 1
+    duplicate_alerts: 1 > max 0
+```
+
+### The gate
+
+The rules decide; Glimmer can only veto a PASS and explain. A record counts only for:
+
+- **its device:** the policy's `[targets]` names each backend's device (a hash of its machine id) and runtime version. A record from another device, a reinstalled OS or another runtime version holds.
+- **its eval set:** `eval_set_sha256` is a manifest of every frame's sha256 plus the marks, `frames.csv` and `meta.json`; the device reports a digest of the frames it actually read and it must match.
+- **its evaluation settings:** `eval_config_sha256` covers the policy's `[events]` (zone, dwell, windows, the measured alert delay) and `[measure]` (class order, detection threshold). Changing any of them voids older records. Thresholds are applied at decision time and are not in the hash.
+- **its age:** older than `max_age_hours` (24) is stale.
+
+**Arrival rule** (`edgegate/events.py`, fixed 10/27 before any session was recorded, not tuned): a package whose box bottom-center is inside the zone, seen for 2 s in an empty zone, is an arrival; the alert must be received within 10 s of the package being let go, dwell included. One alert while it stays; a new arrival needs the zone empty, not just hidden by a person, for 2 s. A second package next to the first is out of scope and scored apart. When the camera drops out, the zone state is unknown, not empty.
+
+**What the metrics are:** a recorded-session evaluation. Alert times are recorded frame times; device latency is a separate metric. Alert delivery enters through `notify_s`, the measured delay from the deciding frame to the alert received on the phone's push service (1.2 s, measured 10/30 on the live path with a throwaway student, before any candidate), added to every alert time before the 10 s check. Until it is measured the gate holds everything.
+
+**Glimmer's audit.** Glimmer 30B runs on the GX10 under vLLM in FP8. For s3 it called `gate_decisions` and `eval_coverage`, found both backends already held, proposed nothing, and wrote one paragraph per device with the evidence ids, in 188 s (`runs/audits/s3_*.json`). On five synthetic cases with planted slice failures (`tests/audit_cases.py`, made-up numbers, not evidence) it gave the expected verdict in all five and did not hold the control.
+
+## What we chose after seeing results
+
+Everything a judge should know before trusting the numbers above.
+
+- **Thresholds and rule first.** The arrival rule was written on 10/27 and the thresholds on 10/28, before any eval session existed. The zone was drawn on the mounted camera on 10/29 before the first session. Neither was changed after seeing eval data.
+- **One improvement round, chosen after a HOLD.** s1 (trained on t01–t03) was measured on eval set v1 on 11/1 and held, missing arrivals in the dark sessions. In answer, t04 (night, one floor lamp) and t05 (hard negatives, lights on) were recorded on 11/1 and s3 and s4 were trained on t01–t05. No eval frames and no marks were used in training; the train and eval boxes are different objects. There was no second round.
+- **e06 was added after v1.** Eval set v1 (e01–e05, u01) was frozen on 11/1 before any candidate was measured on it. After s1–s4 had been measured on v1, e06 was recorded on 11/2 with a round script fixed before recording, marked, and v2 (v1 + e06) was frozen before any candidate was measured on it. The v1 and v2 verdicts agree; e06 is the unseen check.
+- **Marks that were removed.** While marking, five placements were removed as not arrivals under the zone rule because the box lay across the zone's bottom edge with its bottom-center outside: e01 80.2 s and 126.7 s, e02 336.7 s, e03 300.3 s and e06 77.7 s. Placements that ended inside by a few pixels were kept and tagged `edge`. Each decision was made when that session was marked, before any candidate was measured on it, and is written in the session's `data/gt/*.json` notes. u01's zero events were checked with a per-second pixel difference over the zone and by eye.
+- **A known limitation of the rule, kept.** A package that is "hidden" by a person box still counts toward the 2 s dwell. A box lifted inside the zone and carried out behind the person can therefore raise an alert; s3's second false alert on e06 (136 s) is one. The rule was frozen before evaluation and was not changed for it.
+- **Fault builds were re-measured.** Their v1 records are not valid under v2 (another eval set, and older than 24 h), so the twelve fault builds were measured again on v2 on 11/3. The v1 table above is replaced by the v2 one when it finishes.
+- **Records expire.** The gate holds a record older than 24 h, so the verdicts in `runs/` must be re-measured before any live use; the numbers above are from the records named.
+- **The front end came last.** `scripts/teach.py` (one sentence, typed or spoken, to a task spec through Muse Voice Transcribe and Muse Spark) was written on 11/3, after every candidate had been measured. The policy's instruction, classes, zone, rule and thresholds were written by hand before any of that. On the policy's sentence, spoken through a Kokoro-synthesized WAV, Spark returned the same name, the classes `package, person`, "a package is left unattended in the entrance drop zone" as the event, "a person carrying or walking with a package must not alert" as the non-event, and "low light at night, dim room evenings, package occluded in zone" to watch; the script reports any difference and exits non-zero, as it does for a different sentence (`runs/teach/`, copied to `results/`).
+- **Not built.** A Creoqode Nova head turning toward the package, Home Assistant integration and two more backends were in the plan and were not started.
+
+## Sessions
+
+All recorded with the one OAK-D Pro, fixed in place at the indoor drop zone, 1280×720 at 15 fps. Train boxes (brown, black, gray) and eval boxes (white, a robot-arm box) are different objects, and each set was kept out of the other's sessions.
+
+| session | split | light | length | used for |
+|---|---|---|---|---|
+| t01–t05 | train | lights on; day; hallway only; one floor lamp; lights on (hard negatives) | 10–15 min each | SAM 3.1 labels, student training |
+| c01 | calib | lights on, hallway only, floor lamp | 9 min | Hailo-8 calibration images |
+| e01, e02 | eval | night, one floor lamp (zone ~11/255) | 5, 7 min | eval set (e01 cut short by a USB error) |
+| e03, e04, e06 | eval | night, room lights on | 8, 10, 10 min | eval set |
+| e05 | eval | rainy day, lights off | 10 min | eval set |
+| u01 | eval | rainy day, unattended | 120 min | eval set, no package |
+| m01–m03 | live | night | 2–4 min | alert delivery measurement (`notify_s`) |
+
+## Hardware and external tools
+
+GX10 workstation (NVIDIA GB10): Glimmer, SAM 3.1, training, the ONNX reference. Jetson Orin Nano Super (JetPack 6.2.3, TensorRT 10.3). Raspberry Pi 5 with a Hailo-8 (HailoRT 4.20). HEFs compiled with the Hailo Dataflow Compiler 3.34 on an x86 workstation. OAK-D Pro camera. An Android phone with the ntfy app for alerts. All pre-existing home-lab hardware.
+
+The external tools are used as-is, without modification:
+
+| Tool | Used for |
 |---|---|
-| GX10 setup, Glimmer serving (FP8, tool-call parser) | Implemented |
-| Meta Model API check (Spark text/image, Voice Transcribe), Kokoro TTS | Implemented |
-| Glimmer tool calling | Wiring test only: `toolcheck` uses a stub tool with fixed numbers |
-| OAK-D Pro session capture (timestamped frames, outage log) | Implemented; mounted at the drop zone, USB 2 with NV12 at 15 fps (no gaps in a 60 s soak), focus fixed at the zone, exposure metered on the zone. Reconnect path not yet tested by unplugging |
-| SAM 3.1 text-prompt labeling (box, person) | Implemented; on a 1-minute recording of the scene, 0.7 s/frame. Boxes come from the largest piece of each mask (a stray mask patch made boxes span 70% of the frame) |
-| Rule engine (`policies/*.toml` → PASS/HOLD per backend) and event evaluator | Implemented, unit-tested on synthetic data only; no real measurements yet |
-| Toolchain path to both devices (public YOLOv8n, not yet trained on our data) | Compile and run on both; on 33 public sample frames TensorRT FP16 matches ONNX 116/116 boxes, Hailo-8 INT8 111/116 (mean IoU 0.977); end to end per frame (letterbox, inference, decoding, NMS) p50 23 ms Jetson (15W mode), 14 ms Hailo Pi |
-| Measurement harness (device run → event metrics → record the gate reads) | Implemented; the device hashes every frame it reads and reports its identity and runtime. Dry run on a 1-minute recording with no marked events on all three backends (2-epoch student, a toolchain check, not accuracy): each device matched its policy target, and p50 per frame was 32.7 ms GX10 ONNX, 19.6 ms Jetson, 12.4 ms Hailo Pi. No real eval data yet |
-| Glimmer audit tools (MCP: rule verdicts, eval coverage, per-slice recall; veto-only `propose_hold` with evidence ids) | Implemented; wiring check on 5 synthetic cases (made-up numbers, one run each, not evidence): Glimmer FP8 gave the expected verdict in all 5, no HOLD on the control, 3.5 to 6 min per audit. Its HOLD reasons name the planted slice but also cite one-event lighting gaps. Not yet run on measured candidates, no repeat runs yet |
-| GT marking tool (browser) | Implemented; save and validation tested, page not yet used on a real session |
-| Fault-injected builds (BGR swap, no normalization, 4-bit weights, 10 calibration images) | Built for both devices from the public YOLOv8n; on 33 public frames vs ONNX: no normalization 0 boxes matched, 4-bit weights 65/116, BGR 100/116 (Hailo) and 104/116 (TRT), 10 calibration images 112/116, about the same as the clean build |
-| Student training (YOLOv8n on SAM labels, train sessions only) | Script dry-run only: 2 epochs on 1 minute of video, exported and compiled for both devices. No real training yet |
-| Deployment, Nova, Home Assistant | Planned |
-
-The external tools below are used as-is, without modification.
-
-| External tool | Used for |
-|---|---|
-| vLLM | Serving Muse Glimmer |
+| vLLM (≥ 0.32) | Serving Muse Glimmer 30B, FP8 |
 | facebookresearch/sam3 | SAM 3.1 inference |
-| Qualcomm QNN SDK | VENTUNO Q Hexagon compile |
-| HailoRT / Dataflow Compiler | Hailo-8 compile |
-| edgetpu_compiler | Coral Edge TPU compile |
-| TensorRT | Jetson compile |
-| Ultralytics YOLOv8 (AGPL-3.0) and its public COCO weights | Student detector architecture; the COCO weights only for toolchain tests |
-| DepthAI | OAK-D Pro camera capture |
-| Kokoro-82M | TTS for testing spoken instructions without a mic |
+| Ultralytics YOLOv8 (AGPL-3.0) and its public COCO `yolov8n.pt` / `yolov8s.pt` | Student architecture and pretrained base; the trained students inherit AGPL-3.0 |
+| TensorRT, `trtexec` | Jetson engines |
+| Hailo Dataflow Compiler, HailoRT | Hailo-8 HEFs and runtime |
+| onnxruntime | The GX10 reference backend |
+| DepthAI | OAK-D Pro capture |
+| MCP Python SDK | The audit tools Glimmer calls |
+| Kokoro-82M | A spoken instruction for the Voice Transcribe check |
+| ntfy | Alerts to the phone |
 
-## Meta models used
+**Meta models used:** Muse Glimmer 30B (local audit agent, open weights, vLLM on the GX10), SAM 3.1 (teacher labels, local), Muse Spark 1.3 and Muse Voice Transcribe through the Meta Model API in the front end (`scripts/teach.py`, added 11/3; with `--base` it uses Muse Spark Open on Baseten instead, which gave the same classes and a closer event sentence in 5 s).
 
-Muse Glimmer 30B (local audit agent), Muse Spark / Muse Spark Open (planning and verification), Muse Voice Transcribe (spoken instructions), SAM 3.1 (teacher labels), Muse Code (development).
-
-## GX10 setup
+## Running it
 
 ```bash
 bash scripts/setup_gx10.sh               # model downloads + SAM 3.1, TTS and OAK envs + checks
-bash scripts/start_glimmer.sh            # Glimmer vLLM server (:8001, vLLM >= 0.32, FP8 by default)
-bash scripts/start_glimmer.sh test       # plain chat check
-bash scripts/start_glimmer.sh toolcheck  # one tool-call round trip
-python3 scripts/check_meta_api.py        # Meta Model API check (META_API_KEY in .env)
-.venv-tts/bin/python scripts/tts.py "Tell me when a package is left at the entrance." data/instruction.wav
-python3 scripts/check_meta_api.py data/instruction.wav   # speech → Voice Transcribe
-python3 scripts/check_baseten.py         # Muse Spark Open on Baseten (BASETEN_API_KEY in .env)
-.venv-modal/bin/modal run scripts/check_modal.py   # Modal GPU check (after `modal setup`)
-.venv-oak/bin/python scripts/capture_oak.py s01 --split eval --light day --minutes 10   # record a session (OAK-D Pro)
-.venv-sam3/bin/python scripts/label_sam.py data/sessions/s01   # SAM 3.1 teacher boxes for package and person
-python3 scripts/mark_gt.py data/sessions/e01   # mark arrivals by hand in the browser (127.0.0.1:8765) -> data/gt/e01.json
-.venv-train/bin/python scripts/train_student.py data/sessions/t01 data/sessions/t02 --out runs/train/s1   # student
-scripts/make_student.sh s1 data/sessions/t01 data/sessions/t02 data/sessions/t03   # both: label what is unlabeled, then train
-.venv-train/bin/python scripts/make_calib.py data/sessions/c01 build/calib.npy   # Hailo calibration images
-python3 scripts/measure.py --eval-set-hash --sessions e01,e02   # eval set hash for the policy; manifest in data/manifests/
+bash scripts/start_glimmer.sh            # Glimmer vLLM server (:8001, FP8 by default)
+python3 -m unittest discover -s tests    # rule engine, evaluator, audit tools, comparison (72 tests)
+
+.venv-oak/bin/python scripts/capture_oak.py t01 --split train --light night --minutes 10   # record a session
+scripts/make_student.sh s3 data/sessions/t01 data/sessions/t02 ...   # SAM 3.1 labels for what is unlabeled, then train
+python3 scripts/mark_gt.py data/sessions/e01                        # mark arrivals by hand in the browser -> data/gt/e01.json
+python3 scripts/measure.py --eval-set-hash --sessions e01,e02,...   # eval set hash for the policy; freeze it there
+scripts/build_candidates.sh s3 runs/train/s3/student.pt build/calib.npy   # clean + fault builds: 3 engines, 5 HEFs
+python3 scripts/measure_candidates.py s3 --sessions e01,...,u01     # every build on its device -> records + verdict table
+
+.venv-audit/bin/python scripts/audit.py policies/package_entrance.toml runs/records/s3/reference/*.json \
+    runs/records/s3/clean/*.json --model-sha SHA --artifact trt=build/s3/student_fp16.engine \
+    --artifact hailo8=build/s3/student.hef --label s3
+python3 scripts/deploy.py policies/package_entrance.toml runs/records/s3/reference/*.json runs/records/s3/clean/*.json \
+    --model-sha SHA --artifact trt=build/s3/student_fp16.engine --artifact hailo8=build/s3/student.hef \
+    [--audit runs/audits/s3_X.json] --notify URL
+python3 scripts/compare_gates.py                                     # always deploy / false-alert-only / rules / rules + Glimmer
+python3 scripts/dashboard.py                                         # -> runs/dashboard.html
 ```
 
-## Gate
+Live path: `capture_oak.py --stream HOST:8790` sends the camera's JPEG frames to a runner started by `deploy.py`; `scripts/replay.py` streams a recorded session the same way, for tests and for showing what a held build would have done, labeled as a replay. `scripts/measure_delivery.py` runs a build in measurement mode (alerts say TEST, no approval, nothing deployed) to measure `notify_s`.
 
-```bash
-python3 -m unittest discover -s tests                     # rule engine + evaluator tests
-.venv-train/bin/python -m unittest discover -s tests      # also the detector post-processing (numpy, OpenCV)
-python3 -m edgegate.events policies/package_entrance.toml GT_DIR DETS_DIR   # detections → event metrics
-python3 scripts/measure.py hailo build/student.hef --onnx build/student.onnx --host chans@192.168.50.151 \
-    --sessions e01,e02          # device run -> runs/records/*.json (any failure is recorded as a tool failure)
-python3 -m edgegate.gate policies/package_entrance.toml runs/records/*.json --model-sha SHA \
-    --artifact trt=build/student.engine --artifact hailo8=build/student.hef
-scripts/build_candidates.sh s1 runs/train/s1/student.pt build/calib.npy   # clean + fault builds: 3 engines, 5 HEFs
-python3 scripts/measure_candidates.py s1 --sessions e01,e02   # every candidate on its device -> rule verdict table
-```
+## Repository
 
-Audit (after the rules): Glimmer gets the MCP tools in `edgegate/audit_mcp.py` (rule verdicts, eval coverage, per-slice recall by lighting, package size, scene tag or session) and can only propose a HOLD for a backend the rules passed, citing the evidence ids of tool results from that audit.
-
-```bash
-bash scripts/setup_gx10.sh auditenv       # MCP SDK env for the audit
-.venv-audit/bin/python scripts/audit.py policies/package_entrance.toml runs/records/*.json --model-sha SHA \
-    --artifact trt=build/student.engine --artifact hailo8=build/student.hef --repeats 5 --label fp8
-python3 tests/audit_cases.py /tmp/cases   # synthetic wiring cases (made-up numbers, not evidence)
-```
-
-Fault-injected candidates (judged only by their measured metrics): `scripts/inject_fault.py` (BGR swap or missing normalization, built into the ONNX given to the compiler) and the `compile_hailo.py` flags `--calib-limit`, `--precision a8_w4`, `--no-normalization`.
-
-The rules decide; Glimmer can only veto a PASS and explain why. Missing, stale, NaN or failed measurements, a different model or eval set, a deployed file that is not the one measured, or a policy without an eval set all give HOLD. A record also counts only for:
-
-- **its device:** the policy's `[targets]` names each backend's device (a hash of its machine id) and runtime version. A record from another device, a reinstalled OS or another runtime version holds.
-- **its eval set:** the eval set hash is a manifest of every frame's sha256 plus the marks, `frames.csv` and `meta.json`. A changed image changes the hash, and the device's digest of the frames it read must match it.
-- **its evaluation settings:** `eval_config_sha256` covers the policy's `[events]` (zone, dwell, windows) and `[measure]` (class order, detection threshold). Changing them voids older records; thresholds are applied at decision time and are not in it.
-
-**What the metrics are:** a recorded-session evaluation. Alert times come from the recorded frame times, and device latency is a separate metric. Alert delivery comes in through `notify_s`, the measured delay from the deciding frame to the alert received (below), added to each alert time before the 10 s check; until it is measured (`notify_measured = false`) the gate holds every backend. `notify_s` is part of `[events]`, so it is measured before the candidates are: setting it voids older records.
-
-Arrival rule (first version, fixed before evaluation, not tuned): a package seen for 2 s in an empty zone is an arrival, and the alert must be received within 10 s of the package being let go, dwell included; later alerts are recorded as late, not as successes. One alert while it stays; a new arrival needs the zone empty, not just hidden by a person, for 2 s. Scope: a first package into an empty zone; a second package next to the first is not detected, so a marked arrival while another marked package is still there is scored apart (`second_packages`), not in recall. Known limit: when the camera drops out the zone state is unknown, not empty, and packages already there on reconnect are not alerted, so a package that arrived during the outage is never alerted.
-
-## Live path
-
-Only the backends the gate passed run live. `scripts/deploy.py` takes the same records and files as the gate (and an audit record, whose vetoes can only add HOLDs). A HOLD prints its reasons and deploys nothing; there is no override. A PASS writes an approval record to `runs/approvals/` (model, file, device, runtime, eval set, rule settings, the metrics that passed, the record and the audit behind them), copies the file and the runner to the device and starts it. The runner (`scripts/live_device.py`) checks that the approval names its device, its runtime and that exact file, then runs the approved rule settings: frames in, the same letterbox, inference, decoding, NMS and zone rule the measurement scored, and an HTTP POST per arrival (an ntfy topic or a Home Assistant webhook URL).
-
-The camera host streams the same JPEG bytes it records (`capture_oak.py --stream`, `edgegate/stream.py`); `scripts/replay.py` streams a recorded session the same way, for tests and for showing what a held build would have done, labeled as a replay.
-
-```bash
-python3 scripts/deploy.py policies/package_entrance.toml runs/records/s1/reference/*.json runs/records/s1/clean/*.json \
-    --model-sha SHA --artifact trt=build/s1/student_fp16.engine --artifact hailo8=build/s1/student.hef \
-    [--audit runs/audits/X.json] --notify URL
-.venv-oak/bin/python scripts/capture_oak.py l01 --split live --light night --stream JETSON_IP:8790 --stream PI_IP:8790
-python3 scripts/replay.py data/sessions/e01 --stream JETSON_IP:8790    # a recorded session instead of the camera
-python3 scripts/deploy.py --stop trt,hailo8
-```
-
-**Alert delivery (`notify_s`)** is measured before any approval, with the runner in measurement mode: no approval, alerts say TEST, nothing is deployed. Delivery is the time from the frame that decided the arrival to the alert received, both ends on one clock so no device clocks need to agree. With `--phone`, the phone lies face up in view next to the zone and its screen lighting up in the recorded frames is the alert received (the phone's own push delay is in). With `--received`, the camera host subscribes to the alert topic while it streams a session to the device; the hop from the push server to the phone is not in it.
-
-```bash
-python3 scripts/measure_delivery.py start trt build/s1/student_fp16.engine --notify URL
-.venv-oak/bin/python scripts/capture_oak.py m01 --split live --light night --stream JETSON_IP:8790   # place packages
-.venv-train/bin/python scripts/measure_delivery.py report data/sessions/m01 alerts.jsonl --phone X1,Y1,X2,Y2
-# or: subscribe here, stream a recorded session to the device, pair alerts with arrivals
-python3 scripts/measure_delivery.py listen URL received.jsonl &
-python3 scripts/replay.py data/sessions/m03 --stream JETSON_IP:8790
-python3 scripts/measure_delivery.py report data/sessions/m03 alerts.jsonl --received received.jsonl
-```
-
-Measured 10/30 (s0, measurement mode): 7 package drops live on the Jetson, 7 alerts, 0.10–0.12 s from the frame to the decision and 0.63–0.84 s for the POST to ntfy.sh. The phone (a Galaxy with Always On Display) shows an alert as a one-line banner the camera cannot see, so the `--received` way was used: m03 streamed again to each device, deciding frame to alert received at most 0.98 s (Jetson) and 1.13 s (Hailo Pi). A live frame reaches the device about 0.07 s later than a streamed recording does, so `notify_s = 1.2`. The push server to phone hop is not in it.
-
-Dry run 10/30 (s0, a stand-in session of 359 held-out t01 frames, a test policy; not an evaluation): under the real policy both devices were held and nothing was deployed. Under the test policy both passed, started from their approvals and, streamed the session, alerted at exactly the three frame times the recorded-session scoring gives. A model file or device the approval does not name was refused.
+- `edgegate/` — `gate.py` (rules), `events.py` (detections → arrival alerts → scores), `audit.py` and `audit_mcp.py` (Glimmer's tools), `detect.py` (letterbox, decoding, NMS shared by every backend), `stream.py` (frame streaming).
+- `policies/package_entrance.toml` — the task, targets, eval set hash, event rule, thresholds.
+- `scripts/` — capture, labeling, training, export, compile, fault injection, measurement, audit, deploy, live runner, comparison, dashboard.
+- `tests/` — unit tests on synthetic data; `audit_cases.py` builds the synthetic audit cases.
+- `docs/pipeline.svg` — the diagram above.
+- `results/` — a snapshot of `runs/` taken with `scripts/snapshot_results.sh`: every measurement record and audit, the verdict table per student, the gate comparison and the dashboard page, so the tables above can be checked without the devices (`results/snapshot_at.txt` says when).
+- `data/`, `build/`, `runs/`, `logs/` are not in git (recordings, models, training outputs, the live records).

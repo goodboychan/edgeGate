@@ -11,6 +11,7 @@ mkdir -p results/records results/audits results/approvals
 rsync -a --delete --prune-empty-dirs --include='*/' --include='*.json' --exclude='*' runs/records/ results/records/
 rsync -a --delete runs/audits/ results/audits/
 [ -d runs/approvals ] && rsync -a --delete runs/approvals/ results/approvals/
+[ -d runs/teach ] && rsync -a --delete runs/teach/ results/teach/
 for r in runs/records/*/; do
     run=$(basename "$r")
     [ -f "build/$run/student.onnx" ] || continue

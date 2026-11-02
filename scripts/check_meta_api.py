@@ -39,8 +39,8 @@ def load_key():
     return key
 
 
-def call(method, path, key, body=None, content_type="application/json"):
-    req = urllib.request.Request(BASE + path, data=body, method=method)
+def call(method, path, key, body=None, content_type="application/json", base=BASE):
+    req = urllib.request.Request(base + path, data=body, method=method)
     req.add_header("Authorization", f"Bearer {key}")
     if body is not None:
         req.add_header("Content-Type", content_type)
