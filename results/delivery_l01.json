@@ -1,0 +1,42 @@
+{
+  "session": "l01",
+  "alerts": "data/sessions/l01/alerts_trt.jsonl",
+  "phone_box": [
+    0.345,
+    0.72,
+    0.37,
+    0.745
+  ],
+  "rise": 25.0,
+  "blink": true,
+  "results": [
+    {
+      "seq": 1165,
+      "t": 80.7871,
+      "status": 200,
+      "phone_lit_t": 83.1865,
+      "delay_s": 2.399
+    },
+    {
+      "seq": 2970,
+      "t": 201.0805,
+      "status": 200,
+      "phone_lit_t": 203.1466,
+      "delay_s": 2.066
+    },
+    {
+      "seq": 6547,
+      "t": 439.4672,
+      "status": 200,
+      "phone_lit_t": 441.3998,
+      "delay_s": 1.933
+    },
+    {
+      "seq": 7538,
+      "t": 505.512,
+      "status": 200,
+      "phone_lit_t": 507.2446,
+      "delay_s": 1.733
+    }
+  ]
+}

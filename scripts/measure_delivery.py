@@ -4,11 +4,13 @@
 Delivery is the time from the frame that decides an arrival to the alert received.
 Both ends are read off one clock, so no device clocks need to agree. Two ways:
 
-  --phone     the phone lies face up in view next to the zone, and its screen
-              lighting up in the recorded frames is the alert received (camera clock;
-              the phone's own push delay is in). Needs a phone whose screen visibly
-              changes on an alert: a Galaxy with Always On Display only shows a
-              one-line banner, which the camera cannot tell apart (10/30).
+  --phone     the phone lies in view next to the zone, and its screen lighting up
+              (or, with --blink, its camera-flash notification blinking) in the
+              recorded frames is the alert received (camera clock; the phone's own
+              push delay is in). Needs a phone that visibly changes on an alert: a
+              Galaxy with Always On Display only shows a one-line banner, which the
+              camera cannot tell apart (10/30); the same phone face down with the
+              flash notification on gives two clear pulses (11/3, l01).
   --received  this host subscribes to the alert topic (listen) while it streams a
               session to the device: capture time and arrival on one host clock. The
               last hop, from the push server to the phone, is not in it.
@@ -38,6 +40,7 @@ import json
 import subprocess
 import sys
 import time
+from statistics import median
 import urllib.request
 from pathlib import Path
 
@@ -115,14 +118,36 @@ def phone_level(path, box):
     return float(g[int(y1 * h):int(y2 * h), int(x1 * w):int(x2 * w)].mean())
 
 
+def first_lit(times, levels, t_alert, rise, blink=False, lookback=0.3, fall=0.6):
+    """Index of the first frame at or after t_alert in which the phone answers.
+
+    A screen coming on is a step: the level rises `rise` gray levels above the median of
+    the previous `lookback` seconds. A flash notification (blink) is a pulse: the same
+    rise, and within `fall` seconds the level drops back by at least half of it. The
+    comparison is local because the person walking out of the frame moves the level
+    slowly, and the shadow they cast over the phone recovers as a step that never falls
+    back; with blink only the pulse counts."""
+    for i, (t, lv) in enumerate(zip(times, levels)):
+        if t < t_alert:
+            continue
+        prev = [l for tt, l in zip(times, levels) if t - lookback <= tt < t - 0.05]
+        if not prev or lv - median(prev) < rise:
+            continue
+        if not blink:
+            return i
+        after = [l for tt, l in zip(times, levels) if t < tt <= t + fall]
+        if after and lv - min(after) >= rise / 2:
+            return i
+    return None
+
+
 def report(a):
     if a.received:
         return report_received(a)
-    import numpy as np  # report runs in .venv-train (numpy, OpenCV); start needs neither
     sess = Path(a.session)
     box = [float(v) for v in a.phone.split(",")]
     rows = [(int(r["seq"]), float(r["t"])) for r in csv.DictReader(open(sess / "frames.csv"))]
-    ts = np.array([t for _, t in rows])
+    ts = [t for _, t in rows]
     # The runner's log keeps every stream; this session's alerts are the ones whose
     # capture clock started when the session did (capture_wall - t = session start).
     t0 = _parse_time(json.loads((sess / "meta.json").read_text())["started_utc"]).timestamp()
@@ -130,11 +155,10 @@ def report(a):
     for al in map(json.loads, open(a.alerts)):
         if abs(al["capture_wall"] - al["t"] - t0) > 5 or al["t"] > ts[-1]:
             continue
-        before = [i for i in range(len(rows)) if al["t"] - 1.0 <= ts[i] < al["t"]]
-        after = [i for i in range(len(rows)) if al["t"] <= ts[i] <= al["t"] + a.window]
-        base = np.median([phone_level(sess / "frames" / f"{rows[i][0]:06d}.jpg", box) for i in before])
-        lit = next((i for i in after
-                    if phone_level(sess / "frames" / f"{rows[i][0]:06d}.jpg", box) > base + a.rise), None)
+        idx = [i for i in range(len(rows)) if al["t"] - 1.0 <= ts[i] <= al["t"] + a.window]
+        levels = [phone_level(sess / "frames" / f"{rows[i][0]:06d}.jpg", box) for i in idx]
+        j = first_lit([ts[i] for i in idx], levels, al["t"], a.rise, a.blink)
+        lit = None if j is None else idx[j]
         delay = None if lit is None else round(ts[lit] - al["t"], 3)
         out.append({"seq": al["seq"], "t": al["t"], "status": al["status"], "phone_lit_t":
                     None if lit is None else float(ts[lit]), "delay_s": delay})
@@ -145,7 +169,7 @@ def report(a):
           + (f"{max(seen):.2f} s" if seen else "-"))
     if a.out:
         Path(a.out).write_text(json.dumps({"session": sess.name, "alerts": a.alerts, "phone_box": box,
-                                           "rise": a.rise, "results": out}, indent=2) + "\n")
+                                           "rise": a.rise, "blink": a.blink, "results": out}, indent=2) + "\n")
 
 
 def main():
@@ -166,7 +190,9 @@ def main():
     how = r.add_mutually_exclusive_group(required=True)
     how.add_argument("--phone", help="x1,y1,x2,y2 of the phone, normalized")
     how.add_argument("--received", help="arrivals logged by listen while the session streamed")
-    r.add_argument("--rise", type=float, default=25.0, help="gray levels above the second before = lit")
+    r.add_argument("--rise", type=float, default=25.0, help="gray levels above the 0.3 s before = lit")
+    r.add_argument("--blink", action="store_true",
+                   help="the phone answers with a flash notification: count a pulse, not a step")
     r.add_argument("--window", type=float, default=15.0, help="seconds to look for the phone after an alert")
     r.add_argument("--out", help="write the results here (JSON)")
     a = ap.parse_args()

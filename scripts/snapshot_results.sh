@@ -30,5 +30,7 @@ done
 { grep -rl '/home/[a-z0-9_]*/edgegate/' results || true; } | xargs -r sed -i -E 's#/home/[a-z0-9_]+/edgegate/##g'
 # deploy.py's refusal on s3, captured 11/3, is evidence too (logs/ is not in git)
 [ -f logs/deploy_s3_hold.txt ] && cp logs/deploy_s3_hold.txt results/deploy_s3_hold.txt
+# alert delivery reports (measure_delivery.py report): the push-server hop (10/30) and the phone hop (11/3)
+for f in runs/delivery_*.json; do [ -f "$f" ] && cp "$f" results/; done
 date -u +%Y-%m-%dT%H:%M:%SZ > results/snapshot_at.txt
 echo "results/ written at $(cat results/snapshot_at.txt): $(find results -type f | wc -l) files, $(du -sh results | cut -f1)"
