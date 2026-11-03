@@ -170,6 +170,10 @@ Everything a judge should know before trusting the numbers above.
 
 All recorded with the one OAK-D Pro, fixed in place at the indoor drop zone, 1280×720 at 15 fps. Train boxes (brown, black, gray) and eval boxes (white, a robot-arm box) are different objects, and each set was kept out of the other's sessions. The eval sessions are public on Hugging Face as [chans/edgegate-package-entrance-eval](https://huggingface.co/datasets/chans/edgegate-package-entrance-eval) with people, the monitor and the hallway blurred (`scripts/blur_sessions.py`); the blurred JPEGs do not reproduce the policy's eval set hash, so the manifests with the original per-frame hashes are included, and the originals can be shared with reviewers on request.
 
+![The five boxes: brown, black and gray were trained on; white and robot-arm were never seen before the eval sessions](docs/boxes.jpg)
+
+Box widths: brown 22 cm, black 27, gray 26 (train); white 27, robot-arm 32 (eval).
+
 | session | split | light | length | used for |
 |---|---|---|---|---|
 | t01–t05 | train | lights on; day; hallway only; one floor lamp; lights on (hard negatives) | 10–15 min each | SAM 3.1 labels, student training |
