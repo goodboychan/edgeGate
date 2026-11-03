@@ -64,6 +64,8 @@ def measure(a, names, build, out):
         queues["onnx"].append(("reference_onnx", cmd("onnx", onnx, out / "reference")))
     for c in names:
         for runtime, f in CANDIDATES.get(c, {}).items():
+            if a.runtimes and runtime not in a.runtimes:
+                continue
             queues[runtime].append((f"{c}_{runtime}", cmd(runtime, build / f, out / c)))
     (out / "logs").mkdir(parents=True, exist_ok=True)
     threads = [threading.Thread(target=run_queue, args=(q, out / "logs")) for q in queues.values() if q]
@@ -111,6 +113,8 @@ def main():
     ap.add_argument("--sessions", help="comma-separated eval session names")
     ap.add_argument("--only", help=f"comma-separated, from reference,{','.join(CANDIDATES)} (default: all)")
     ap.add_argument("--table-only", action="store_true", help="only judge the records already there")
+    ap.add_argument("--runtimes", help="comma-separated, from trt,hailo: measure only on these devices "
+                                       "(the table still shows every backend)")
     ap.add_argument("--policy", default=str(ROOT / "policies/package_entrance.toml"))
     ap.add_argument("--data", default=str(ROOT / "data"))
     a = ap.parse_args()
@@ -118,6 +122,9 @@ def main():
     unknown = set(names) - {"reference", *CANDIDATES}
     if unknown:
         ap.error(f"unknown candidates {sorted(unknown)}")
+    a.runtimes = a.runtimes.split(",") if a.runtimes else None
+    if a.runtimes and set(a.runtimes) - {"trt", "hailo"}:
+        ap.error(f"unknown runtimes {sorted(set(a.runtimes) - {'trt', 'hailo'})}")
     build, out = ROOT / "build" / a.run, ROOT / "runs/records" / a.run
     if not a.table_only:
         if not a.sessions:
