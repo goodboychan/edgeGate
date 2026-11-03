@@ -1,2 +1,2 @@
-replaying e03 t 80.0-100.0 s at 1.0x to 192.168.50.67:8790
-192.168.50.67:8790: sent 301, dropped 0
+replaying e03 t 80.0-100.0 s at 1.0x to jetson:8790
+jetson:8790: sent 301, dropped 0
