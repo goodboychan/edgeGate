@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compile the student ONNX to a Hailo-8 HEF with the Hailo Dataflow Compiler.
 
-Runs on an x86 host with the DFC installed (kepler). The network ends at the six
+Runs on an x86 host with the DFC installed (an x86 host with the DFC). The network ends at the six
 YOLOv8 head convolutions (box and class per scale); DFL decoding and NMS run on
 the host CPU, as is usual for YOLOv8 on Hailo. The HEF takes uint8 RGB 640x640;
 normalization to [0, 1] is folded into the network.

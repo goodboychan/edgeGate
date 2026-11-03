@@ -14,7 +14,7 @@
 #   w4       4-bit weights (Hailo)
 #   calib10  10 calibration images instead of all of them (Hailo)
 #
-# Hosts, from the environment: JETSON (default jetson); DFC_HOST (default kepler),
+# Hosts, from the environment: JETSON (default jetson); DFC_HOST (default dfc-host),
 # DFC_JUMP (a host to hop through, if the DFC host is not reachable directly) and
 # DFC_PY (the DFC's python, default python3). Files go to and from the DFC host as tar
 # streams, so nothing is left on a hop.
@@ -26,7 +26,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT=$ROOT/build/$RUN
 PY=$ROOT/.venv-train/bin/python
 JETSON=${JETSON:-jetson}
-DFC_HOST=${DFC_HOST:-kepler}
+DFC_HOST=${DFC_HOST:-dfc-host}
 DFC_PY=${DFC_PY:-python3}
 REMOTE=edgegate_hackathon/build/$RUN
 SSH=(ssh -o BatchMode=yes)

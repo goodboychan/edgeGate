@@ -1,0 +1,21 @@
+name: tests
+# No hardware, no keys: the unit tests on synthetic data, then the gate comparison and the
+# dashboard rebuilt from the committed results/ as of the snapshot time, checked against
+# the committed comparison table.
+on: [push, pull_request]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy opencv-python-headless mcp
+      - run: python -m unittest discover -s tests
+      - name: Replay the verdicts from results/ and compare with the committed table
+        run: |
+          NOW=$(cat results/snapshot_at.txt)
+          python scripts/compare_gates.py --records results/records --audits results/audits --now "$NOW" > /tmp/compare_gates.md
+          diff /tmp/compare_gates.md results/compare_gates.md
+          python scripts/dashboard.py --records results/records --audits results/audits --approvals results/approvals --now "$NOW" --out /tmp/dashboard.html

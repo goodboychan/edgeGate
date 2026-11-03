@@ -2,7 +2,7 @@
 """Export the student detector (YOLOv8n family, Ultralytics) to a fixed-shape ONNX.
 
 The same ONNX feeds both backends: TensorRT on the Jetson and the Hailo DFC on
-kepler. Fixed batch 1 and a fixed input size keep both compilers happy. Prints the
+an x86 host with the DFC. Fixed batch 1 and a fixed input size keep both compilers happy. Prints the
 sha256 that measurement records use as model_sha256.
 
 Usage:  .venv-train/bin/python scripts/export_onnx.py WEIGHTS.pt OUT.onnx [--imgsz 640]
