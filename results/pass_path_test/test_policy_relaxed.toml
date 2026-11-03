@@ -1,0 +1,94 @@
+# TEST POLICY, made 11/4 to show the PASS path on camera. NOT an evaluation and NOT a real
+# approval: false_alerts_per_h is raised from 1.0 to 5.0 so that s3 on the Jetson passes.
+# [events] and [measure] are byte-identical to policies/package_entrance.toml, so the
+# records keep their eval_config_sha256. Under the real policy the same records are HOLD.
+# Deployment policy for "Tell me when a package is left at the entrance".
+# The rule engine (edgegate/gate.py) decides PASS/HOLD per backend from this file
+# and the measurement records. Anything missing, stale, NaN or failed is a HOLD.
+# The eval set and the thresholds were frozen 11/1, before any candidate was
+# measured on it; the thresholds are the 10/28 values, unchanged. v2 (11/2) adds
+# e06, recorded and marked after s1-s4 were measured on v1 and frozen before any
+# candidate was measured on it; v1 was 8c78e3a4... (e01-e05, u01).
+
+[task]
+name = "package-at-entrance"
+instruction = "Tell me when a package is left at the entrance."
+# Where and when the skill runs. The audit agent reads this; the rules do not.
+context = "Indoor staged drop zone in a room, standing in for the entrance. The camera watches around the clock, including evenings and nights with the room lights low."
+# sha256 of the eval set manifest; records measured on anything else are rejected.
+# e01-e06 and u01 (2 h 50 min: night with one lamp, room lights on, a rainy day,
+# and 2 h unattended with no package): scripts/measure.py --eval-set-hash
+# --sessions e01,e02,e03,e04,e05,e06,u01
+eval_set_sha256 = "b7e333a9b347e66123e017752350c0aafcc242247a64241c43f75f52571fa4ec"
+# Measurements older than this are stale.
+max_age_hours = 24
+# Backend whose record is the accuracy reference for max_drop checks.
+reference_backend = "onnx-gx10"
+
+# Deployment target per backend: a record counts only if it was measured on this
+# device with this runtime. device_id is sha256("edgegate:" + /etc/machine-id)[:32],
+# so the raw machine id never leaves the device (scripts/run_backend.py). A new
+# device, a reinstalled OS or a runtime upgrade means measuring again.
+[targets]
+onnx-gx10 = { device_id = "f2c8a7b13d7e38457fbe9cf87fe9120e", runtime = "onnxruntime 1.31.1" }
+trt = { device_id = "28e2cf10ddf70d2ef8221c82c013d27d", runtime = "tensorrt 10.3.0" }
+hailo8 = { device_id = "8db76e25b0fb515f0893a1d0c62e06d7", runtime = "hailort 4.20.0" }
+
+# How the device output is read. Hashed with [events] into eval_config_sha256.
+[measure]
+classes = ["package", "person"]  # model output order (scripts/train_student.py)
+det_conf = 0.25                  # detections below this are dropped on the device
+
+# How per-frame detections become arrival alerts (edgegate/events.py).
+# Fixed for the first version (10/27): not tuned values. Check false alerts, misses
+# and delays on real sessions; change them only before an evaluation, never after.
+[events]
+# Normalized [0, 1] polygon; a box counts when its bottom-center is inside.
+# Drawn on the mounted camera (10/29) before any session was recorded: from the
+# doorway threshold over the light floor and the front of the gray mat, clear of
+# the fixed boxes and bag on the left and the desk on the right. The door stays open.
+zone = [[0.39, 0.5625], [0.54, 0.5625], [0.69, 0.72], [0.69, 0.92], [0.37, 0.92]]
+score_min = 0.5
+dwell_s = 2.0        # package seen this long in an empty zone = arrival
+gap_s = 1.0          # missed detections shorter than this do not restart the dwell
+clear_s = 2.0        # zone empty (not hidden) this long = package removed
+hidden_overlap = 0.3 # a person box covering this much of the package = hidden, not empty
+# Scope: a first package into an empty zone. A marked arrival while another marked
+# package is still there is scored apart (second_packages), not in recall (events.py).
+reconnect_s = 2.0    # no frames this long = camera away, zone state unknown
+match_window_s = 10.0  # release to alert received, dwell included
+notify_s = 1.2       # measured deciding frame -> alert at the push server, added before the 10 s check
+# Measured 10/30 with s0 in measurement mode (scripts/measure_delivery.py): 7 live
+# drops on the Jetson (m01, m02, m03; 7 of 7 alerted), then m03 streamed again to each
+# device while this host subscribed to the ntfy topic: deciding frame -> alert received,
+# one clock. Max 0.98 s (trt) and 1.13 s (hailo8); a live frame reaches the device
+# about 0.07 s later than a streamed recording does (trt live 0.10-0.12 s to the
+# decision vs 0.05 s), so 1.13 + 0.07 rounds to 1.2.
+# Two states, only the first measured: (1) deciding frame -> alert at the push server,
+# 1.2 s, in notify_s; (2) push server -> the phone's screen: NOT measured (the Galaxy's
+# always-on display did not visibly change on an alert, 10/30). So the 10 s check as
+# applied is release -> alert at the push server + 1.2 s; "received on the phone within
+# 10 s" is not verified by any record. A phone-side value (the screen lighting up in the
+# recorded frames, measure_delivery.py --phone) goes into a new policy version, since
+# changing anything in [events] voids every record.
+notify_measured = true
+
+# min / max are absolute limits; max_drop is the allowed drop below the reference.
+[thresholds]
+event_recall = { min = 0.9, max_drop = 0.05 }
+false_alerts_per_h = { max = 5.0 }
+duplicate_alerts = { max = 0 }
+detection_delay_s_p95 = { max = 5.0 }
+latency_ms_p95 = { max = 100.0 }
+peak_mem_mb = { max = 2048.0 }
+
+# Per-backend overrides replace the whole entry for that metric.
+[backends.hailo8]
+latency_ms_p95 = { max = 50.0 }
+
+# Audit slices (edgegate/audit.py). The rules never read these; they only group
+# the per-event results the audit agent can ask for. Fixed before evaluation.
+[slices]
+# Package size = sqrt(box area) as a fraction of the frame, from the marked box:
+# small < 0.08 <= medium < 0.15 <= large; events without a marked box are "unknown".
+size_edges = [0.08, 0.15]

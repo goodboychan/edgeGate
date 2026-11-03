@@ -9,8 +9,8 @@
       "false_alerts_per_h": 3.179077711530583,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": 3.1993999999999687,
-      "latency_ms_p95": 44.04958273516968,
-      "peak_mem_mb": 322.73046875
+      "latency_ms_p95": 38.66455634124572,
+      "peak_mem_mb": 323.078125
     },
     "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
     "replay": false
@@ -28,13 +28,13 @@
       "false_alerts_per_h": 3.179077711530583,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": 3.1993999999999687,
-      "latency_ms_p95": 19.446642545517534,
-      "peak_mem_mb": 391.81640625
+      "latency_ms_p95": 19.377052725758404,
+      "peak_mem_mb": 401.4296875
     },
     "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
     "artifact_sha256": "90a65eb7a0cba026e926f9618c73b25ded051d17700a3acbc2e63cf166e46f87",
     "measured": true,
-    "measured_at": "2026-11-02T17:34:25+00:00",
+    "measured_at": "2026-11-03T19:06:37+00:00",
     "replay": false
   },
   {
@@ -50,145 +50,13 @@
       "false_alerts_per_h": 2.1193851410203886,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": 3.1993999999999687,
-      "latency_ms_p95": 15.125352278118953,
-      "peak_mem_mb": 231.59375
+      "latency_ms_p95": 15.36519534420222,
+      "peak_mem_mb": 233.078125
     },
     "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
     "artifact_sha256": "0457001f6fe5accbe137e36d189b9497b9bcfbf8f5c7cdd4d8f462263aa9c2cb",
     "measured": true,
-    "measured_at": "2026-11-02T17:23:47+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "bgr",
-    "backend": "trt",
-    "verdict": "HOLD",
-    "reasons": [
-      "eval_set: measured on a different eval set",
-      "stale: measured_at 2026-11-01T12:06:35+00:00 is older than 24 h"
-    ],
-    "metrics": {
-      "event_recall": 0.6818181818181818,
-      "false_alerts_per_h": 1.8766133260402413,
-      "duplicate_alerts": 1,
-      "detection_delay_s_p95": 4.532300000000021,
-      "latency_ms_p95": 20.613787582260557,
-      "peak_mem_mb": 418.625
-    },
-    "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
-    "artifact_sha256": "f3ebc31b70b3e190f0688acba5192ca33722db6b62c1f794fd821faad4dce86f",
-    "measured": true,
-    "measured_at": "2026-11-01T12:06:35+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "bgr",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "eval_set: measured on a different eval set",
-      "stale: measured_at 2026-11-01T11:42:53+00:00 is older than 24 h"
-    ],
-    "metrics": {
-      "event_recall": 0.6363636363636364,
-      "false_alerts_per_h": 1.1259679956241448,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": 2.9995999999999867,
-      "latency_ms_p95": 16.78541098954156,
-      "peak_mem_mb": 228.5625
-    },
-    "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
-    "artifact_sha256": "95efc2312199b686e42ef223e652cce1c398dc6e9a365ef87989168b35a9811e",
-    "measured": true,
-    "measured_at": "2026-11-01T11:42:53+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "no_norm",
-    "backend": "trt",
-    "verdict": "HOLD",
-    "reasons": [
-      "eval_set: measured on a different eval set",
-      "stale: measured_at 2026-11-01T13:50:44+00:00 is older than 24 h"
-    ],
-    "metrics": {
-      "event_recall": 0.0,
-      "false_alerts_per_h": 0.0,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": null,
-      "latency_ms_p95": 44.658877508481964,
-      "peak_mem_mb": 407.47265625
-    },
-    "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
-    "artifact_sha256": "5fb339495234b40954b0a7e560e50e63cce2850d4ee5978c4ffb6e9d8431ae1d",
-    "measured": true,
-    "measured_at": "2026-11-01T13:50:44+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "no_norm",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "eval_set: measured on a different eval set",
-      "stale: measured_at 2026-11-01T13:32:14+00:00 is older than 24 h"
-    ],
-    "metrics": {
-      "event_recall": 0.0,
-      "false_alerts_per_h": 0.0,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": null,
-      "latency_ms_p95": 40.17329549242277,
-      "peak_mem_mb": 248.921875
-    },
-    "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
-    "artifact_sha256": "50012a86f40bed6931e3737e8423aec02c7955ce50749c0e4b392de590e78cf0",
-    "measured": true,
-    "measured_at": "2026-11-01T13:32:14+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "w4",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "eval_set: measured on a different eval set",
-      "stale: measured_at 2026-11-01T14:07:00+00:00 is older than 24 h"
-    ],
-    "metrics": {
-      "event_recall": 0.4090909090909091,
-      "false_alerts_per_h": 0.0,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": 3.066299999999984,
-      "latency_ms_p95": 14.960088257794268,
-      "peak_mem_mb": 231.734375
-    },
-    "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
-    "artifact_sha256": "92b43dcf341c60c3d07488a07b6a5970a68bbbd214c7fe9fb15ae33ceb22bcdb",
-    "measured": true,
-    "measured_at": "2026-11-01T14:07:00+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "calib10",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "eval_set: measured on a different eval set",
-      "stale: measured_at 2026-11-01T14:42:33+00:00 is older than 24 h"
-    ],
-    "metrics": {
-      "event_recall": 0.6818181818181818,
-      "false_alerts_per_h": 2.2519359912482897,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": 3.1326999999999714,
-      "latency_ms_p95": 15.113240436767228,
-      "peak_mem_mb": 235.578125
-    },
-    "model_sha256": "abd16d3223719344902faaf0c51ddd872e640e253ac5675efecc1deb5174c910",
-    "artifact_sha256": "f3df38db25508fa6bccb0ead7691da772b3f95fae53b2b558868fb47fb3d359b",
-    "measured": true,
-    "measured_at": "2026-11-01T14:42:33+00:00",
+    "measured_at": "2026-11-03T18:55:29+00:00",
     "replay": false
   }
 ]

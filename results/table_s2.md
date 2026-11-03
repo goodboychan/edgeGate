@@ -1,8 +1,8 @@
 | candidate | backend | verdict | recall | false/h | dup | delay p95 s | latency p95 ms | mem MB | held for |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| reference | onnx-gx10 | - | 0.731 | 3.18 | 0 | 3.2 | 44 | 323 |  |
-| clean | trt | HOLD | 0.731 | 3.18 | 0 | 3.2 | 19.4 | 392 | event_recall, false_alerts_per_h |
-| clean | hailo8 | HOLD | 0.731 | 2.12 | 0 | 3.2 | 15.1 | 232 | event_recall, false_alerts_per_h |
+| reference | onnx-gx10 | - | 0.731 | 3.18 | 0 | 3.2 | 38.7 | 323 |  |
+| clean | trt | HOLD | 0.731 | 3.18 | 0 | 3.2 | 19.4 | 401 | event_recall, false_alerts_per_h |
+| clean | hailo8 | HOLD | 0.731 | 2.12 | 0 | 3.2 | 15.4 | 233 | event_recall, false_alerts_per_h |
 | bgr | trt | HOLD | 0.682 | 1.88 | 1 | 4.53 | 20.6 | 419 | eval_set, stale |
 | bgr | hailo8 | HOLD | 0.636 | 1.13 | 0 | 3 | 16.8 | 229 | eval_set, stale |
 | no_norm | trt | HOLD | 0 | 0 | 0 | - | 44.7 | 407 | eval_set, stale |

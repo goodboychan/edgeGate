@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "task": "package-at-entrance",
+  "instruction": "Tell me when a package is left at the entrance.",
+  "backend": "trt",
+  "verdict": "PASS",
+  "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
+  "artifact_sha256": "53b17a8db84cba4ebe027b36b01c5eafe9eccbc55a413b5f8570cd45368fb9c1",
+  "artifact_file": "student_fp16.engine",
+  "device_id": "28e2cf10ddf70d2ef8221c82c013d27d",
+  "runtime": "tensorrt 10.3.0",
+  "device": {
+    "label": "trt",
+    "device_id": "28e2cf10ddf70d2ef8221c82c013d27d",
+    "hostname": "ubuntu",
+    "board": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
+    "runtime": "tensorrt 10.3.0"
+  },
+  "eval_set_sha256": "b7e333a9b347e66123e017752350c0aafcc242247a64241c43f75f52571fa4ec",
+  "eval_config_sha256": "d347ea2a2e62464f53a3f2efcb2213fd96ff82dbf2c617e02892db3c3e5b9b6c",
+  "events": {
+    "zone": [
+      [
+        0.39,
+        0.5625
+      ],
+      [
+        0.54,
+        0.5625
+      ],
+      [
+        0.69,
+        0.72
+      ],
+      [
+        0.69,
+        0.92
+      ],
+      [
+        0.37,
+        0.92
+      ]
+    ],
+    "score_min": 0.5,
+    "dwell_s": 2.0,
+    "gap_s": 1.0,
+    "clear_s": 2.0,
+    "hidden_overlap": 0.3,
+    "reconnect_s": 2.0,
+    "match_window_s": 10.0,
+    "notify_s": 1.2,
+    "notify_measured": true
+  },
+  "measure": {
+    "classes": [
+      "package",
+      "person"
+    ],
+    "det_conf": 0.25
+  },
+  "metrics": {
+    "event_recall": 0.9615384615384616,
+    "false_alerts_per_h": 4.238770282040777,
+    "duplicate_alerts": 0,
+    "late_alerts": 0,
+    "outage_misses": 0,
+    "second_packages": 2,
+    "detection_delay_s_p50": 2.5996000000000095,
+    "detection_delay_s_p95": 3.3326000000000136,
+    "latency_ms_p50": 18.73892603907734,
+    "latency_ms_p95": 19.524034450296313,
+    "peak_mem_mb": 427.95703125
+  },
+  "thresholds": {
+    "event_recall": {
+      "min": 0.9,
+      "max_drop": 0.05
+    },
+    "false_alerts_per_h": {
+      "max": 5.0
+    },
+    "duplicate_alerts": {
+      "max": 0
+    },
+    "detection_delay_s_p95": {
+      "max": 5.0
+    },
+    "latency_ms_p95": {
+      "max": 100.0
+    },
+    "peak_mem_mb": {
+      "max": 2048.0
+    }
+  },
+  "max_age_hours": 24,
+  "record": {
+    "path": "runs/records/s3/clean/trt_53b17a8db84c_2026-11-03T124704+0000.json",
+    "sha256": "70b0d557e2062e4b2a76a6b4edcc651e7f1f3bbe2ac2d13dd1964537bf863cf5",
+    "measured_at": "2026-11-03T12:47:04+00:00"
+  },
+  "audit": null,
+  "policy_sha256": "d946824edf81abfe3ba1ff3aff0fd57f4ec570aaa196a7691af1176fcb8df545",
+  "approved_at": "2026-11-03T19:45:07+00:00"
+}

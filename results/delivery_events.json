@@ -1,0 +1,42 @@
+{
+  "events": {
+    "zone": [
+      [
+        0.39,
+        0.5625
+      ],
+      [
+        0.54,
+        0.5625
+      ],
+      [
+        0.69,
+        0.72
+      ],
+      [
+        0.69,
+        0.92
+      ],
+      [
+        0.37,
+        0.92
+      ]
+    ],
+    "score_min": 0.5,
+    "dwell_s": 2.0,
+    "gap_s": 1.0,
+    "clear_s": 2.0,
+    "hidden_overlap": 0.3,
+    "reconnect_s": 2.0,
+    "match_window_s": 10.0,
+    "notify_s": 1.2,
+    "notify_measured": true
+  },
+  "measure": {
+    "classes": [
+      "package",
+      "person"
+    ],
+    "det_conf": 0.25
+  }
+}

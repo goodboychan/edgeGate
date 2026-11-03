@@ -9,8 +9,8 @@
       "false_alerts_per_h": 4.94523199571424,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": 3.7992000000000417,
-      "latency_ms_p95": 93.85706393513823,
-      "peak_mem_mb": 414.8203125
+      "latency_ms_p95": 98.12401208328077,
+      "peak_mem_mb": 415.5546875
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "replay": false
@@ -28,13 +28,13 @@
       "false_alerts_per_h": 4.94523199571424,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": 3.7992000000000417,
-      "latency_ms_p95": 22.877583251101896,
-      "peak_mem_mb": 438.05078125
+      "latency_ms_p95": 22.879925731103867,
+      "peak_mem_mb": 431.3359375
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "8c876a33df3d79305b60c427e73178f2b8e570e1667a8aab437d0a0ecf791d52",
     "measured": true,
-    "measured_at": "2026-11-02T19:09:58+00:00",
+    "measured_at": "2026-11-03T16:08:37+00:00",
     "replay": false
   },
   {
@@ -50,152 +50,13 @@
       "false_alerts_per_h": 4.94523199571424,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": 3.332599999999985,
-      "latency_ms_p95": 20.918281748890877,
-      "peak_mem_mb": 251.59375
+      "latency_ms_p95": 21.472642850130796,
+      "peak_mem_mb": 253.234375
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "06ab8841f920e87730ac89d01e05aa744c840d30bd84d724cb50c71135b9bfa9",
     "measured": true,
-    "measured_at": "2026-11-02T19:03:23+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "bgr",
-    "backend": "trt",
-    "verdict": "HOLD",
-    "reasons": [
-      "event_recall: 0.692308 < min 0.9",
-      "event_recall: 0.692308 is 0.153846 below reference 0.846154 (max_drop 0.05)",
-      "false_alerts_per_h: 5.29846 > max 1",
-      "duplicate_alerts: 1 > max 0"
-    ],
-    "metrics": {
-      "event_recall": 0.6923076923076923,
-      "false_alerts_per_h": 5.298462852550972,
-      "duplicate_alerts": 1,
-      "detection_delay_s_p95": 3.3326000000000136,
-      "latency_ms_p95": 23.347968130838126,
-      "peak_mem_mb": 457.32421875
-    },
-    "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
-    "artifact_sha256": "ff5095034f0c40c1879a15fade46c12ad5e5f11af0b2be80943f5ff70cfccd58",
-    "measured": true,
-    "measured_at": "2026-11-03T03:41:34+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "bgr",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "event_recall: 0.769231 < min 0.9",
-      "event_recall: 0.769231 is 0.0769231 below reference 0.846154 (max_drop 0.05)",
-      "false_alerts_per_h: 3.17908 > max 1",
-      "duplicate_alerts: 2 > max 0"
-    ],
-    "metrics": {
-      "event_recall": 0.7692307692307693,
-      "false_alerts_per_h": 3.179077711530583,
-      "duplicate_alerts": 2,
-      "detection_delay_s_p95": 3.3326000000000136,
-      "latency_ms_p95": 20.407551317475736,
-      "peak_mem_mb": 251.375
-    },
-    "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
-    "artifact_sha256": "ef1959601df3fce648bc63481c342d68b22b5836ae1864c2e631a83bd3bf56d3",
-    "measured": true,
-    "measured_at": "2026-11-03T04:50:45+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "no_norm",
-    "backend": "trt",
-    "verdict": "HOLD",
-    "reasons": [
-      "event_recall: 0 < min 0.9",
-      "event_recall: 0 is 0.846154 below reference 0.846154 (max_drop 0.05)",
-      "detection_delay_s_p95: missing or not a finite number: None"
-    ],
-    "metrics": {
-      "event_recall": 0.0,
-      "false_alerts_per_h": 0.0,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": null,
-      "latency_ms_p95": 53.57793064904399,
-      "peak_mem_mb": 440.47265625
-    },
-    "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
-    "artifact_sha256": "4f3132f05a0e8bb18bc46f94d5eb4a0c80b33f4f606a44cbc582c24252a94318",
-    "measured": true,
-    "measured_at": "2026-11-03T05:53:58+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "no_norm",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "event_recall: 0.269231 < min 0.9",
-      "event_recall: 0.269231 is 0.576923 below reference 0.846154 (max_drop 0.05)",
-      "false_alerts_per_h: 3.17908 > max 1"
-    ],
-    "metrics": {
-      "event_recall": 0.2692307692307692,
-      "false_alerts_per_h": 3.179077711530583,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": 2.5328999999999837,
-      "latency_ms_p95": 30.79694039770402,
-      "peak_mem_mb": 253.765625
-    },
-    "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
-    "artifact_sha256": "5cd23d5157b3b231a85246e60376d6b4cee7e657289834dcab9650f6b403c959",
-    "measured": true,
-    "measured_at": "2026-11-03T06:00:15+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "w4",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "event_recall: 0.307692 < min 0.9",
-      "event_recall: 0.307692 is 0.538462 below reference 0.846154 (max_drop 0.05)"
-    ],
-    "metrics": {
-      "event_recall": 0.3076923076923077,
-      "false_alerts_per_h": 0.35323085683673144,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": 3.3992999999999824,
-      "latency_ms_p95": 21.195300784893334,
-      "peak_mem_mb": 247.390625
-    },
-    "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
-    "artifact_sha256": "294830dc101ce58c2e4aae2ef24d54294951d5b3b2c9a48da2f4d90e74a0e59f",
-    "measured": true,
-    "measured_at": "2026-11-03T06:51:51+00:00",
-    "replay": false
-  },
-  {
-    "candidate": "calib10",
-    "backend": "hailo8",
-    "verdict": "HOLD",
-    "reasons": [
-      "event_recall: 0.884615 < min 0.9",
-      "false_alerts_per_h: 3.88554 > max 1",
-      "duplicate_alerts: 2 > max 0"
-    ],
-    "metrics": {
-      "event_recall": 0.8846153846153846,
-      "false_alerts_per_h": 3.885539425204046,
-      "duplicate_alerts": 2,
-      "detection_delay_s_p95": 3.066100000000006,
-      "latency_ms_p95": 21.063370746560395,
-      "peak_mem_mb": 245.234375
-    },
-    "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
-    "artifact_sha256": "13b69276f3522b6790d62cba304f92b887acdea0b86016e230e6c3ff8ccb0904",
-    "measured": true,
-    "measured_at": "2026-11-03T07:44:50+00:00",
+    "measured_at": "2026-11-03T16:03:43+00:00",
     "replay": false
   }
 ]
