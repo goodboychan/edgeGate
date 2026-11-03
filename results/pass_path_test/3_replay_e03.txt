@@ -1,7 +1,2 @@
-Traceback (most recent call last):
-  File "scripts/replay.py", line 56, in <module>
-    main()
-  File "scripts/replay.py", line 31, in main
-    rows = [(int(r["seq"]), float(r["t"])) for r in csv.DictReader(open(sess / "frames.csv"))]
-                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: 'e03/frames.csv'
+replaying e03 t 80.0-100.0 s at 1.0x to 192.168.50.67:8790
+192.168.50.67:8790: sent 301, dropped 0
