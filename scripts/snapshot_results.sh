@@ -12,6 +12,7 @@ rsync -a --delete --prune-empty-dirs --include='*/' --include='*.json' --exclude
 rsync -a --delete runs/audits/ results/audits/
 [ -d runs/approvals ] && rsync -a --delete runs/approvals/ results/approvals/
 [ -d runs/teach ] && rsync -a --delete runs/teach/ results/teach/
+[ -d runs/audits_synthetic ] && rsync -a --delete runs/audits_synthetic/ results/audits_synthetic/
 for r in runs/records/*/; do
     run=$(basename "$r")
     [ -f "build/$run/student.onnx" ] || continue
