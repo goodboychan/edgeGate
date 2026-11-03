@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "label": "s4_w4",
+  "repeat": 0,
+  "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
+  "artifacts": {
+    "hailo8": "294830dc101ce58c2e4aae2ef24d54294951d5b3b2c9a48da2f4d90e74a0e59f"
+  },
+  "records": [
+    "runs/records/s4/w4/hailo8_294830dc101c_2026-11-02T084413+0000.json",
+    "runs/records/s4/w4/hailo8_294830dc101c_2026-11-03T024614+0000.json",
+    "runs/records/s4/w4/hailo8_294830dc101c_2026-11-03T065151+0000.json",
+    "runs/records/s4/reference/onnx-gx10_6cbc104441d8_2026-11-02T080945+0000.json",
+    "runs/records/s4/reference/onnx-gx10_6cbc104441d8_2026-11-02T211545+0000.json"
+  ],
+  "reasoning": "medium",
+  "temperature": 1.0,
+  "url": "http://127.0.0.1:8001/v1/chat/completions",
+  "audited_at": "2026-11-03T07:49:20+00:00",
+  "wall_s": 198.0,
+  "rules": [
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "event_recall",
+          "0.307692 < min 0.9"
+        ],
+        [
+          "event_recall",
+          "0.307692 is 0.538462 below reference 0.846154 (max_drop 0.05)"
+        ]
+      ]
+    }
+  ],
+  "final": [
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "event_recall",
+          "0.307692 < min 0.9"
+        ],
+        [
+          "event_recall",
+          "0.307692 is 0.538462 below reference 0.846154 (max_drop 0.05)"
+        ]
+      ],
+      "vetoed_by": null
+    }
+  ],
+  "vetoes": {},
+  "rejected": [],
+  "tool_calls": [
+    {
+      "name": "gate_decisions",
+      "args": {},
+      "result": "{\"evidence_id\": \"E1\", \"backends\": {\"hailo8\": {\"verdict\": \"HOLD\", \"reasons\": [\"event_recall: 0.307692 < min 0.9\", \"event_recall: 0.307692 is 0.538462 below reference 0.846154 (max_drop 0.05)\"], \"device\": {\"label\": \"hailo8\", \"device_id\": \"8db76e25b0fb515f0893a1d0c62e06d7\", \"hostname\": \"raspberrypi-hailo\", \"board\": \"Raspberry Pi 5 Model B Rev 1.0\", \"runtime\": \"hailort 4.20.0\"}, \"metrics\": {\"event_recall\": 0.3076923076923077, \"false_alerts_per_h\": 0.35323085683673144, \"duplicate_alerts\": 0, \"late_alerts\": 3, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 3.1327, \"detection_delay_s_p95\": 3.3992999999999824, \"latency_ms_p50\": 20.71207296103239, \"latency_ms_p95\": 21.195300784893334, \"peak_mem_mb\": 247.390625}}}, \"reference\": {\"backend\": \"onnx-gx10\", \"metrics\": {\"event_recall\": 0.8461538461538461, \"false_alerts_per_h\": 4.94523199571424, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 2.6661, \"detection_delay_s_p95\": 3.7992000000000417, \"latency_ms_p50\": 70.09067398030311, \"latency_ms_p95\": 93.85706393513823, \"peak_mem_mb\": 414.8203125}}, \"thresholds\": {\"event_recall\": {\"min\": 0.9, \"max_drop\": 0.05}, \"false_alerts_per_h\": {\"max\": 1.0}, \"duplicate_alerts\": {\"max\": 0}, \"detection_delay_s_p95\": {\"max\": 5.0}, \"latency_ms_p95\": {\"max\": 100.0}, \"peak_mem_mb\": {\"max\": 2048.0}}, \"backend_overrides\": {\"hailo8\": {\"latency_ms_p95\": {\"max\": 50.0}}}}"
+    },
+    {
+      "name": "eval_coverage",
+      "args": {},
+      "result": "{\"evidence_id\": \"E2\", \"sessions\": 7, \"by_lighting\": {\"day\": {\"sessions\": 2, \"hours\": 2.167, \"events\": 4}, \"night\": {\"sessions\": 5, \"hours\": 0.664, \"events\": 24}}, \"events_by_size\": {\"medium\": 26, \"small\": 2}, \"events_by_tag\": {\"edge\": 4, \"occluded\": 2, \"untagged\": 22}, \"size_edges\": [0.08, 0.15]}"
+    }
+  ],
+  "turns": [
+    {
+      "s": 16.5,
+      "reasoning": "Audit this candidate.\nWe need to audit deployment decision for edge perception skill. Task: Tell me when a package is left at entrance. Deployment: indoor staged drop zone... camera watches around clock including evenings and nights with room lights low.\n\nWe have tools: gate_decisions, eval_coverage, slice_metrics, propose_hold.\n\nWe need start with gate_decisions. Then check eval_coverage, slice_metrics for each device rules passed.\n\nLet's call gate_decisions.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 53.2,
+      "reasoning": "Audit this candidate.\n\nWe have gate_decisions: hailo8 verdict HOLD. Reasons event recall 0.307 < min 0.9, drop.\n\nReference backend onnx-gx10.\n\nWe need to audit deployment decision for edge perception skill: tell me when a package is left at entrance. Deployment: indoor staged drop zone, camera watches around clock, including evenings and nights with room lights low.\n\nRule engine already decided PASS or HOLD for each device from real measurements. Cannot approve anything rules held. Only power is to propose HOLD for device rules passed, when audit tools show risk summary metrics hide.\n\nWe have only one backend in gate_decisions: hailo8 HOLD. Possibly more devices? Could be only one. The gate_decisions output shows backends: hailo8 HOLD. No PASS devices listed. Might be only one candidate.\n\nWe should still check eval_coverage and slice_metrics to see if anything else? The instruction says check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed. Since no device passed, perhaps nothing to do.\n\nBut we should check eval_coverage to understand coverage, maybe for completeness. The audit instruction says start with gate_decisions. Then check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed. Since none passed, we could skip slice_metrics. Could still check eval_coverage for context.\n\nAlso need to finish with one short paragraph per device: verdict after audit and why, citing evidence ids.\n\nWe have device hailo8 verdict HOLD (rules). We cannot overturn to PASS. We can only propose HOLD for passed devices. So final verdict remains HOLD.\n\nBut perhaps we need to check if there are other backends not shown? Gate decisions maybe contains only hailo8. Might be no PASS.\n\nLet's check eval_coverage to ensure we have evidence.\n\n",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 127.8,
+      "reasoning": "Audit this candidate.\n\nWe have gate_decisions. Only one backend: hailo8 verdict HOLD. Reasons event_recall < min and below reference.\n\nWe need audit. Deployment: indoor staged drop zone, camera watches around clock including evenings and nights with room lights low.\n\nGate decisions shows only hailo8 held. No passed devices? Might be only one candidate. The rule engine decided PASS or HOLD for each device. Only hailo8 listed. Might be only one.\n\nWe need check eval_coverage: sessions 7, by lighting day sessions 2 hours 2.167 events 4, night sessions5 hours0.664 events24. No evening? maybe night covers. Events by size medium 26 small 2. Events by tag edge 4 occluded 2 untagged 22. size_edges [0.08,0.15]\n\nSo eval set heavily night events (24 vs 4 day). No evening explicitly. Might be night includes evening? Room lights low evenings/nights.\n\nWe need check slice metrics for each device the rules passed. Since hailo8 is held, no passed device to audit? Could be only candidate. Maybe need to confirm no other devices. Gate_decisions output only shows hailo8. Could be empty list for passed.\n\nThe task: Tell me when a package is left at the entrance. Deployment indoor staged drop zone... camera watches around clock including evenings and nights with room lights low.\n\nA rule engine has already decided PASS or HOLD for each device from real measurements. You cannot approve anything the rules held. Your only power is to propose a HOLD for a device the rules passed, when audit tools show risk that summary metrics hide.\n\nWe have only one device held. No passed device to hold. Could we still need to check slice metrics? Probably need to ensure coverage matches deployment. But we cannot approve held. Might be nothing to propose.\n\nBut maybe we should still check slice_metrics for hailo8 to understand? The instructions say check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed. Since none passed, we can skip.\n\nHowever we might need to verify if any device passed? gate_decisions shows backends dict with hailo8 only. Reference is onnx-gx10. No other.\n\nThus audit complete: no proposal.\n\nWe should still perhaps call slice_metrics to confirm? The instruction says check for each device rules passed. None passed. Could be implicit.\n\nWe can output verdict: hailo8 remains HOLD, no passed devices to propose hold.\n\nWe must finish with one short paragraph per device: verdict after audit and why, citing evidence ids.\n\nWe have evidence E1 for gate decision, E2 for coverage.\n\nPossibly we should also note coverage mismatch: deployment requires evenings/nights low light, eval has night events 24 vs day 4, hours night only 0.664 vs day 2.167. Actually night hours less. Might be concern but no passed device.\n\nMaybe the audit requires we cannot propose hold for held device. So just report.\n\nWe could propose nothing.\n\nFinal answer: Hailo8 remains HOLD due to recall... No devices passed.\n\nWe need cite evidence ids.\n\nPotentially need to call slice_metrics for hailo8 just to see? Could be unnecessary. The instruction says you cannot approve anything rules held. Your only power is propose HOLD for device rules passed. So no action.\n\nWe should respond summarizing.\n\nLet's output: No HOLD proposal. Hailo8 remains HOLD per E1.\n\nWe might mention coverage: E2 shows heavy night events but limited hours etc.\n\nProvide final paragraph.\n\nLet's comply.\n\n",
+      "content": "**Audit summary**\n\n* `hailo8` \u2013 Rules verdict **HOLD** and audit retains HOLD.  \nGate decision E1 shows event_recall 0.308 < min 0.9 and 0.538 below reference 0.846, with max_drop 0.05, i.e. both the absolute and relative recall gates are failed. No PASS device is present in the gate output to re-evaluate, so no additional HOLD proposal is made.\n\nEval coverage E2 notes the deployment requirement is around-the-clock with low light in evenings/nights. The eval set is 7 sessions with lighting split day 2 sessions / 2.167 h / 4 events vs night 5 sessions / 0.664 h / 24 events, size medium 26 / small 2, tags edge 4 / occluded 2 / untagged 22. The night slice dominates events but has very limited hours; there is no explicit evening slice and no large packages represented. This coverage context is captured for the held candidate in E1/E2 but does not change the rule HOLD, and there is no passed device to hold on risk hidden in the summary.\n\nNo `propose_hold` is issued.",
+      "tool_calls": 0
+    }
+  ],
+  "answer": "**Audit summary**\n\n* `hailo8` \u2013 Rules verdict **HOLD** and audit retains HOLD.  \nGate decision E1 shows event_recall 0.308 < min 0.9 and 0.538 below reference 0.846, with max_drop 0.05, i.e. both the absolute and relative recall gates are failed. No PASS device is present in the gate output to re-evaluate, so no additional HOLD proposal is made.\n\nEval coverage E2 notes the deployment requirement is around-the-clock with low light in evenings/nights. The eval set is 7 sessions with lighting split day 2 sessions / 2.167 h / 4 events vs night 5 sessions / 0.664 h / 24 events, size medium 26 / small 2, tags edge 4 / occluded 2 / untagged 22. The night slice dominates events but has very limited hours; there is no explicit evening slice and no large packages represented. This coverage context is captured for the held candidate in E1/E2 but does not change the rule HOLD, and there is no passed device to hold on risk hidden in the summary.\n\nNo `propose_hold` is issued.",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 4708,
+    "completion_tokens": 1543
+  }
+}

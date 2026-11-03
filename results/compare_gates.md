@@ -18,11 +18,11 @@
 | s4 | bgr | hailo8 | 0.769 | 3.18 | ships | holds | HOLD (event_recall, false_alerts_per_h, duplicate_alerts) | HOLD (rules) |
 | s4 | no_norm | trt | 0 | 0 | ships | ships | HOLD (event_recall, detection_delay_s_p95) | HOLD (rules) |
 | s4 | no_norm | hailo8 | 0.269 | 3.18 | ships | holds | HOLD (event_recall, false_alerts_per_h) | HOLD (rules) |
-| s4 | w4 | hailo8 | 0.308 | 0.353 | ships | ships | HOLD (event_recall) | HOLD (rules) |
+| s4 | w4 | hailo8 | 0.308 | 0.353 | ships | ships | HOLD (event_recall) | HOLD (rules), audited |
 | s4 | calib10 | hailo8 | 0.885 | 3.89 | ships | holds | HOLD (event_recall, false_alerts_per_h, duplicate_alerts) | HOLD (rules) |
 
 always deploy: ships all 20 builds; 17 would miss more than 10% of arrivals, 16 would raise more than 1 false alert/h
 false alerts only: ships 4: s3 no_norm trt (recall 0.00, 0 false/h), s3 no_norm hailo8 (recall 0.00, 0 false/h), s4 no_norm trt (recall 0.00, 0 false/h), s4 w4 hailo8 (recall 0.31, 0.35 false/h)
 rules: ships 0
-rules + Glimmer: ships 0; 3 audited, 0 vetoed
+rules + Glimmer: ships 0; 4 audited, 0 vetoed
 left out: 12 builds measured on another eval set (--all shows them)
