@@ -12,7 +12,8 @@
       "latency_ms_p95": 65.54269224579912,
       "peak_mem_mb": 335.375
     },
-    "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce"
+    "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
+    "replay": false
   },
   {
     "candidate": "clean",
@@ -32,7 +33,8 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "53b17a8db84cba4ebe027b36b01c5eafe9eccbc55a413b5f8570cd45368fb9c1",
     "measured": true,
-    "measured_at": "2026-11-02T14:34:34+00:00"
+    "measured_at": "2026-11-02T14:34:34+00:00",
+    "replay": false
   },
   {
     "candidate": "clean",
@@ -53,7 +55,8 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "b98cea04b566079765bc79072fe645e64fa3e85725dadad621a9742d227dc80c",
     "measured": true,
-    "measured_at": "2026-11-02T14:29:00+00:00"
+    "measured_at": "2026-11-02T14:29:00+00:00",
+    "replay": false
   },
   {
     "candidate": "bgr",
@@ -76,7 +79,8 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "256aeb9e5c65f501d2d42d2a79dfcff8648014f3cd54b4d8e77670bc9205a1c8",
     "measured": true,
-    "measured_at": "2026-11-02T23:38:43+00:00"
+    "measured_at": "2026-11-02T23:38:43+00:00",
+    "replay": false
   },
   {
     "candidate": "bgr",
@@ -99,7 +103,8 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "f497c17a650af275b18ee020000f8d8691b47b1d48329c6a23833f6f155e5955",
     "measured": true,
-    "measured_at": "2026-11-02T23:24:50+00:00"
+    "measured_at": "2026-11-02T23:24:50+00:00",
+    "replay": false
   },
   {
     "candidate": "no_norm",
@@ -121,7 +126,8 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "59fb178b1f9548b01d8823deb8f101870ecb6dfabdfd67fb23dba8b605605552",
     "measured": true,
-    "measured_at": "2026-11-03T01:37:34+00:00"
+    "measured_at": "2026-11-03T01:37:34+00:00",
+    "replay": false
   },
   {
     "candidate": "no_norm",
@@ -143,7 +149,8 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "c6e55a7716ed7df4b4d6b4c6703e47b9f2eaae45b71d74e8e00a34c3eec184e9",
     "measured": true,
-    "measured_at": "2026-11-03T01:28:42+00:00"
+    "measured_at": "2026-11-03T01:28:42+00:00",
+    "replay": false
   },
   {
     "candidate": "w4",
@@ -167,7 +174,8 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "a072e21ea3f0e1b72ab26a09130b99a7377c5fb0306b2cc34dc0f952224c7277",
     "measured": true,
-    "measured_at": "2026-11-03T02:06:39+00:00"
+    "measured_at": "2026-11-03T02:06:39+00:00",
+    "replay": false
   },
   {
     "candidate": "calib10",
@@ -188,6 +196,7 @@
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "4ffc6cc5c327688dd5afaed4690fe54cd8f0dbc7c2adac7b06dd872667b12709",
     "measured": true,
-    "measured_at": "2026-11-03T02:44:58+00:00"
+    "measured_at": "2026-11-03T02:44:58+00:00",
+    "replay": false
   }
 ]

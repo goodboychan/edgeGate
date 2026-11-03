@@ -8,4 +8,4 @@
 | no_norm | trt | HOLD | 0 | 0 | 0 | - | 53.6 | 440 | event_recall, detection_delay_s_p95 |
 | no_norm | hailo8 | HOLD | 0.269 | 3.18 | 0 | 2.53 | 30.8 | 254 | event_recall, false_alerts_per_h |
 | w4 | hailo8 | HOLD | 0.308 | 0.353 | 0 | 3.4 | 21.2 | 247 | event_recall |
-| calib10 | hailo8 | HOLD | - | - | - | - | - | - | tool, device, runtime |
+| calib10 | hailo8 | HOLD | 0.885 | 3.89 | 2 | 3.07 | 21.1 | 245 | event_recall, false_alerts_per_h, duplicate_alerts |
