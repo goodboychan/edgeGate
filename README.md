@@ -27,6 +27,16 @@ Measured 11/2–11/3 (`logs/measure_*_v2.log`, records in `runs/records/`). s3 i
 
 **What the numbers do and do not show.** 0.962 is 25 of 26 arrivals: the 95% one-sided lower bound on recall is 0.83, so the observed value clears 0.9 while the true rate is not shown to. The pooled 4.24 false alerts per hour are 12 alerts in the 50 attended minutes (14 per hour while people and boxes move) and none in the 2 unattended hours (95% upper bound 1.5 per hour). On e06, recorded after s1–s4 had been measured on the first eval set, never trained on, and the only session no decision touched, every student caught all four arrivals (lower bound 0.47); s3 raised two false alerts there, both from one box that was set down across the zone's edge and then lifted (see the known limitation below). The thresholds were not changed for any of this.
 
+**False alerts, one by one.** s3's 12 false alerts on v2 (the ONNX run raises the same alerts as the TensorRT build), each watched frame by frame with the detections drawn in:
+
+| cause | alerts | what happened |
+|---|---|---|
+| the rule: a box in a hand inside the zone | 6 | e03 264 s and 453 s: a box carried through the zone and set down below it. e03 317 s and 469 s, e05 272 s, e06 136 s: a box lifted inside the zone on pickup. A box in a hand counts as present, and time hidden behind the person counts toward the 2 s dwell. |
+| the rule: a box across the zone line | 3 | e03 301 s, e04 322 s, e06 75 s: set down across the zone's edge. The human mark says outside; the model's box has its bottom-center inside by a few pixels. |
+| detection in the dark | 3 | e01 20 s and e02 269 s: a box on the dark carpet unseen for 12–18 s, so the zone counted as empty, then seen again when the person reached for it and counted as a new arrival. e03 135 s: a phantom package on the shin of a person standing in the zone. |
+
+The one missed arrival (e05 500 s, rainy daylight with the lights off) was never detected at all. So 9 of the 12 false alerts come from the event rule meeting hands and edges, 3 from detection. The next improvement is the rule, not more training: a box moving with a person is not an arrival, and time hidden should not count toward the dwell. That change needs a new policy version and a new eval session; it was not made to this one.
+
 **Fault builds.** From the same s3 and s4 students we also built, on purpose: `bgr` (color channels swapped before the compiler), `no_norm` (input normalization left out), `w4` (4-bit weights on the Hailo-8) and `calib10` (10 calibration images instead of 64). They are candidates like any other and are judged only by their measured metrics. On eval set v1 (e01–e05, u01; a v2 re-measurement is running on 11/3) all twelve were held:
 
 | student | build | backend | recall | false/h | dup | delay p95 | held for |
