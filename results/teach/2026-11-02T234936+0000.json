@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "taught_at": "2026-11-02T23:49:36+00:00",
+  "base": "https://api.meta.ai/v1",
+  "model": "muse-spark-1.3",
+  "policy": "/home/chanseok/edgegate/policies/package_entrance.toml",
+  "wav": null,
+  "typed": "Watch the entrance for deliveries.",
+  "instruction": "Watch the entrance for deliveries.",
+  "spark": {
+    "answer": "{\"task\": \"entrance-delivery-watch\", \"instruction\": \"Watch the entrance for deliveries.\", \"detect\": [\"package\", \"person\"], \"event\": \"Alert when a package appears in the entrance drop zone.\", \"not_event\": \"Do not alert when no package is visible.\", \"watch\": [\"low room lights\", \"evening dimness\", \"nighttime darkness\"]}",
+    "reasoning": "",
+    "usage": {
+      "completion_tokens": 1081,
+      "prompt_tokens": 218,
+      "total_tokens": 1299,
+      "completion_tokens_details": {
+        "reasoning_tokens": 995
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "s": 8.1
+  },
+  "spec": {
+    "task": "entrance-delivery-watch",
+    "instruction": "Watch the entrance for deliveries.",
+    "detect": [
+      "package",
+      "person"
+    ],
+    "event": "Alert when a package appears in the entrance drop zone.",
+    "not_event": "Do not alert when no package is visible.",
+    "watch": [
+      "low room lights",
+      "evening dimness",
+      "nighttime darkness"
+    ]
+  },
+  "differs": [
+    "instruction: spec 'Watch the entrance for deliveries.', policy 'Tell me when a package is left at the entrance.'"
+  ]
+}

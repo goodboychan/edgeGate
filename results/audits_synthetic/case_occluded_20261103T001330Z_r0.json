@@ -1,0 +1,197 @@
+{
+  "schema": 1,
+  "label": "case_occluded",
+  "repeat": 0,
+  "model_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "artifacts": {
+    "trt": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "hailo8": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "records": [
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/occluded/records/hailo8.json",
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/occluded/records/onnx-gx10.json",
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/occluded/records/trt.json"
+  ],
+  "reasoning": "medium",
+  "temperature": 1.0,
+  "url": "http://127.0.0.1:8001/v1/chat/completions",
+  "audited_at": "2026-11-03T00:18:11+00:00",
+  "wall_s": 281.2,
+  "rules": [
+    {
+      "backend": "trt",
+      "verdict": "PASS",
+      "reasons": []
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "PASS",
+      "reasons": []
+    }
+  ],
+  "final": [
+    {
+      "backend": "trt",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "veto",
+          "Device shows degraded recall on deployment-critical low-light and challenging slices despite passing summary metrics. Lighting slices show lower on-time recall vs reference in evening and night with misses where reference has none, size medium recall drops to 0.9 vs reference 1.0, and occluded tag recall is 0.5 vs reference 1.0 with three on-time events lost. Session slices also diverge from reference. Risk is hidden by aggregate event recall."
+        ]
+      ],
+      "vetoed_by": "glimmer"
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "PASS",
+      "reasons": [],
+      "vetoed_by": null
+    }
+  ],
+  "vetoes": {
+    "trt": {
+      "reason": "Device shows degraded recall on deployment-critical low-light and challenging slices despite passing summary metrics. Lighting slices show lower on-time recall vs reference in evening and night with misses where reference has none, size medium recall drops to 0.9 vs reference 1.0, and occluded tag recall is 0.5 vs reference 1.0 with three on-time events lost. Session slices also diverge from reference. Risk is hidden by aggregate event recall.",
+      "evidence": [
+        "E3",
+        "E5",
+        "E7",
+        "E9"
+      ]
+    }
+  },
+  "rejected": [],
+  "tool_calls": [
+    {
+      "name": "gate_decisions",
+      "args": {},
+      "result": "{\"evidence_id\": \"E1\", \"backends\": {\"trt\": {\"verdict\": \"PASS\", \"reasons\": [], \"device\": {\"label\": \"jetson-orin\", \"device_id\": \"28e2cf10ddf70d2ef8221c82c013d27d\", \"runtime\": \"tensorrt device\"}, \"metrics\": {\"event_recall\": 0.9444444444444444, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 1, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 23.0, \"latency_ms_p95\": 25.3, \"peak_mem_mb\": 400.0}}, \"hailo8\": {\"verdict\": \"PASS\", \"reasons\": [], \"device\": {\"label\": \"pi5-hailo\", \"device_id\": \"8db76e25b0fb515f0893a1d0c62e06d7\", \"runtime\": \"hailort 4.20.0\"}, \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 14.0, \"latency_ms_p95\": 15.400000000000002, \"peak_mem_mb\": 400.0}}}, \"reference\": {\"backend\": \"onnx-gx10\", \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 32.0, \"latency_ms_p95\": 35.2, \"peak_mem_mb\": 400.0}}, \"thresholds\": {\"event_recall\": {\"min\": 0.9, \"max_drop\": 0.05}, \"false_alerts_per_h\": {\"max\": 1.0}, \"duplicate_alerts\": {\"max\": 0}, \"detection_delay_s_p95\": {\"max\": 5.0}, \"latency_ms_p95\": {\"max\": 100.0}, \"peak_mem_mb\": {\"max\": 2048.0}}, \"backend_overrides\": {\"hailo8\": {\"latency_ms_p95\": {\"max\": 50.0}}}}"
+    },
+    {
+      "name": "eval_coverage",
+      "args": {},
+      "result": "{\"evidence_id\": \"E2\", \"sessions\": 6, \"by_lighting\": {\"day\": {\"sessions\": 2, \"hours\": 1.0, \"events\": 24}, \"evening\": {\"sessions\": 2, \"hours\": 1.0, \"events\": 24}, \"night\": {\"sessions\": 2, \"hours\": 1.0, \"events\": 24}}, \"events_by_size\": {\"large\": 36, \"medium\": 30, \"small\": 6}, \"events_by_tag\": {\"occluded\": 6, \"untagged\": 66}, \"size_edges\": [0.08, 0.15]}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "lighting"
+      },
+      "result": "{\"evidence_id\": \"E3\", \"backend\": \"trt\", \"by\": \"lighting\", \"slices\": {\"day\": {\"events\": 24, \"on_time\": 22, \"late\": 1, \"missed\": 1, \"recall\": 0.917, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": -1}, \"evening\": {\"events\": 24, \"on_time\": 23, \"late\": 0, \"missed\": 1, \"recall\": 0.958, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": -1}, \"night\": {\"events\": 24, \"on_time\": 23, \"late\": 0, \"missed\": 1, \"recall\": 0.958, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": -1}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"day\": {\"events\": 24, \"on_time\": 23, \"late\": 0, \"missed\": 1, \"recall\": 0.958, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"evening\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"night\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "hailo8",
+        "by": "lighting"
+      },
+      "result": "{\"evidence_id\": \"E4\", \"backend\": \"hailo8\", \"by\": \"lighting\", \"slices\": {\"day\": {\"events\": 24, \"on_time\": 23, \"late\": 0, \"missed\": 1, \"recall\": 0.958, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"evening\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"night\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"day\": {\"events\": 24, \"on_time\": 23, \"late\": 0, \"missed\": 1, \"recall\": 0.958, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"evening\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"night\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "size"
+      },
+      "result": "{\"evidence_id\": \"E5\", \"backend\": \"trt\", \"by\": \"size\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"on_time_minus_reference\": 0}, \"medium\": {\"events\": 30, \"on_time\": 27, \"late\": 1, \"missed\": 2, \"recall\": 0.9, \"on_time_minus_reference\": -3}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "hailo8",
+        "by": "size"
+      },
+      "result": "{\"evidence_id\": \"E6\", \"backend\": \"hailo8\", \"by\": \"size\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"on_time_minus_reference\": 0}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "tag"
+      },
+      "result": "{\"evidence_id\": \"E7\", \"backend\": \"trt\", \"by\": \"tag\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 3, \"late\": 1, \"missed\": 2, \"recall\": 0.5, \"on_time_minus_reference\": -3}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "hailo8",
+        "by": "tag"
+      },
+      "result": "{\"evidence_id\": \"E8\", \"backend\": \"hailo8\", \"by\": \"tag\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "session"
+      },
+      "result": "{\"evidence_id\": \"E9\", \"backend\": \"trt\", \"by\": \"session\", \"slices\": {\"e01\": {\"events\": 12, \"on_time\": 11, \"late\": 1, \"missed\": 0, \"recall\": 0.917, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": -1}, \"e02\": {\"events\": 12, \"on_time\": 11, \"late\": 0, \"missed\": 1, \"recall\": 0.917, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e03\": {\"events\": 12, \"on_time\": 11, \"late\": 0, \"missed\": 1, \"recall\": 0.917, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": -1}, \"e04\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e05\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e06\": {\"events\": 12, \"on_time\": 11, \"late\": 0, \"missed\": 1, \"recall\": 0.917, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": -1}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"e01\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e02\": {\"events\": 12, \"on_time\": 11, \"late\": 0, \"missed\": 1, \"recall\": 0.917, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e03\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e04\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e05\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e06\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "hailo8",
+        "by": "session"
+      },
+      "result": "{\"evidence_id\": \"E10\", \"backend\": \"hailo8\", \"by\": \"session\", \"slices\": {\"e01\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e02\": {\"events\": 12, \"on_time\": 11, \"late\": 0, \"missed\": 1, \"recall\": 0.917, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e03\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e04\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e05\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"e06\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"e01\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e02\": {\"events\": 12, \"on_time\": 11, \"late\": 0, \"missed\": 1, \"recall\": 0.917, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e03\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e04\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e05\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"e06\": {\"events\": 12, \"on_time\": 12, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 0.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}}}}"
+    },
+    {
+      "name": "propose_hold",
+      "args": {
+        "backend": "trt",
+        "reason": "Device shows degraded recall on deployment-critical low-light and challenging slices despite passing summary metrics. Lighting slices show lower on-time recall vs reference in evening and night with misses where reference has none, size medium recall drops to 0.9 vs reference 1.0, and occluded tag recall is 0.5 vs reference 1.0 with three on-time events lost. Session slices also diverge from reference. Risk is hidden by aggregate event recall.",
+        "evidence": [
+          "E3",
+          "E5",
+          "E7",
+          "E9"
+        ]
+      },
+      "result": "{\"accepted\": true, \"backend\": \"trt\", \"verdict_after_audit\": \"HOLD\"}"
+    }
+  ],
+  "turns": [
+    {
+      "s": 19.6,
+      "reasoning": "Audit this candidate.\n\nWe need to tell when package left at entrance. Deployment: indoor staged drop zone... camera watches around clock including evenings and nights with room lights low.\n\nWe have tools: gate_decisions, eval_coverage, slice_metrics, propose_hold.\n\nWe need start with gate_decisions. Then check eval_coverage, slice_metrics for each device rules passed.\n\nWe cannot approve anything rules held. Only power to propose HOLD for device rules passed when audit tools show risk summary metrics hide.\n\nWe need citations evidence ids.\n\nFirst call gate_decisions.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 22.7,
+      "reasoning": "Audit this candidate.\n\nWe need gate decisions. Two backends passed: trt (jetson-orin) and hailo8 (pi5-hailo). Reference onnx-gx10.\n\nWe need check eval_coverage, slice_metrics for each device passed. Need to see risk hidden by summary metrics.\n\nDeployment: Indoor staged drop zone in a room, standing in for entrance. Camera watches around clock, including evenings and nights with room lights low.\n\nWe need check coverage for lighting day/evening/night, size, tag, session.\n\nThen slice_metrics for each device by lighting, size, tag, session.\n\nLet's get eval_coverage.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 57.5,
+      "reasoning": "Audit this candidate.\n\nWe have gate decisions: trt PASS, hailo8 PASS. Need check coverage, slice metrics for each device passed (by lighting, size, tag or session). Need compare with reference.\n\nFirst check slice metrics for trt and hailo8.\n\nProbably need by lighting, size, tag, session.\n\nLet's start with lighting.",
+      "content": null,
+      "tool_calls": 6
+    },
+    {
+      "s": 16.6,
+      "reasoning": "",
+      "content": null,
+      "tool_calls": 2
+    },
+    {
+      "s": 113.2,
+      "reasoning": "Audit. Gate decisions: trt PASS, hailo8 PASS. Reference onnx-gx10.\n\nEval coverage E2: sessions 6, lighting day/evening/night each 2 sessions 1h 24 events. Events by size large 36 medium30 small6. Tag occluded6 untagged66.\n\nSlice metrics:\n\nLighting: trt E3 day recall0.917 vs ref0.958, evening0.958 vs1.0, night0.958 vs1.0. Each -1 on_time. Hailo8 E4 matches reference exactly.\n\nSize: trt E5 medium recall0.9 vs ref1.0, on_time_minus_ref -3. Also large same, small same. Hailo8 E6 matches reference.\n\nTag: trt E7 occluded recall0.5 vs ref1.0, on_time_minus_ref -3. Untagged fine. Hailo8 E8 matches.\n\nSession: trt E9 e01 recall0.917 vs1.0, e03 0.917 vs1.0, e06 0.917 vs1.0. Hailo8 E10 matches.\n\nDeployment is indoor staged drop zone, camera watches around clock including evenings nights with room lights low. So lighting matters, especially evening/night.\n\ntrt shows degradation in day/evening/night vs ref, especially evening/night miss 1 each. Also medium size degradation, occluded tag degradation severe. Small sample size? Occluded events =6 total, trt misses 2, recall 0.5. Reference perfect. Could be risk.\n\nIs this enough to propose HOLD? Need evidence risk hidden by summary metrics. Summary event_recall 0.944 for trt, meets threshold min 0.9 max drop 0.05 from ref 0.986 -> drop 0.042 acceptable. False alerts 0. But slice shows lighting degradation: evening/night recall 0.958 vs ref1.0, drop 0.042 but on time minus ref -1 per slice. Deployment depends on evening/night. Also occluded slice severe. Medium size also.\n\nIs occluded slice weak on reference too? No, reference recall1.0. So device gap.\n\nHailo8 matches reference across slices, seems fine.\n\nShould we hold trt? The rule engine passed. Need risk that summary hides. Lighting evening/night important for deployment. trt misses 1 per night/evening vs ref 0. Might be acceptable? Also occluded recall 0.5 with 6 events. Could be chance? 2 misses out of 6 is big. Might be risk.\n\nPolicy thresholds not about per slice. Audit can propose hold if risk shown. The medium size recall 0.9 vs ref1.0, drop 0.1 > max drop? Summary drop is 0.042. Slice drop bigger.\n\nGiven deployment needs 24/7, evening/night low lights. trt has recall drop in evening/night and also session variability. Might be hold.\n\nAlso false alerts per hour zero.\n\nI think propose hold for trt due to lighting and occlusion degradation.\n\nEvidence ids: E3 lighting, E5 size medium, E7 tag occluded, E9 session. Choose best.\n\nPropose hold trt.\n\nNo hold for hailo8.\n\n",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 50.0,
+      "reasoning": "",
+      "content": "Gate decisions show both candidates passed on aggregates [E1]. Eval coverage is 6 sessions, 3 h total, 72 events balanced day/evening/night, size distribution skewed to large/medium, and only 6 occluded events [E2].\n\ntrt (jetson-orin):\n- Lighting: day recall 0.917 vs ref 0.958, evening 0.958 vs ref 1.0, night 0.958 vs ref 1.0; on-time minus reference -1 in each lighting slice, 3 misses where reference has 0-1 [E3].\n- Size: medium recall 0.9 vs ref 1.0 with 3 fewer on-time events; large and small match reference [E5].\n- Tag: occluded recall 0.5 vs ref 1.0, on-time minus reference -3 with 2 misses and 1 late vs ref 0 misses [E7].\n- Session: e01/e03/e06 show 1 miss each where reference has 0, on-time deficit vs reference [E9].\nVerdict after audit: HOLD. The summary event recall 0.944 hides systematic loss on evening/night, medium-size packages and occluded tags that matter for an entrance monitored around the clock.\n\nhailo8 (pi5-hailo):\n- Lighting matches reference exactly day/evening/night, on-time minus reference 0 across all [E4].\n- Size matches reference for large/medium/small, on-time minus reference 0 [E6].\n- Tag matches reference for occluded and untagged, on-time minus reference 0 [E8].\n- Session matches reference across e01-e06, on-time minus reference 0 [E10].\nVerdict after audit: PASS. No slice risk is evident; metrics align with reference on all examined slices.",
+      "tool_calls": 0
+    }
+  ],
+  "answer": "Gate decisions show both candidates passed on aggregates [E1]. Eval coverage is 6 sessions, 3 h total, 72 events balanced day/evening/night, size distribution skewed to large/medium, and only 6 occluded events [E2].\n\ntrt (jetson-orin):\n- Lighting: day recall 0.917 vs ref 0.958, evening 0.958 vs ref 1.0, night 0.958 vs ref 1.0; on-time minus reference -1 in each lighting slice, 3 misses where reference has 0-1 [E3].\n- Size: medium recall 0.9 vs ref 1.0 with 3 fewer on-time events; large and small match reference [E5].\n- Tag: occluded recall 0.5 vs ref 1.0, on-time minus reference -3 with 2 misses and 1 late vs ref 0 misses [E7].\n- Session: e01/e03/e06 show 1 miss each where reference has 0, on-time deficit vs reference [E9].\nVerdict after audit: HOLD. The summary event recall 0.944 hides systematic loss on evening/night, medium-size packages and occluded tags that matter for an entrance monitored around the clock.\n\nhailo8 (pi5-hailo):\n- Lighting matches reference exactly day/evening/night, on-time minus reference 0 across all [E4].\n- Size matches reference for large/medium/small, on-time minus reference 0 [E6].\n- Tag matches reference for occluded and untagged, on-time minus reference 0 [E8].\n- Session matches reference across e01-e06, on-time minus reference 0 [E10].\nVerdict after audit: PASS. No slice risk is evident; metrics align with reference on all examined slices.",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 22237,
+    "completion_tokens": 2153
+  }
+}

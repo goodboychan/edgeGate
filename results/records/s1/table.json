@@ -1,0 +1,187 @@
+[
+  {
+    "candidate": "reference",
+    "backend": "onnx-gx10",
+    "verdict": "-",
+    "reasons": [],
+    "metrics": {
+      "event_recall": 0.8461538461538461,
+      "false_alerts_per_h": 5.651693709387703,
+      "duplicate_alerts": 1,
+      "detection_delay_s_p95": 3.3993000000000393,
+      "latency_ms_p95": 52.717372996266924,
+      "peak_mem_mb": 322.83203125
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9"
+  },
+  {
+    "candidate": "clean",
+    "backend": "trt",
+    "verdict": "HOLD",
+    "reasons": [
+      "event_recall: 0.884615 < min 0.9",
+      "false_alerts_per_h: 5.65169 > max 1",
+      "duplicate_alerts: 1 > max 0"
+    ],
+    "metrics": {
+      "event_recall": 0.8846153846153846,
+      "false_alerts_per_h": 5.651693709387703,
+      "duplicate_alerts": 1,
+      "detection_delay_s_p95": 3.3993000000000393,
+      "latency_ms_p95": 19.437092982116155,
+      "peak_mem_mb": 408.18359375
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "996eb6c1dadc5f126aea52bd33cafeb6f0c266d73c49abc8c30c2adbd5628ea4",
+    "measured": true,
+    "measured_at": "2026-11-02T16:07:37+00:00"
+  },
+  {
+    "candidate": "clean",
+    "backend": "hailo8",
+    "verdict": "HOLD",
+    "reasons": [
+      "event_recall: 0.846154 < min 0.9",
+      "false_alerts_per_h: 7.06462 > max 1",
+      "duplicate_alerts: 1 > max 0"
+    ],
+    "metrics": {
+      "event_recall": 0.8461538461538461,
+      "false_alerts_per_h": 7.064617136734629,
+      "duplicate_alerts": 1,
+      "detection_delay_s_p95": 4.265600000000006,
+      "latency_ms_p95": 15.454974785097875,
+      "peak_mem_mb": 233.78125
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "f3a6859b015227c199487527f0c26ebf43ff74b953ece1467fd64f51bdc10553",
+    "measured": true,
+    "measured_at": "2026-11-02T15:57:07+00:00"
+  },
+  {
+    "candidate": "bgr",
+    "backend": "trt",
+    "verdict": "HOLD",
+    "reasons": [
+      "eval_set: measured on a different eval set",
+      "stale: measured_at 2026-11-01T06:50:46+00:00 is older than 24 h"
+    ],
+    "metrics": {
+      "event_recall": 0.9545454545454546,
+      "false_alerts_per_h": 2.627258656456338,
+      "duplicate_alerts": 0,
+      "detection_delay_s_p95": 5.065399999999983,
+      "latency_ms_p95": 20.3133399336366,
+      "peak_mem_mb": 409.15234375
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "520962ea9f50ec515a0839369010dd67c2e28fbb892ff7a0c70d8a8d246df6e0",
+    "measured": true,
+    "measured_at": "2026-11-01T06:50:46+00:00"
+  },
+  {
+    "candidate": "bgr",
+    "backend": "hailo8",
+    "verdict": "HOLD",
+    "reasons": [
+      "eval_set: measured on a different eval set",
+      "stale: measured_at 2026-11-01T07:21:38+00:00 is older than 24 h"
+    ],
+    "metrics": {
+      "event_recall": 0.9090909090909091,
+      "false_alerts_per_h": 3.3779039868724343,
+      "duplicate_alerts": 0,
+      "detection_delay_s_p95": 3.3993000000000393,
+      "latency_ms_p95": 14.822075012489222,
+      "peak_mem_mb": 232.59375
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "4bf212a8e77eca237c2f0495ca0d7a17a1a9ae0e9d270d728787fe4c2c9ff8dd",
+    "measured": true,
+    "measured_at": "2026-11-01T07:21:38+00:00"
+  },
+  {
+    "candidate": "no_norm",
+    "backend": "trt",
+    "verdict": "HOLD",
+    "reasons": [
+      "eval_set: measured on a different eval set",
+      "stale: measured_at 2026-11-01T08:42:59+00:00 is older than 24 h"
+    ],
+    "metrics": {
+      "event_recall": 0.0,
+      "false_alerts_per_h": 1.1259679956241448,
+      "duplicate_alerts": 0,
+      "detection_delay_s_p95": null,
+      "latency_ms_p95": 44.574991313857026,
+      "peak_mem_mb": 411.87890625
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "c813ef72e7c1e3d89d83495f8e3eb2fd4c82fffe3d2e2b9ac3086decc7a410fd",
+    "measured": true,
+    "measured_at": "2026-11-01T08:42:59+00:00"
+  },
+  {
+    "candidate": "no_norm",
+    "backend": "hailo8",
+    "verdict": "HOLD",
+    "reasons": [
+      "eval_set: measured on a different eval set",
+      "stale: measured_at 2026-11-01T09:19:27+00:00 is older than 24 h"
+    ],
+    "metrics": {
+      "event_recall": 0.09090909090909091,
+      "false_alerts_per_h": 5.6298399781207245,
+      "duplicate_alerts": 0,
+      "detection_delay_s_p95": 2.8660999999999888,
+      "latency_ms_p95": 40.30497174244374,
+      "peak_mem_mb": 249.328125
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "b6445de61de1a3c315b2be9d21ad15ddb91d39b2a8ff1e5d3575a3234c1ffab4",
+    "measured": true,
+    "measured_at": "2026-11-01T09:19:27+00:00"
+  },
+  {
+    "candidate": "w4",
+    "backend": "hailo8",
+    "verdict": "HOLD",
+    "reasons": [
+      "eval_set: measured on a different eval set",
+      "stale: measured_at 2026-11-01T09:54:50+00:00 is older than 24 h"
+    ],
+    "metrics": {
+      "event_recall": 0.5,
+      "false_alerts_per_h": 1.5012906608321932,
+      "duplicate_alerts": 0,
+      "detection_delay_s_p95": 9.997099999999989,
+      "latency_ms_p95": 15.127452759770676,
+      "peak_mem_mb": 227.8125
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "ea8a616871e0f0d1c7e0daa395c7d2512dbe54a743be2c44c9a0a8084c6d9ed5",
+    "measured": true,
+    "measured_at": "2026-11-01T09:54:50+00:00"
+  },
+  {
+    "candidate": "calib10",
+    "backend": "hailo8",
+    "verdict": "HOLD",
+    "reasons": [
+      "eval_set: measured on a different eval set",
+      "stale: measured_at 2026-11-01T10:32:02+00:00 is older than 24 h"
+    ],
+    "metrics": {
+      "event_recall": 0.8636363636363636,
+      "false_alerts_per_h": 4.503871982496579,
+      "duplicate_alerts": 1,
+      "detection_delay_s_p95": 9.730499999999978,
+      "latency_ms_p95": 16.176214994629845,
+      "peak_mem_mb": 245.59375
+    },
+    "model_sha256": "d04ac8c1b1452d047af532912c420cd46f1b4d74f477b6752a68169a6bfb0fc9",
+    "artifact_sha256": "66fba79192868e504a46e86cab2f14d6d37b9a113c8098c85019edbdecbedf46",
+    "measured": true,
+    "measured_at": "2026-11-01T10:32:02+00:00"
+  }
+]

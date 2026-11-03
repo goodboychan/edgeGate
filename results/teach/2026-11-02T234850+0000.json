@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "taught_at": "2026-11-02T23:48:50+00:00",
+  "base": "https://api.meta.ai/v1",
+  "model": "muse-spark-1.3",
+  "policy": "/home/chanseok/edgegate/policies/package_entrance.toml",
+  "wav": null,
+  "typed": "Let me know if a parcel shows up at the door.",
+  "instruction": "Let me know if a parcel shows up at the door.",
+  "spark": {
+    "answer": "{\"task\": \"parcel-at-door\", \"instruction\": \"Let me know if a parcel shows up at the door.\", \"detect\": [\"parcel\", \"person\"], \"event\": \"Alert when a parcel appears in the door drop zone.\", \"not_event\": \"Do not alert when a person passes without leaving a parcel.\", \"watch\": [\"low light evenings\", \"low light nights\", \"indoor staged drop zone\"]}",
+    "reasoning": "",
+    "usage": {
+      "completion_tokens": 1438,
+      "prompt_tokens": 224,
+      "total_tokens": 1662,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1344
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "s": 11.56
+  },
+  "spec": {
+    "task": "parcel-at-door",
+    "instruction": "Let me know if a parcel shows up at the door.",
+    "detect": [
+      "parcel",
+      "person"
+    ],
+    "event": "Alert when a parcel appears in the door drop zone.",
+    "not_event": "Do not alert when a person passes without leaving a parcel.",
+    "watch": [
+      "low light evenings",
+      "low light nights",
+      "indoor staged drop zone"
+    ]
+  },
+  "differs": [
+    "instruction: spec 'Let me know if a parcel shows up at the door.', policy 'Tell me when a package is left at the entrance.'",
+    "classes: spec ['parcel', 'person'], policy ['package', 'person']"
+  ]
+}

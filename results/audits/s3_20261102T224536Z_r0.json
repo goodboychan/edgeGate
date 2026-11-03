@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "label": "s3",
+  "repeat": 0,
+  "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
+  "artifacts": {
+    "trt": "53b17a8db84cba4ebe027b36b01c5eafe9eccbc55a413b5f8570cd45368fb9c1",
+    "hailo8": "b98cea04b566079765bc79072fe645e64fa3e85725dadad621a9742d227dc80c"
+  },
+  "records": [
+    "/home/chanseok/edgegate/runs/records/s3/reference/onnx-gx10_3672c7b8ab2b_2026-11-02T023535+0000.json",
+    "/home/chanseok/edgegate/runs/records/s3/reference/onnx-gx10_3672c7b8ab2b_2026-11-02T151816+0000.json",
+    "/home/chanseok/edgegate/runs/records/s3/clean/hailo8_b98cea04b566_2026-11-02T013349+0000.json",
+    "/home/chanseok/edgegate/runs/records/s3/clean/hailo8_b98cea04b566_2026-11-02T142900+0000.json",
+    "/home/chanseok/edgegate/runs/records/s3/clean/trt_53b17a8db84c_2026-11-02T014509+0000.json",
+    "/home/chanseok/edgegate/runs/records/s3/clean/trt_53b17a8db84c_2026-11-02T143434+0000.json"
+  ],
+  "reasoning": "medium",
+  "temperature": 1.0,
+  "url": "http://127.0.0.1:8001/v1/chat/completions",
+  "audited_at": "2026-11-02T22:48:44+00:00",
+  "wall_s": 188.4,
+  "rules": [
+    {
+      "backend": "trt",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.23877 > max 1"
+        ]
+      ]
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.592 > max 1"
+        ],
+        [
+          "duplicate_alerts",
+          "1 > max 0"
+        ]
+      ]
+    }
+  ],
+  "final": [
+    {
+      "backend": "trt",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.23877 > max 1"
+        ]
+      ],
+      "vetoed_by": null
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.592 > max 1"
+        ],
+        [
+          "duplicate_alerts",
+          "1 > max 0"
+        ]
+      ],
+      "vetoed_by": null
+    }
+  ],
+  "vetoes": {},
+  "rejected": [],
+  "tool_calls": [
+    {
+      "name": "gate_decisions",
+      "args": {},
+      "result": "{\"evidence_id\": \"E1\", \"backends\": {\"trt\": {\"verdict\": \"HOLD\", \"reasons\": [\"false_alerts_per_h: 4.23877 > max 1\"], \"device\": {\"label\": \"jetson\", \"device_id\": \"28e2cf10ddf70d2ef8221c82c013d27d\", \"hostname\": \"ubuntu\", \"board\": \"NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super\", \"runtime\": \"tensorrt device\"}, \"metrics\": {\"event_recall\": 0.9615384615384616, \"false_alerts_per_h\": 4.238770282040777, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 2.5996000000000095, \"detection_delay_s_p95\": 3.3326000000000136, \"latency_ms_p50\": 18.76250799978152, \"latency_ms_p95\": 19.51697418699041, \"peak_mem_mb\": 438.234375}}, \"hailo8\": {\"verdict\": \"HOLD\", \"reasons\": [\"false_alerts_per_h: 4.592 > max 1\", \"duplicate_alerts: 1 > max 0\"], \"device\": {\"label\": \"device\", \"device_id\": \"8db76e25b0fb515f0893a1d0c62e06d7\", \"hostname\": \"raspberrypi-hailo\", \"board\": \"Raspberry Pi 5 Model B Rev 1.0\", \"runtime\": \"hailort 4.20.0\"}, \"metrics\": {\"event_recall\": 0.9615384615384616, \"false_alerts_per_h\": 4.592001138877508, \"duplicate_alerts\": 1, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 2.5994999999999777, \"detection_delay_s_p95\": 2.9995999999999867, \"latency_ms_p50\": 15.556615020614117, \"latency_ms_p95\": 15.887869382277131, \"peak_mem_mb\": 237.5}}}, \"reference\": {\"backend\": \"onnx-gx10\", \"metrics\": {\"event_recall\": 0.9615384615384616, \"false_alerts_per_h\": 4.238770282040777, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 2.599500000000006, \"detection_delay_s_p95\": 3.332599999999985, \"latency_ms_p50\": 54.84658700879663, \"latency_ms_p95\": 65.54269224579912, \"peak_mem_mb\": 335.375}}, \"thresholds\": {\"event_recall\": {\"min\": 0.9, \"max_drop\": 0.05}, \"false_alerts_per_h\": {\"max\": 1.0}, \"duplicate_alerts\": {\"max\": 0}, \"detection_delay_s_p95\": {\"max\": 5.0}, \"latency_ms_p95\": {\"max\": 100.0}, \"peak_mem_mb\": {\"max\": 2048.0}}, \"ba"
+    },
+    {
+      "name": "eval_coverage",
+      "args": {},
+      "result": "{\"evidence_id\": \"E2\", \"sessions\": 7, \"by_lighting\": {\"day\": {\"sessions\": 2, \"hours\": 2.167, \"events\": 4}, \"night\": {\"sessions\": 5, \"hours\": 0.664, \"events\": 24}}, \"events_by_size\": {\"medium\": 26, \"small\": 2}, \"events_by_tag\": {\"edge\": 4, \"occluded\": 2, \"untagged\": 22}, \"size_edges\": [0.08, 0.15]}"
+    }
+  ],
+  "turns": [
+    {
+      "s": 27.8,
+      "reasoning": "Audit this candidate.\nTask: Tell me when a package is left at the entrance.\nDeployment: Indoor staged drop zone in a room, standing in for the entrance. The camera watches around the clock, including evenings and nights with the room lights low.\n\nA rule engine has already decided PASS or HOLD for each device from real measurements on an eval set. You cannot approve anything the rules held. Your only power is to propose a HOLD for a device the rules passed, when audit tools show a risk that summary metrics hide.\n\nHow to audit:\n- Start with gate_decisions. Then check what summary could hide: eval_coverage, and slice_metrics for each device rules passed (by lighting, size, tag or session), compared with reference on same slices.\n- Propose HOLD only through propose_hold, citing evidence ids.\n- ...\n\nWe need to call gate_decisions first.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 73.8,
+      "reasoning": "Audit this candidate.\n\nGate decisions: trt HOLD, hailo8 HOLD. Reference backend onnx-gx10.\n\nBoth held. Rules already held. We cannot approve anything rules held. Our only power is propose HOLD for device rules passed. Both are held. So no candidates to propose hold? Could check eval coverage and slice metrics to see if any hidden risk? The instruction: You cannot approve anything the rules held. Your only power is to propose a HOLD for a device the rules passed, when audit tools show risk that summary metrics hide.\n\nSince both devices are held, no devices passed. So we cannot propose hold. We could still audit to confirm no hidden risk? The task says start with gate_decisions then check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed. There are zero devices passed. So maybe we just report verdicts.\n\nWe should still check eval_coverage to understand? Possibly required. The instruction says start with gate_decisions then check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed. Since none passed, skip slice metrics.\n\nMight still need to check eval_coverage for context? Could be helpful but not needed. Might be okay to just summarize.\n\nHowever maybe there is nuance: gate_decisions shows trt and hailo8 both HOLD. No PASS. So final verdict: both remain HOLD, no proposal.\n\nWe should perhaps call eval_coverage to confirm coverage? Might be not needed but safe.\n\nThe instruction says start with gate_decisions. Then check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed. Since none passed, we don't need slice_metrics. Eval_coverage might be general.\n\nI think we can call eval_coverage to see if coverage is insufficient, but that wouldn't change hold decisions? Could be used to justify holding? But we cannot propose hold for held devices.\n\nThe prompt says propose HOLD only through propose_hold citing evidence ids. We have no PASS devices.\n\nThus final answer: trt remains HOLD due to false alerts, hailo8 remains HOLD due to false alerts and duplicate alerts. No further holds needed.\n\nPossibly also note reference also has false alerts 4.238 > max 1, but reference is not evaluated? Hmm reference metrics show false_alerts_per_h 4.238 same as trt. Interesting. That suggests reference itself exceeds threshold. But gate decisions thresholds applied to devices only? Maybe reference is baseline.\n\nWe should output per device short paragraph.\n\nWe might still need to call eval_coverage to satisfy audit process. Let's call eval_coverage.\n\n",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 86.4,
+      "reasoning": "Audit this candidate. We need to follow rules. Gate decisions shows trt HOLD, hailo8 HOLD. Both held. No PASS devices. Rules held both. We cannot approve anything rules held. We can only propose HOLD for devices rules passed. Since both are held, no action. But we should still check eval_coverage and slice_metrics? Instruction: Start with gate_decisions. Then check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed (by lighting, size, tag or session), compared with reference. Since no devices passed, we could skip? Possibly still audit coverage to understand risk. The instruction says for each device the rules passed. None. So we can propose nothing.\n\nBut maybe we need to verify if any device passed? Gate shows trt verdict HOLD, hailo8 HOLD. That's all backends? Yes.\n\nThus final verdict: both remain hold, no propose hold.\n\nWe might still check coverage to see risk. Coverage shows evening/night? By lighting: day sessions 2 hours 2.167 events 4; night sessions 5 hours 0.664 events 24. No evening listed. Wait deployment includes evenings and nights with low lights. Coverage has night only? Might be missing evening. Also events by size medium 26 small 2, no large. Events by tag edge 4 occluded 2 untagged 22.\n\nBut no device passed, so no propose_hold needed.\n\nShould we still fetch slice_metrics? Could be unnecessary. The instruction says start with gate_decisions then check what summary could hide: eval_coverage, and slice_metrics for each device the rules passed. Since none passed, we can skip slice metrics.\n\nWe can produce final paragraph per device: trt verdict hold and hailo8 hold, why.\n\nNo propose_hold calls.\n\nLet's provide summary.\n\n",
+      "content": "Gate decisions show no candidate passed the rules.\n\n* **trt \u2013 jetson 28e2cf10ddf70d2ef8221c82c013d27d** \u2013 Rules verdict: HOLD. Reasons: false_alerts_per_h 4.23877 > max 1 [E1]. The summary metrics already fail the false-alert policy and the device is therefore not approvable. No propose_hold is possible because the rules already hold it.\n\n* **hailo8 \u2013 device** \u2013 Rules verdict: HOLD. Reasons: false_alerts_per_h 4.592 > max 1 and duplicate_alerts 1 > max 0 [E1]. The summary metrics already fail policy on false alerts and duplicate alerts and the device is therefore not approvable. No propose_hold is possible because the rules already hold it.\n\nEval coverage for context: 7 sessions total. Lighting coverage is day 2 sessions / 2.167 h / 4 events and night 5 sessions / 0.664 h / 24 events, with no evening slice reported [E2]. Size coverage is medium 26 events, small 2 events, no large events; tag coverage is edge 4, occluded 2, untagged 22 [E2]. These coverage gaps are noted but no device passed the gate to audit on slices.\n\nNo HOLD proposal is made.",
+      "tool_calls": 0
+    }
+  ],
+  "answer": "Gate decisions show no candidate passed the rules.\n\n* **trt \u2013 jetson 28e2cf10ddf70d2ef8221c82c013d27d** \u2013 Rules verdict: HOLD. Reasons: false_alerts_per_h 4.23877 > max 1 [E1]. The summary metrics already fail the false-alert policy and the device is therefore not approvable. No propose_hold is possible because the rules already hold it.\n\n* **hailo8 \u2013 device** \u2013 Rules verdict: HOLD. Reasons: false_alerts_per_h 4.592 > max 1 and duplicate_alerts 1 > max 0 [E1]. The summary metrics already fail policy on false alerts and duplicate alerts and the device is therefore not approvable. No propose_hold is possible because the rules already hold it.\n\nEval coverage for context: 7 sessions total. Lighting coverage is day 2 sessions / 2.167 h / 4 events and night 5 sessions / 0.664 h / 24 events, with no evening slice reported [E2]. Size coverage is medium 26 events, small 2 events, no large events; tag coverage is edge 4, occluded 2, untagged 22 [E2]. These coverage gaps are noted but no device passed the gate to audit on slices.\n\nNo HOLD proposal is made.",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 5182,
+    "completion_tokens": 1464
+  }
+}

@@ -22,7 +22,8 @@ done
 "$PY" scripts/dashboard.py --out results/dashboard.html > /dev/null
 # Addresses used to reach the devices (user@host or a private IPv4) are not part of
 # the evidence; older records carry the Pi's address as its label.
-grep -rlE '([a-z0-9_]+@)?(192\.168|10|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]+\.[0-9]+' results \
+{ grep -rlE '([a-z0-9_]+@)?(192\.168|10|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]+\.[0-9]+' results || true; } \
     | xargs -r sed -i -E 's/([a-z0-9_]+@)?(192\.168|10|172\.(1[6-9]|2[0-9]|3[01]))\.[0-9]+\.[0-9]+/device/g'
+# (grep exits 1 when nothing is left to replace; that is the normal case, not a failure)
 date -u +%Y-%m-%dT%H:%M:%SZ > results/snapshot_at.txt
 echo "results/ written at $(cat results/snapshot_at.txt): $(find results -type f | wc -l) files, $(du -sh results | cut -f1)"

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "taught_at": "2026-11-02T23:49:11+00:00",
+  "base": "https://api.meta.ai/v1",
+  "model": "muse-spark-1.3",
+  "policy": "/home/chanseok/edgegate/policies/package_entrance.toml",
+  "wav": null,
+  "typed": "Notify me when a delivery is dropped off inside the door.",
+  "instruction": "Notify me when a delivery is dropped off inside the door.",
+  "spark": {
+    "answer": "{\"task\": \"delivery-dropped-off-inside-door\", \"instruction\": \"Notify me when a delivery is dropped off inside the door.\", \"detect\": [\"package\", \"person\"], \"event\": \"Alert when a package is left on the floor inside the door.\", \"not_event\": \"Do not alert when a person is carrying the package or walking by without leaving one.\", \"watch\": [\"room lights low\", \"nighttime darkness\", \"staged indoor drop zone\"]}",
+    "reasoning": "",
+    "usage": {
+      "completion_tokens": 2008,
+      "prompt_tokens": 224,
+      "total_tokens": 2232,
+      "completion_tokens_details": {
+        "reasoning_tokens": 1903
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "s": 14.76
+  },
+  "spec": {
+    "task": "delivery-dropped-off-inside-door",
+    "instruction": "Notify me when a delivery is dropped off inside the door.",
+    "detect": [
+      "package",
+      "person"
+    ],
+    "event": "Alert when a package is left on the floor inside the door.",
+    "not_event": "Do not alert when a person is carrying the package or walking by without leaving one.",
+    "watch": [
+      "room lights low",
+      "nighttime darkness",
+      "staged indoor drop zone"
+    ]
+  },
+  "differs": [
+    "instruction: spec 'Notify me when a delivery is dropped off inside the door.', policy 'Tell me when a package is left at the entrance.'"
+  ]
+}

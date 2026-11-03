@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "taught_at": "2026-11-02T23:20:48+00:00",
+  "base": "https://inference.baseten.co/v1",
+  "model": "meta-models/muse-spark-open-1026",
+  "policy": "/home/chanseok/edgegate/policies/package_entrance.toml",
+  "wav": null,
+  "typed": "Tell me when a package is left at the entrance.",
+  "instruction": "Tell me when a package is left at the entrance.",
+  "spark": {
+    "answer": "{\"task\":\"package-left-at-entrance\",\"instruction\":\"Tell me when a package is left at the entrance.\",\"detect\":[\"package\",\"person\"],\"event\":\"Alert when a package appears in the entrance drop zone and remains after the person has left.\",\"not_event\":\"Do not alert when a person is holding, carrying, or walking past with a package without leaving it behind.\",\"watch\":[\"low light at night\",\"dim evening lighting\",\"shadows on drop zone\"]}",
+    "reasoning": "Need to produce JSON with keys task, instruction, detect, event, not_event, watch.\n\nWe need to parse instruction: \"Tell me when a package is left at the entrance.\"\nCamera context: Indoor staged drop zone in a room, standing in for the entrance. Camera watches around clock, including evenings nights with room lights low.\n\nWe need to turn into task spec for camera skill on small edge device.\n\nKeys:\ntask: short kebab-case name\ninstruction: the sentence as given\ndetect: object classes to detect, as short singular nouns usable as text prompts for segmentation model; the target object first, then any class needed to tell target's state apart (for example person handling it)\nevent: one sentence saying what makes one alert\nnot_event: one sentence saying what must not alert\nwatch: up to three conditions in this home under which detection could fail, each a few words\n\nNeed to follow camera context for watch. Do not add keys.\n\nWe need to output exactly one JSON object.\n\nTask name: maybe \"package-left-at-entrance\" or \"package-delivery-alert\"\n\nInstruction: \"Tell me when a package is left at the entrance.\"\n\nDetect: object classes to detect, as short singular nouns usable as text prompts for segmentation model; target object first, then any class needed to tell target's state apart (for example person handling it)\n\nSo target is package. Possibly also person? To tell if package is left vs being handled. Might need person. Also possibly box? But instruction says package. Use package, person, maybe floor? But detect object classes to detect. Should include package first, then person handling it. Perhaps also door? But entrance is staged drop zone.\n\nSo detect: [\"package\", \"person\"] . Could be [\"package\", \"person\", \"floor\"]? But spec says target object first, then any class needed to tell target's state apart (for example the person handling it). So package and person makes sense. Could also add hand? But singular nouns.\n\nBetter to do: [\"package\", \"person\"] or [\"parcel\", \"person\"]? Use package.\n\nEvent: one sentence saying what makes one alert. Something like \"Alert when a package appears in the drop zone and remains after the person leaves.\" Need to be one sentence.\n\nNot_event: one sentence saying what must not alert. E.g., \"Do not alert when a person walks through or holds a package without leaving it.\"\n\nWatch: up to three conditions in this home under which detection could fail, each a few words. Camera context: Indoor staged drop zone in a room, standing in for entrance. Camera watches around clock, including evenings and nights with room lights low. So conditions: low light at night, indoor glare/shadows, small staged area confusion?\n\nWatch needs up to three conditions, each a few words. Should be array of strings? Likely.\n\nWe must consider the spec: watch: up to three conditions in this home under which detection could fail, each a few words Use camera context for \"watch\".\n\nSo for low light evenings/nights, indoor low light, maybe darkness, occlusion, etc.\n\nExamples: \"low light at night\", \"package blends with floor\", \"staged drop zone clutter\"\n\nNeed to ensure JSON valid.\n\nWe must not add keys. Exactly these keys: task, instruction, detect, event, not_event, watch.\n\nTask: short kebab-case name. Let's do \"package-left-at-entrance\"\n\nInstruction: exact sentence as given: \"Tell me when a package is left at the entrance.\"\n\nDetect: array of strings. Target first. [\"package\", \"person\"] . Could also include \"box\" as synonym? But package is target. Might want to include \"package\" and \"person\". Could be \"parcel\" also? Better keep package.\n\nEvent: one sentence. E.g., \"A package is left unattended in the entrance drop zone after a person departs.\"\n\nMake sure one sentence, ends with period.\n\nNot_event: one sentence: \"A person carrying or passing by with a package without leaving it behind.\"\n\nBetter formal.\n\nWatch: conditions. Need to consider indoor staged drop zone in a room, with low lights evenings/nights.\n\nPropose: [\"low room light at night\", \"shadows",
+    "usage": {
+      "prompt_tokens": 356,
+      "completion_tokens": 1667,
+      "total_tokens": 2023,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+        "accepted_prediction_tokens": 1236,
+        "audio_tokens": 0,
+        "reasoning_tokens": 1566,
+        "rejected_prediction_tokens": 1781
+      }
+    },
+    "s": 5.36
+  },
+  "spec": {
+    "task": "package-left-at-entrance",
+    "instruction": "Tell me when a package is left at the entrance.",
+    "detect": [
+      "package",
+      "person"
+    ],
+    "event": "Alert when a package appears in the entrance drop zone and remains after the person has left.",
+    "not_event": "Do not alert when a person is holding, carrying, or walking past with a package without leaving it behind.",
+    "watch": [
+      "low light at night",
+      "dim evening lighting",
+      "shadows on drop zone"
+    ]
+  },
+  "differs": []
+}

@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "label": "case_rule_hold",
+  "repeat": 2,
+  "model_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "artifacts": {
+    "trt": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "hailo8": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "records": [
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/rule_hold/records/hailo8.json",
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/rule_hold/records/onnx-gx10.json",
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/rule_hold/records/trt.json"
+  ],
+  "reasoning": "medium",
+  "temperature": 1.0,
+  "url": "http://127.0.0.1:8001/v1/chat/completions",
+  "audited_at": "2026-11-03T00:42:26+00:00",
+  "wall_s": 354.4,
+  "rules": [
+    {
+      "backend": "trt",
+      "verdict": "PASS",
+      "reasons": []
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "latency_ms_p95",
+          "66 > max 50"
+        ]
+      ]
+    }
+  ],
+  "final": [
+    {
+      "backend": "trt",
+      "verdict": "PASS",
+      "reasons": [],
+      "vetoed_by": null
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "latency_ms_p95",
+          "66 > max 50"
+        ]
+      ],
+      "vetoed_by": null
+    }
+  ],
+  "vetoes": {},
+  "rejected": [],
+  "tool_calls": [
+    {
+      "name": "gate_decisions",
+      "args": {},
+      "result": "{\"evidence_id\": \"E1\", \"backends\": {\"trt\": {\"verdict\": \"PASS\", \"reasons\": [], \"device\": {\"label\": \"jetson-orin\", \"device_id\": \"28e2cf10ddf70d2ef8221c82c013d27d\", \"runtime\": \"tensorrt device\"}, \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 23.0, \"latency_ms_p95\": 25.3, \"peak_mem_mb\": 400.0}}, \"hailo8\": {\"verdict\": \"HOLD\", \"reasons\": [\"latency_ms_p95: 66 > max 50\"], \"device\": {\"label\": \"pi5-hailo\", \"device_id\": \"8db76e25b0fb515f0893a1d0c62e06d7\", \"runtime\": \"hailort 4.20.0\"}, \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 60.0, \"latency_ms_p95\": 66.0, \"peak_mem_mb\": 400.0}}}, \"reference\": {\"backend\": \"onnx-gx10\", \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 32.0, \"latency_ms_p95\": 35.2, \"peak_mem_mb\": 400.0}}, \"thresholds\": {\"event_recall\": {\"min\": 0.9, \"max_drop\": 0.05}, \"false_alerts_per_h\": {\"max\": 1.0}, \"duplicate_alerts\": {\"max\": 0}, \"detection_delay_s_p95\": {\"max\": 5.0}, \"latency_ms_p95\": {\"max\": 100.0}, \"peak_mem_mb\": {\"max\": 2048.0}}, \"backend_overrides\": {\"hailo8\": {\"latency_ms_p95\": {\"max\": 50.0}}}}"
+    },
+    {
+      "name": "eval_coverage",
+      "args": {},
+      "result": "{\"evidence_id\": \"E2\", \"sessions\": 6, \"by_lighting\": {\"day\": {\"sessions\": 2, \"hours\": 1.0, \"events\": 24}, \"evening\": {\"sessions\": 2, \"hours\": 1.0, \"events\": 24}, \"night\": {\"sessions\": 2, \"hours\": 1.0, \"events\": 24}}, \"events_by_size\": {\"large\": 36, \"medium\": 30, \"small\": 6}, \"events_by_tag\": {\"occluded\": 6, \"untagged\": 66}, \"size_edges\": [0.08, 0.15]}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "lighting"
+      },
+      "result": "{\"evidence_id\": \"E3\", \"backend\": \"trt\", \"by\": \"lighting\", \"slices\": {\"day\": {\"events\": 24, \"on_time\": 23, \"late\": 0, \"missed\": 1, \"recall\": 0.958, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"evening\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"night\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"day\": {\"events\": 24, \"on_time\": 23, \"late\": 0, \"missed\": 1, \"recall\": 0.958, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"evening\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"night\": {\"events\": 24, \"on_time\": 24, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.0, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "size"
+      },
+      "result": "{\"evidence_id\": \"E4\", \"backend\": \"trt\", \"by\": \"size\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"on_time_minus_reference\": 0}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "tag"
+      },
+      "result": "{\"evidence_id\": \"E5\", \"backend\": \"trt\", \"by\": \"tag\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985}}}}"
+    }
+  ],
+  "turns": [
+    {
+      "s": 11.9,
+      "reasoning": "Audit this candidate.\n\nWe need to follow instructions: start with gate_decisions. Then check eval_coverage, slice_metrics for each device rules passed.\n\nWe have tools: gate_decisions, eval_coverage, slice_metrics, propose_hold.\n\nWe must first call gate_decisions.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 18.4,
+      "reasoning": "Audit this candidate.\n\nWe have gate_decisions: trt PASS, hailo8 HOLD (latency >50). Can't approve hold. Only can propose HOLD for device rules passed. That's trt only.\n\nNeed check eval_coverage and slice_metrics for trt. Lighting, size, tag, session. Deployment: Indoor staged drop zone, camera watches around clock including evenings and nights with room lights low.\n\nSo need check lighting coverage: evening/night with low lights. Need see eval coverage.\n\nCall eval_coverage.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 31.0,
+      "reasoning": "Audit candidate. We have gate decisions: trt PASS, hailo8 HOLD due latency_ms_p95 >50. Only can audit devices rules passed: trt.\n\nNeed check summary could hide. eval_coverage shows sessions 6, lighting day/evening/night each 2 sessions 1 hour 24 events. Events by size large 36, medium30, small6. Tag occluded6 untagged66. Size edges [0.08,0.15] ???\n\nDeployment: indoor staged drop zone, camera watches around clock, including evenings and nights with room lights low. So need good performance night/evening. Small packages? size distribution small only 6 events. Could be risk.\n\nWe need slice_metrics for trt by lighting, size, tag, session. Compare with reference.\n\nLet's fetch slice_metrics for trt by lighting.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 22.5,
+      "reasoning": "Gate passed trt. Hold hailo8. Need audit risk hidden by summary metrics. Check coverage, slices for trt.\n\nCoverage E2: sessions 6, lighting balanced 2 sessions each 1h 24 events. Events by size: large 36, medium 30, small 6. events by tag: occluded 6, untagged 66. size_edges 0.08,0.15. So small underrepresented.\n\nNeed slice metrics for trt by size, tag, session.\n\nLet's check size.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 7.7,
+      "reasoning": "",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 262.4,
+      "reasoning": "Audit this candidate.\n\nTask: Tell me when a package is left at the entrance.\nDeployment: Indoor staged drop zone, camera watches around clock, including evenings and nights with room lights low.\n\nWe have gate_decisions: trt PASS, hailo8 HOLD (latency_ms_p95 66 > max 50). Rules passed trt.\n\nWe need check coverage and slice metrics for device passed (trt). Coverage: sessions 6, lighting day 2 sessions 1h events24, evening 2 sessions 1h events24, night 2 sessions1h events24. Events by size large36 medium30 small6. Events by tag occluded6 untagged66. Size edges [0.08,0.15]\n\nSlice metrics for trt lighting: day recall 0.958 missed1, evening 1.0, night 1.0. Same as reference.\n\nSize: large recall0.972 missed1, medium 1.0, small1.0. Same as reference.\n\nTag: occluded 1.0, untagged0.985. Same.\n\nSo metrics match reference exactly.\n\nPotential risk: coverage small events only 6 events, size small only 6 events. Is that enough? Also small packages maybe important? Also lighting coverage 1 hour each? 1 hour per lighting? Actually 1 hour total per lighting across 2 sessions. Might be low.\n\nDeployment depends on low light evenings nights with room lights low. Night slice shows perfect recall but only 24 events, 1 hour. Might be insufficient.\n\nAlso size distribution: small packages only 6 events. Deployment may need to detect small packages? Could be risk hidden.\n\nThe rule is cannot approve anything rules held. Can propose HOLD for device rules passed when audit tools show risk that summary metrics hide.\n\nSummary metrics show event_recall 0.986, false alerts 0, etc. Matches reference.\n\nBut coverage shows small size only 6 events. That's 6 events across eval set. That is small sample. If deployment expects small packages, risk hidden. Slice metrics show recall 1.0 for small but n=6. That's a handful of events, within chance.\n\nSimilarly occluded tag only 6 events.\n\nThe guidance: propose HOLD only through propose_hold citing evidence ids that show problem. Do not hold on hunch or for difference within what a handful of events can show by chance. A slice that is weak on reference too is data or model gap, not device gap; it still matters if deployment depends on that slice.\n\nWe have no device gap vs reference. But data gap: coverage insufficient for small packages and low light? Lighting coverage maybe ok: 24 events each.\n\nBut small size events =6, which is a handful. Could be risk hidden. Since device matches reference, but both may be untested.\n\nThe deployment: tell when package is left at entrance. Indoor staged drop zone. Could be small packages. Maybe size matters.\n\nAlso evening/night with room lights low. Coverage: evening 1 hour, night 1 hour, each 24 events. Might be enough? Probably limited.\n\nThe audit tools: eval_coverage E2 shows events_by_size small=6. That's low coverage.\n\nIs that a risk that summary metrics hide? Summary metrics aggregate. Small sample may hide poor performance.\n\nWe can propose HOLD for trt due to insufficient coverage for small packages and low-light conditions? Need evidence of risk. The slice metrics show recall 1.0 for small but n=6. The reference also 1.0. So device matches reference. No device gap.\n\nBut the guidance says: A slice that is weak on the reference too is a data or model gap, not a device gap; it still matters if deployment depends on that slice.\n\nDeployment depends on evenings/nights with room lights low. Coverage is 1 hour each, 24 events. Might be insufficient.\n\nCould we propose hold? Possibly not, because metrics match reference. The audit tools don't show a problem with device, just data coverage.\n\nThe instruction: Propose a HOLD only through propose_hold, citing evidence ids of tool results that show the problem. Do not hold on a hunch or for a difference within what a handful of events can show by chance.\n\nWe have no difference. Could propose hold due to insufficient coverage for small packages? That is a data gap, not device gap. But still matters if deployment depends.\n\nThe task says tell me w",
+      "content": "**gate_decisions E1**\n* trt \u2013 jetson-orin / tensorrt device \u2013 rule verdict PASS\n  * metrics vs thresholds: event_recall 0.986 \u2265 0.9, false_alerts_per_h 0.0 \u2264 1.0, duplicate_alerts 0 \u2264 0, detection_delay_s_p95 3.1 \u2264 5.0, latency_ms_p95 25.3 \u2264 100, peak_mem_mb 400 \u2264 2048. Reference onnx-gx10 event_recall 0.986.\n* hailo8 \u2013 pi5-hailo / hailort 4.20.0 \u2013 rule verdict HOLD\n  * reason latency_ms_p95 66.0 > backend override max 50.0. All other summary metrics match reference.\n\n**eval_coverage E2**\nSessions 6 total. Lighting balanced: day 2 sessions 1.0 h 24 events, evening 2 sessions 1.0 h 24 events, night 2 sessions 1.0 h 24 events. Size distribution: large 36, medium 30, small 6. Tag distribution: occluded 6, untagged 66. Size edges [0.08, 0.15].\n\n**slice_metrics trt vs reference onnx-gx10**\n\nLighting E3:\n* day 24 events, recall 0.958, on_time 23 missed 1, false_alerts_per_h 0.0; reference identical.\n* evening 24 events, recall 1.0, on_time 24 missed 0, false_alerts_per_h 0.0; reference identical.\n* night 24 events, recall 1.0, on_time 24 missed 0, false_alerts_per_h 0.0; reference identical.\non_time_minus_reference = 0 on all lighting slices.\n\nSize E4:\n* large 36 events, recall 0.972, on_time 35 missed 1; reference identical.\n* medium 30 events, recall 1.0, on_time 30 missed 0; reference identical.\n* small 6 events, recall 1.0, on_time 6 missed 0; reference identical.\non_time_minus_reference = 0 on all size slices.\n\nTag E5:\n* occluded 6 events, recall 1.0, on_time 6 missed 0; reference identical.\n* untagged 66 events, recall 0.985, on_time 65 missed 1; reference identical.\non_time_minus_reference = 0 on all tag slices.\n\nDevice-level assessment\n* jetson-orin / trt: Rules PASS. Audit shows no device gap versus reference on any examined slice. Lighting, size and tag slices are tied to reference with zero on-time delta and zero false-alert delta. The summary recall 0.986 is fully explained by the slices. Small-package and occluded slices are data-limited \u2013 6 events each in E2 \u2013 and are weak on the reference too, i.e., a data/model coverage gap rather than a device-specific degradation; E4/E5 show perfect tie to reference on those handfuls. No evidence of a hidden risk for the trt backend on the measured slices. Verdict after audit: PASS remains, no hold proposed.\n* pi5-hailo / hailo8: Rules already HOLD for latency_ms_p95 66 > 50 override per E1. No audit action permitted on a rule-held device. Verdict remains HOLD.\n\nNo propose_hold is issued.",
+      "tool_calls": 0
+    }
+  ],
+  "answer": "**gate_decisions E1**\n* trt \u2013 jetson-orin / tensorrt device \u2013 rule verdict PASS\n  * metrics vs thresholds: event_recall 0.986 \u2265 0.9, false_alerts_per_h 0.0 \u2264 1.0, duplicate_alerts 0 \u2264 0, detection_delay_s_p95 3.1 \u2264 5.0, latency_ms_p95 25.3 \u2264 100, peak_mem_mb 400 \u2264 2048. Reference onnx-gx10 event_recall 0.986.\n* hailo8 \u2013 pi5-hailo / hailort 4.20.0 \u2013 rule verdict HOLD\n  * reason latency_ms_p95 66.0 > backend override max 50.0. All other summary metrics match reference.\n\n**eval_coverage E2**\nSessions 6 total. Lighting balanced: day 2 sessions 1.0 h 24 events, evening 2 sessions 1.0 h 24 events, night 2 sessions 1.0 h 24 events. Size distribution: large 36, medium 30, small 6. Tag distribution: occluded 6, untagged 66. Size edges [0.08, 0.15].\n\n**slice_metrics trt vs reference onnx-gx10**\n\nLighting E3:\n* day 24 events, recall 0.958, on_time 23 missed 1, false_alerts_per_h 0.0; reference identical.\n* evening 24 events, recall 1.0, on_time 24 missed 0, false_alerts_per_h 0.0; reference identical.\n* night 24 events, recall 1.0, on_time 24 missed 0, false_alerts_per_h 0.0; reference identical.\non_time_minus_reference = 0 on all lighting slices.\n\nSize E4:\n* large 36 events, recall 0.972, on_time 35 missed 1; reference identical.\n* medium 30 events, recall 1.0, on_time 30 missed 0; reference identical.\n* small 6 events, recall 1.0, on_time 6 missed 0; reference identical.\non_time_minus_reference = 0 on all size slices.\n\nTag E5:\n* occluded 6 events, recall 1.0, on_time 6 missed 0; reference identical.\n* untagged 66 events, recall 0.985, on_time 65 missed 1; reference identical.\non_time_minus_reference = 0 on all tag slices.\n\nDevice-level assessment\n* jetson-orin / trt: Rules PASS. Audit shows no device gap versus reference on any examined slice. Lighting, size and tag slices are tied to reference with zero on-time delta and zero false-alert delta. The summary recall 0.986 is fully explained by the slices. Small-package and occluded slices are data-limited \u2013 6 events each in E2 \u2013 and are weak on the reference too, i.e., a data/model coverage gap rather than a device-specific degradation; E4/E5 show perfect tie to reference on those handfuls. No evidence of a hidden risk for the trt backend on the measured slices. Verdict after audit: PASS remains, no hold proposed.\n* pi5-hailo / hailo8: Rules already HOLD for latency_ms_p95 66 > 50 override per E1. No audit action permitted on a rule-held device. Verdict remains HOLD.\n\nNo propose_hold is issued.",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 13598,
+    "completion_tokens": 2748
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "taught_at": "2026-11-02T23:20:17+00:00",
+  "base": "https://inference.baseten.co/v1",
+  "model": "meta-models/muse-spark-open-1026",
+  "policy": "/home/chanseok/edgegate/policies/package_entrance.toml",
+  "wav": null,
+  "typed": "Tell me when a package is left at the entrance.",
+  "instruction": "Tell me when a package is left at the entrance.",
+  "spark": {
+    "answer": null,
+    "reasoning": "Task: short kebab-case name. Instruction: sentence as given. Detect: object classes to detect, as short singular nouns usable as text prompts for a segmentation model; the target object first, then any class needed to tell the target's state apart (for example the person handling it). Event: one sentence saying what makes one alert. Not_event: one sentence saying what must not alert. Watch: up to three conditions in this home under which detection could fail, each a few words.\n\nWe need to convert \"Tell me when a package is left at the entrance.\" Camera context: Indoor staged drop zone in a room, standing in for the entrance. Camera watches around the clock, including evenings and nights with room lights low.\n\nSo task: package-left-at-entrance? Something kebab-case. Probably \"package-delivered\" or \"package-left-at-entrance\". Keep short kebab-case.\n\nInstruction: the sentence as given. So \"Tell me when a package is left at the entrance.\"\n\nDetect: target object first, then any class needed to tell target's state apart (for example the person handling it). So package first. Need person? Probably package, person, maybe door? But instruction says entrance. Could be person, door, floor? But we need classes to detect as short singular nouns usable as text prompts for segmentation model; the target object first, then any class needed to tell target's state apart (for example the person handling it). So we likely need package and person. Because package left means person leaves and package remains. So detect: [\"package\", \"person\"]\n\nEvent: one sentence saying what makes one alert. Something like \"Alert when a package appears and remains unattended in the entrance drop zone after a person leaves.\" Need concise.\n\nNot_event: one sentence saying what must not alert. \"Do not alert when a person is carrying or standing with the package, or when no package is present.\"\n\nWatch: up to three conditions in this home under which detection could fail, each a few words. Use camera context for watch. Do not add keys. Camera context: Indoor staged drop zone in a room, standing in for entrance. Camera watches around the clock, including evenings and nights with room lights low.\n\nSo watch conditions: low light evenings, staged indoor lighting variation, drop zone occlusion? Also \"around the clock\" -> night low light. \"indoor staged drop zone\" -> cluttered room? Maybe: \"low light at night\", \"shadows in staged room\", \"package occluded by furniture\"? Need up to three conditions, each a few words.\n\nPotentially: [\"dim evening lighting\", \"night low-light noise\", \"staged zone clutter\"]\n\nBut better to be specific: \"low light evenings/nights\", \"shadows from room lights\", \"occlusion in drop zone\"\n\nKeep each a few words.\n\nWe must answer with one JSON object and nothing else, with exactly these keys: task, instruction, detect, event, not_event, watch\n\nWe must ensure JSON valid. Task in kebab-case, instruction same sentence, detect array, event sentence, not_event sentence, watch array up to three strings.\n\nLet's design detect: [\"package\", \"person\"] \u2013 that's minimal. Could also add \"door\" or \"floor mat\"? But example says target first then any class needed to tell target's state apart (for example the person handling it). So person is needed. Maybe also add \"bag\"? No.\n\nCould do detect: [\"package\", \"person\", \"doorway\"] but doorway is not needed for state? But package left at entrance \u2013 maybe doorway helps localize. However spec says detect object classes to detect, as short singular nouns usable as text prompts for segmentation model; the target object first, then any class needed to tell target's state apart. So person is needed to distinguish whether package is being held vs left. So two entries suffice.\n\nEvent: one sentence saying what makes one alert. Something like \"Alert when a package is left unattended in the entrance drop zone after the person departs.\"\n\nNot_event: \"Do not alert when a person holds, carries, or stands near the package, or when the drop zone is e",
+    "usage": {
+      "prompt_tokens": 356,
+      "completion_tokens": 2048,
+      "total_tokens": 2404,
+      "prompt_tokens_details": {
+        "audio_tokens": 0,
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+        "accepted_prediction_tokens": 1494,
+        "audio_tokens": 0,
+        "reasoning_tokens": 2045,
+        "rejected_prediction_tokens": 2391
+      }
+    },
+    "s": 7.25
+  },
+  "spec": null
+}

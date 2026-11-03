@@ -53,14 +53,20 @@ hidden_overlap = 0.3 # a person box covering this much of the package = hidden, 
 # package is still there is scored apart (second_packages), not in recall (events.py).
 reconnect_s = 2.0    # no frames this long = camera away, zone state unknown
 match_window_s = 10.0  # release to alert received, dwell included
-notify_s = 1.2       # measured alert delivery delay, added before the 10 s check
+notify_s = 1.2       # measured deciding frame -> alert at the push server, added before the 10 s check
 # Measured 10/30 with s0 in measurement mode (scripts/measure_delivery.py): 7 live
 # drops on the Jetson (m01, m02, m03; 7 of 7 alerted), then m03 streamed again to each
 # device while this host subscribed to the ntfy topic: deciding frame -> alert received,
 # one clock. Max 0.98 s (trt) and 1.13 s (hailo8); a live frame reaches the device
 # about 0.07 s later than a streamed recording does (trt live 0.10-0.12 s to the
-# decision vs 0.05 s), so 1.13 + 0.07 rounds to 1.2. Not in it: the push server to
-# phone hop (the Galaxy's screen did not visibly change on an alert).
+# decision vs 0.05 s), so 1.13 + 0.07 rounds to 1.2.
+# Two states, only the first measured: (1) deciding frame -> alert at the push server,
+# 1.2 s, in notify_s; (2) push server -> the phone's screen: NOT measured (the Galaxy's
+# always-on display did not visibly change on an alert, 10/30). So the 10 s check as
+# applied is release -> alert at the push server + 1.2 s; "received on the phone within
+# 10 s" is not verified by any record. A phone-side value (the screen lighting up in the
+# recorded frames, measure_delivery.py --phone) goes into a new policy version, since
+# changing anything in [events] voids every record.
 notify_measured = true
 
 # min / max are absolute limits; max_drop is the allowed drop below the reference.

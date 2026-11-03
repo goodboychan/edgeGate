@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "label": "case_night_gap",
+  "repeat": 1,
+  "model_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "artifacts": {
+    "trt": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "hailo8": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "records": [
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/night_gap/records/hailo8.json",
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/night_gap/records/onnx-gx10.json",
+    "/tmp/claude-1000/-home-chanseok-workspace/f2a20f23-47fd-43e4-835f-2cab96fe6805/scratchpad/audit_cases/night_gap/records/trt.json"
+  ],
+  "reasoning": "medium",
+  "temperature": 1.0,
+  "url": "http://127.0.0.1:8001/v1/chat/completions",
+  "audited_at": "2026-11-02T23:48:47+00:00",
+  "wall_s": 263.6,
+  "rules": [
+    {
+      "backend": "trt",
+      "verdict": "PASS",
+      "reasons": []
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "PASS",
+      "reasons": []
+    }
+  ],
+  "final": [
+    {
+      "backend": "trt",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "veto",
+          "Deployment requires 24/7 monitoring including nights with low room lights, but eval coverage has no night lighting and only day/evening data; performance on the required night slice is unmeasured."
+        ]
+      ],
+      "vetoed_by": "glimmer"
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "veto",
+          "Deployment requires 24/7 monitoring including nights with low room lights, but eval coverage has no night lighting and only day/evening data; performance on the required night slice is unmeasured."
+        ]
+      ],
+      "vetoed_by": "glimmer"
+    }
+  ],
+  "vetoes": {
+    "trt": {
+      "reason": "Deployment requires 24/7 monitoring including nights with low room lights, but eval coverage has no night lighting and only day/evening data; performance on the required night slice is unmeasured.",
+      "evidence": [
+        "E2",
+        "E3"
+      ]
+    },
+    "hailo8": {
+      "reason": "Deployment requires 24/7 monitoring including nights with low room lights, but eval coverage has no night lighting and only day/evening data; performance on the required night slice is unmeasured.",
+      "evidence": [
+        "E2",
+        "E4"
+      ]
+    }
+  },
+  "rejected": [],
+  "tool_calls": [
+    {
+      "name": "gate_decisions",
+      "args": {},
+      "result": "{\"evidence_id\": \"E1\", \"backends\": {\"trt\": {\"verdict\": \"PASS\", \"reasons\": [], \"device\": {\"label\": \"jetson-orin\", \"device_id\": \"28e2cf10ddf70d2ef8221c82c013d27d\", \"runtime\": \"tensorrt device\"}, \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 23.0, \"latency_ms_p95\": 25.3, \"peak_mem_mb\": 400.0}}, \"hailo8\": {\"verdict\": \"PASS\", \"reasons\": [], \"device\": {\"label\": \"pi5-hailo\", \"device_id\": \"8db76e25b0fb515f0893a1d0c62e06d7\", \"runtime\": \"hailort 4.20.0\"}, \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 14.0, \"latency_ms_p95\": 15.400000000000002, \"peak_mem_mb\": 400.0}}}, \"reference\": {\"backend\": \"onnx-gx10\", \"metrics\": {\"event_recall\": 0.9861111111111112, \"false_alerts_per_h\": 0.0, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 0, \"detection_delay_s_p50\": 3.1, \"detection_delay_s_p95\": 3.1, \"latency_ms_p50\": 32.0, \"latency_ms_p95\": 35.2, \"peak_mem_mb\": 400.0}}, \"thresholds\": {\"event_recall\": {\"min\": 0.9, \"max_drop\": 0.05}, \"false_alerts_per_h\": {\"max\": 1.0}, \"duplicate_alerts\": {\"max\": 0}, \"detection_delay_s_p95\": {\"max\": 5.0}, \"latency_ms_p95\": {\"max\": 100.0}, \"peak_mem_mb\": {\"max\": 2048.0}}, \"backend_overrides\": {\"hailo8\": {\"latency_ms_p95\": {\"max\": 50.0}}}}"
+    },
+    {
+      "name": "eval_coverage",
+      "args": {},
+      "result": "{\"evidence_id\": \"E2\", \"sessions\": 6, \"by_lighting\": {\"day\": {\"sessions\": 3, \"hours\": 1.5, \"events\": 36}, \"evening\": {\"sessions\": 3, \"hours\": 1.5, \"events\": 36}}, \"events_by_size\": {\"large\": 36, \"medium\": 30, \"small\": 6}, \"events_by_tag\": {\"occluded\": 6, \"untagged\": 66}, \"size_edges\": [0.08, 0.15]}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "lighting"
+      },
+      "result": "{\"evidence_id\": \"E3\", \"backend\": \"trt\", \"by\": \"lighting\", \"slices\": {\"day\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"evening\": {\"events\": 36, \"on_time\": 36, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"day\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"evening\": {\"events\": 36, \"on_time\": 36, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "hailo8",
+        "by": "lighting"
+      },
+      "result": "{\"evidence_id\": \"E4\", \"backend\": \"hailo8\", \"by\": \"lighting\", \"slices\": {\"day\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}, \"evening\": {\"events\": 36, \"on_time\": 36, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"day\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}, \"evening\": {\"events\": 36, \"on_time\": 36, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"hours\": 1.5, \"false_alerts\": 0, \"false_alerts_per_h\": 0.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "size"
+      },
+      "result": "{\"evidence_id\": \"E5\", \"backend\": \"trt\", \"by\": \"size\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"on_time_minus_reference\": 0}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "hailo8",
+        "by": "size"
+      },
+      "result": "{\"evidence_id\": \"E6\", \"backend\": \"hailo8\", \"by\": \"size\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972, \"on_time_minus_reference\": 0}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"large\": {\"events\": 36, \"on_time\": 35, \"late\": 0, \"missed\": 1, \"recall\": 0.972}, \"medium\": {\"events\": 30, \"on_time\": 30, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"small\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "trt",
+        "by": "tag"
+      },
+      "result": "{\"evidence_id\": \"E7\", \"backend\": \"trt\", \"by\": \"tag\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985}}}}"
+    },
+    {
+      "name": "slice_metrics",
+      "args": {
+        "backend": "hailo8",
+        "by": "tag"
+      },
+      "result": "{\"evidence_id\": \"E8\", \"backend\": \"hailo8\", \"by\": \"tag\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0, \"on_time_minus_reference\": 0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985, \"on_time_minus_reference\": 0}}, \"reference\": {\"backend\": \"onnx-gx10\", \"slices\": {\"occluded\": {\"events\": 6, \"on_time\": 6, \"late\": 0, \"missed\": 0, \"recall\": 1.0}, \"untagged\": {\"events\": 66, \"on_time\": 65, \"late\": 0, \"missed\": 1, \"recall\": 0.985}}}}"
+    },
+    {
+      "name": "propose_hold",
+      "args": {
+        "backend": "trt",
+        "reason": "Deployment requires 24/7 monitoring including nights with low room lights, but eval coverage has no night lighting and only day/evening data; performance on the required night slice is unmeasured.",
+        "evidence": [
+          "E2",
+          "E3"
+        ]
+      },
+      "result": "{\"accepted\": true, \"backend\": \"trt\", \"verdict_after_audit\": \"HOLD\"}"
+    },
+    {
+      "name": "propose_hold",
+      "args": {
+        "backend": "hailo8",
+        "reason": "Deployment requires 24/7 monitoring including nights with low room lights, but eval coverage has no night lighting and only day/evening data; performance on the required night slice is unmeasured.",
+        "evidence": [
+          "E2",
+          "E4"
+        ]
+      },
+      "result": "{\"accepted\": true, \"backend\": \"hailo8\", \"verdict_after_audit\": \"HOLD\"}"
+    }
+  ],
+  "turns": [
+    {
+      "s": 13.5,
+      "reasoning": "Audit this candidate.\n\nWe need tell me when a package is left at entrance. Deployment: Indoor staged drop zone... camera watches around clock, including evenings and nights with room lights low.\n\nWe need audit decision. Start with gate_decisions. Then check eval_coverage, slice_metrics for each device rules passed.\n\nLet's call gate_decisions.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 13.4,
+      "reasoning": "Audit this candidate.\n\nWe have gate decisions: trt PASS, hailo8 PASS. Both match reference metrics perfectly for event recall etc.\n\nNeed to check eval_coverage, and slice_metrics for each device rules passed (by lighting, size, tag or session), compared with reference on same slices.\n\nStart with eval_coverage.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 75.1,
+      "reasoning": "Need audit. Deployment indoor staged drop zone, camera watches around clock including evenings and nights with room lights low. Eval coverage: sessions 6, by lighting day 3 sessions 1.5h 36 events, evening 3 sessions 1.5h 36 events. No night coverage! Hours 1.5 each. Events by size large 36, medium 30, small 6. Events by tag occluded 6, untagged 66.\n\nGate decisions: trt PASS, hailo8 PASS. Both have same event_recall 0.986..., false alerts 0, etc. Reference onnx-gx10 same.\n\nRisk: deployment requires night low light, but eval has no night coverage. Also small packages only 6 events. Occluded 6 events.\n\nNeed slice_metrics for each device passed by lighting, size, tag, session.\n\nWe need check what summary could hide. Let's get slice_metrics for trt by lighting.",
+      "content": null,
+      "tool_calls": 6
+    },
+    {
+      "s": 96.1,
+      "reasoning": "Audit candidate. We have gate_decisions PASS for trt and hailo8. Metrics all same as reference.\n\nCoverage E2: sessions 6, by lighting day 3 sessions 1.5h events 36, evening 3 sessions 1.5h events 36. No night coverage! Deployment says camera watches around clock including evenings and nights with room lights low. Eval has no night. Events by size large 36, medium 30, small 6. Events by tag occluded 6, untagged 66.\n\nSlice metrics show identical to reference across lighting day/evening, size, tag.\n\nSo risk: missing night lighting coverage. The deployment needs evening and night. Evening present but night missing. That's data/model gap. Both backends match reference, but reference also weak. Should we propose HOLD? The instruction: A slice that is weak on the reference too is a data or model gap, not a device gap; it still matters if deployment depends on that slice.\n\nDeployment depends on night. Eval coverage has no night. So risk hidden. Should we hold both devices? Rule engine passed based on summary metrics. Audit tools show risk: eval_coverage missing night. That's a gap.\n\nWe cannot approve anything rules held. We can propose HOLD for device rules passed when audit tools show risk that summary metrics hide. The risk is lack of coverage for night. Both devices have same recall as reference, so device gap not shown, but deployment depends on night slice which is uncovered. This is a data gap. Might warrant HOLD for both? The instruction says propose HOLD only when tools show risk that summary metrics hide. The eval coverage shows no night. That's evidence.\n\nPotentially hold both devices because deployment requires night performance unknown. The slice_metrics don't have night data. Could we check session slice? Not yet. Maybe session metrics could reveal? Might be similar.\n\nWe could propose HOLD for both trt and hailo8 citing coverage gap E2.\n\nEvidence ids: E2 shows no night, E3/E4 show lighting only day/evening. Could cite.\n\nWe need propose_hold for each device. Use reason: eval set lacks night lighting coverage required for 24/7 deployment with low lights at night.\n\nShould we hold both? Yes.\n\nAlso maybe size small only 6 events. That's small sample. But reference also same. Hmm.\n\nProbably hold both.\n\nLet's propose hold for trt and hailo8.\n\n",
+      "content": null,
+      "tool_calls": 2
+    },
+    {
+      "s": 65.0,
+      "reasoning": "Audit this candidate.\n\nWe have gate_decisions: trt PASS, hailo8 PASS. Metrics identical to reference. Eval coverage: sessions 6, by_lighting day 3 sessions 1.5 hours 36 events, evening 3 sessions 1.5 hours 36 events. No night. Events by size large 36 medium 30 small 6. events by tag occluded 6 untagged 66. Size edges [0.08,0.15]\n\nSlice metrics: lighting day evening both match reference. Size matches. Tag matches.\n\nDeployment requirement: indoor staged drop zone, camera watches around clock including evenings and nights with room lights low.\n\nWe have no night data. Eval coverage lacks night. That is risk. We proposed HOLD for both trt and hailo8.\n\nWe need finish with one short paragraph per device: verdict after audit and why, citing evidence ids.\n\nBoth now HOLD. Need cite evidence.\n\nWe have evidence E2 coverage, E3/E4 lighting.\n\nProvide summary.\n\n",
+      "content": "**jetson-orin \u2013 trt**\nVerdict after audit: HOLD. Rules passed with event_recall 0.986 and zero false alerts, matching the reference on the measured slices [E1]. Lighting slices are day 36 events / 1.5 h and evening 36 events / 1.5 h with recall 0.972 / 1.0 and no delta to reference [E3]; size and tag slices also match reference [E5, E7]. Eval coverage shows only day and evening lighting, 0 hours/events for night, and no night data at all [E2]. Deployment requires around-the-clock monitoring including nights with low room lights, so the required night slice is unmeasured for this device and the reference.\n\n**pi5-hailo \u2013 hailo8**\nVerdict after audit: HOLD. Rules passed with identical summary metrics to reference and the reference [E1]. Lighting slices day/evening show recall 0.972 / 1.0 with zero delta to reference and zero false alerts per hour [E4]; size and tag slices match reference [E6, E8]. The eval set contains only day and evening sessions, 3 sessions / 1.5 h each, with no night coverage [E2]. Because the deployment depends on night performance with low room lights, the lack of night measurements is a coverage gap that hides risk for this backend.",
+      "tool_calls": 0
+    }
+  ],
+  "answer": "**jetson-orin \u2013 trt**\nVerdict after audit: HOLD. Rules passed with event_recall 0.986 and zero false alerts, matching the reference on the measured slices [E1]. Lighting slices are day 36 events / 1.5 h and evening 36 events / 1.5 h with recall 0.972 / 1.0 and no delta to reference [E3]; size and tag slices also match reference [E5, E7]. Eval coverage shows only day and evening lighting, 0 hours/events for night, and no night data at all [E2]. Deployment requires around-the-clock monitoring including nights with low room lights, so the required night slice is unmeasured for this device and the reference.\n\n**pi5-hailo \u2013 hailo8**\nVerdict after audit: HOLD. Rules passed with identical summary metrics to reference and the reference [E1]. Lighting slices day/evening show recall 0.972 / 1.0 with zero delta to reference and zero false alerts per hour [E4]; size and tag slices match reference [E6, E8]. The eval set contains only day and evening sessions, 3 sessions / 1.5 h each, with no night coverage [E2]. Because the deployment depends on night performance with low room lights, the lack of night measurements is a coverage gap that hides risk for this backend.",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 13423,
+    "completion_tokens": 2032
+  }
+}
