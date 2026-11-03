@@ -180,6 +180,7 @@ All recorded with the one OAK-D Pro, fixed in place at the indoor drop zone, 128
 | u01 | eval | rainy day, unattended | 120 min | eval set, no package |
 | m01–m03 | live | night | 2–4 min | alert delivery measurement (`notify_s`) |
 | l01 | live | night, room lights on | 10 min | 11/3 live shoot for the demo video and the phone-hop measurement: 4 placements, 4 alerts, flash 1.7–2.4 s after the deciding frame; not in the eval set |
+| l02 | live | day, morning | 6 min | 11/4 live shoot for the video's opening: the five boxes in turn (train brown, black, gray; eval white, robot-arm), s3 on the Jetson in measurement mode; 6 placements (the robot-arm box twice), 6 alerts ([`results/alerts_l02.jsonl`](results/alerts_l02.jsonl)); not in the eval set |
 
 ## Running it
 
