@@ -33,5 +33,32 @@ class RuntimesFilter(unittest.TestCase):
         self.assertEqual(self.queued(["trt"], ["reference", "clean"]), ["clean_trt", "reference_onnx"])
 
 
+class ReplayFromRecords(unittest.TestCase):
+    """Without build/ (a replay of committed records), judge takes the hashes from the records."""
+
+    def test_hashes_come_from_the_records(self):
+        import json
+        import tempfile
+        from test_gate import NOW, policy, record
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "records"
+            for sub, rec in (("reference", record("onnx-gx10")), ("clean", record("trt")), ("clean", record("hailo8"))):
+                (out / sub).mkdir(parents=True, exist_ok=True)
+                (out / sub / f"{rec['backend']}.json").write_text(json.dumps(rec))
+            rows = mc.judge(policy(), ["clean"], Path(tmp) / "no-build", out, NOW)
+        by = {(r["candidate"], r["backend"]): r for r in rows}
+        self.assertTrue(all(r["replay"] for r in rows))
+        self.assertEqual(by[("clean", "trt")]["verdict"], "PASS")
+        self.assertEqual(by[("clean", "hailo8")]["verdict"], "PASS")
+        self.assertEqual(by[("clean", "trt")]["artifact_sha256"], "t" * 64)
+
+    def test_with_build_the_files_are_hashed(self):
+        if not (ROOT / "build/s3/student.onnx").exists():
+            self.skipTest("build/s3 is not here")
+        rows = mc.judge(mc.load_policy(str(ROOT / "policies/package_entrance.toml")), ["clean"],
+                        ROOT / "build/s3", ROOT / "results/records/s3")
+        self.assertFalse(any(r["replay"] for r in rows))
+
+
 if __name__ == "__main__":
     unittest.main()

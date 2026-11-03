@@ -60,119 +60,134 @@
     "backend": "trt",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0.769231 < min 0.9",
+      "event_recall: 0.769231 is 0.192308 below reference 0.961538 (max_drop 0.05)",
+      "false_alerts_per_h: 3.53231 > max 1",
+      "duplicate_alerts: 1 > max 0"
     ],
     "metrics": {
-      "event_recall": 0.7272727272727273,
-      "false_alerts_per_h": 3.0025813216643864,
+      "event_recall": 0.7692307692307693,
+      "false_alerts_per_h": 3.5323085683673145,
       "duplicate_alerts": 1,
-      "detection_delay_s_p95": 3.4659999999999798,
-      "latency_ms_p95": 20.374028166406788,
-      "peak_mem_mb": 415.72265625
+      "detection_delay_s_p95": 3.1993999999999687,
+      "latency_ms_p95": 20.402948022820055,
+      "peak_mem_mb": 399.53515625
     },
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "256aeb9e5c65f501d2d42d2a79dfcff8648014f3cd54b4d8e77670bc9205a1c8",
     "measured": true,
-    "measured_at": "2026-11-02T02:33:58+00:00"
+    "measured_at": "2026-11-02T23:38:43+00:00"
   },
   {
     "candidate": "bgr",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0.807692 < min 0.9",
+      "event_recall: 0.807692 is 0.153846 below reference 0.961538 (max_drop 0.05)",
+      "false_alerts_per_h: 3.88554 > max 1",
+      "duplicate_alerts: 1 > max 0"
     ],
     "metrics": {
-      "event_recall": 0.7727272727272727,
-      "false_alerts_per_h": 3.3779039868724343,
+      "event_recall": 0.8076923076923077,
+      "false_alerts_per_h": 3.885539425204046,
       "duplicate_alerts": 1,
-      "detection_delay_s_p95": 3.4658999999999764,
-      "latency_ms_p95": 14.901375651243143,
-      "peak_mem_mb": 232.828125
+      "detection_delay_s_p95": 3.3992999999999824,
+      "latency_ms_p95": 17.054781754268333,
+      "peak_mem_mb": 230.078125
     },
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "f497c17a650af275b18ee020000f8d8691b47b1d48329c6a23833f6f155e5955",
     "measured": true,
-    "measured_at": "2026-11-02T02:09:08+00:00"
+    "measured_at": "2026-11-02T23:24:50+00:00"
   },
   {
     "candidate": "no_norm",
     "backend": "trt",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0 < min 0.9",
+      "event_recall: 0 is 0.961538 below reference 0.961538 (max_drop 0.05)",
+      "detection_delay_s_p95: missing or not a finite number: None"
     ],
     "metrics": {
       "event_recall": 0.0,
       "false_alerts_per_h": 0.0,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": null,
-      "latency_ms_p95": 44.7535669663921,
-      "peak_mem_mb": 406.984375
+      "latency_ms_p95": 44.38134975498542,
+      "peak_mem_mb": 406.1484375
     },
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "59fb178b1f9548b01d8823deb8f101870ecb6dfabdfd67fb23dba8b605605552",
     "measured": true,
-    "measured_at": "2026-11-02T04:23:04+00:00"
+    "measured_at": "2026-11-03T01:37:34+00:00"
   },
   {
     "candidate": "no_norm",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0 < min 0.9",
+      "event_recall: 0 is 0.961538 below reference 0.961538 (max_drop 0.05)",
+      "detection_delay_s_p95: missing or not a finite number: None"
     ],
     "metrics": {
       "event_recall": 0.0,
       "false_alerts_per_h": 0.0,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": null,
-      "latency_ms_p95": 39.240618993062526,
-      "peak_mem_mb": 251.640625
+      "latency_ms_p95": 42.04983892268501,
+      "peak_mem_mb": 251.203125
     },
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "c6e55a7716ed7df4b4d6b4c6703e47b9f2eaae45b71d74e8e00a34c3eec184e9",
     "measured": true,
-    "measured_at": "2026-11-02T04:00:22+00:00"
+    "measured_at": "2026-11-03T01:28:42+00:00"
   },
   {
     "candidate": "w4",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0.615385 < min 0.9",
+      "event_recall: 0.615385 is 0.346154 below reference 0.961538 (max_drop 0.05)",
+      "false_alerts_per_h: 4.592 > max 1",
+      "duplicate_alerts: 4 > max 0",
+      "detection_delay_s_p95: 6.7981 > max 5"
     ],
     "metrics": {
-      "event_recall": 0.6363636363636364,
-      "false_alerts_per_h": 3.7532266520804827,
+      "event_recall": 0.6153846153846154,
+      "false_alerts_per_h": 4.592001138877508,
       "duplicate_alerts": 4,
       "detection_delay_s_p95": 6.798100000000005,
-      "latency_ms_p95": 14.4495584332617,
-      "peak_mem_mb": 230.046875
+      "latency_ms_p95": 14.922272984404117,
+      "peak_mem_mb": 228.21875
     },
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "a072e21ea3f0e1b72ab26a09130b99a7377c5fb0306b2cc34dc0f952224c7277",
     "measured": true,
-    "measured_at": "2026-11-02T04:35:05+00:00"
+    "measured_at": "2026-11-03T02:06:39+00:00"
   },
   {
     "candidate": "calib10",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "false_alerts_per_h: 5.29846 > max 1",
+      "duplicate_alerts: 1 > max 0"
     ],
     "metrics": {
-      "event_recall": 0.9090909090909091,
-      "false_alerts_per_h": 4.879194647704628,
+      "event_recall": 0.9230769230769231,
+      "false_alerts_per_h": 5.298462852550972,
       "duplicate_alerts": 1,
       "detection_delay_s_p95": 3.1326999999999714,
-      "latency_ms_p95": 16.81598075083457,
-      "peak_mem_mb": 233.265625
+      "latency_ms_p95": 14.972964179469272,
+      "peak_mem_mb": 232.359375
     },
     "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
     "artifact_sha256": "4ffc6cc5c327688dd5afaed4690fe54cd8f0dbc7c2adac7b06dd872667b12709",
     "measured": true,
-    "measured_at": "2026-11-02T05:11:41+00:00"
+    "measured_at": "2026-11-03T02:44:58+00:00"
   }
 ]

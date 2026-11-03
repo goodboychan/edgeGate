@@ -7,7 +7,7 @@
     "device_id": "28e2cf10ddf70d2ef8221c82c013d27d",
     "hostname": "ubuntu",
     "board": "NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super",
-    "runtime": "tensorrt device"
+    "runtime": "tensorrt 10.3.0"
   },
   "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
   "artifact_sha256": "4f3132f05a0e8bb18bc46f94d5eb4a0c80b33f4f606a44cbc582c24252a94318",

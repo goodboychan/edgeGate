@@ -29,15 +29,18 @@ from measure_candidates import CANDIDATES, judge  # noqa: E402
 POLICIES = ("always deploy", "false alerts only", "rules", "rules + Glimmer")
 
 
-def builds(policy, runs, now=None, all_sets=False):
+def builds(policy, runs, now=None, all_sets=False, records=None):
     """One row per measured build, in run order: the judge row plus its run name.
 
     Builds measured on another eval set are left out unless all_sets: their numbers are
     not comparable with the rest, and "always deploy" would ship them on those numbers.
+    `records` is the records directory (default runs/records; results/records replays the
+    committed snapshot, with the hashes read from the records since build/ is not in git).
     """
+    records = Path(records) if records else ROOT / "runs/records"
     rows, left_out = [], 0
     for run in runs:
-        for r in judge(policy, list(CANDIDATES), ROOT / "build" / run, ROOT / "runs/records" / run, now):
+        for r in judge(policy, list(CANDIDATES), ROOT / "build" / run, records / run, now):
             if r["candidate"] == "reference" or not r["measured"]:
                 continue
             if not all_sets and any(x.startswith("eval_set:") for x in r["reasons"]):
@@ -120,6 +123,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--runs", help="comma-separated run names (default: every run under runs/records)")
     ap.add_argument("--policy", default=str(ROOT / "policies/package_entrance.toml"))
+    ap.add_argument("--records", default=str(ROOT / "runs/records"),
+                    help="records directory (results/records replays the committed snapshot)")
     ap.add_argument("--audits", default=str(ROOT / "runs/audits"))
     ap.add_argument("--now", help="ISO time to judge staleness against (replays)")
     ap.add_argument("--all", action="store_true", help="also builds measured on another eval set")
@@ -128,10 +133,11 @@ def main():
     now = _parse_time(a.now) if a.now else None
     if a.now and now is None:
         sys.exit(f"bad --now {a.now!r} (need ISO time with timezone)")
-    runs = a.runs.split(",") if a.runs else sorted(p.name for p in (ROOT / "runs/records").iterdir()
-                                                   if (ROOT / "build" / p.name / "student.onnx").exists())
+    records = Path(a.records)
+    runs = a.runs.split(",") if a.runs else sorted(p.name for p in records.iterdir()
+                                                   if p.is_dir() and any(p.rglob("*.json")))
     policy = load_policy(a.policy)
-    rows, left_out = builds(policy, runs, now, a.all)
+    rows, left_out = builds(policy, runs, now, a.all, records)
     rows = compare(rows, load_audits(a.audits), policy["thresholds"])
     lines = summary(rows, policy["thresholds"])
     if left_out:

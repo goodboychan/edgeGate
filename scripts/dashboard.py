@@ -137,9 +137,10 @@ def approvals_html(path):
             '<th>record</th></tr></thead><tbody>' + "".join(rows) + "</tbody></table></div>")
 
 
-def page(policy, runs, now, audits_dir, approvals_dir):
+def page(policy, runs, now, audits_dir, approvals_dir, records=None):
     task, limits = policy["task"], policy["thresholds"]
-    comparable, left_out = builds(policy, runs, now)
+    records = Path(records) if records else ROOT / "runs/records"
+    comparable, left_out = builds(policy, runs, now, records=records)
     comparable = compare(comparable, load_audits(audits_dir), limits)
     lines = summary(comparable, limits)
     approved = sum(r["verdict"] == PASS for r in comparable)
@@ -148,7 +149,7 @@ def page(policy, runs, now, audits_dir, approvals_dir):
 
     table = []
     for run in runs:
-        for r in judge(policy, list(CANDIDATES), ROOT / "build" / run, ROOT / "runs/records" / run, now):
+        for r in judge(policy, list(CANDIDATES), ROOT / "build" / run, records / run, now):
             if r["candidate"] != "reference" and not r["measured"]:
                 continue
             held = ", ".join(dict.fromkeys(x.split(":")[0] for x in r["reasons"]))
@@ -250,8 +251,10 @@ code {{ font-size: 13px; }}
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--runs", help="comma-separated run names (default: every run under runs/records)")
+    ap.add_argument("--runs", help="comma-separated run names (default: every run under the records directory)")
     ap.add_argument("--policy", default=str(ROOT / "policies/package_entrance.toml"))
+    ap.add_argument("--records", default=str(ROOT / "runs/records"),
+                    help="records directory (results/records replays the committed snapshot)")
     ap.add_argument("--audits", default=str(ROOT / "runs/audits"))
     ap.add_argument("--approvals", default=str(ROOT / "runs/approvals"))
     ap.add_argument("--now", help="ISO time to judge staleness against (replays)")
@@ -261,10 +264,11 @@ def main():
     now = _parse_time(a.now) if a.now else None
     if a.now and now is None:
         sys.exit(f"bad --now {a.now!r} (need ISO time with timezone)")
-    runs = a.runs.split(",") if a.runs else sorted(p.name for p in (ROOT / "runs/records").iterdir()
-                                                   if (ROOT / "build" / p.name / "student.onnx").exists())
+    records = Path(a.records)
+    runs = a.runs.split(",") if a.runs else sorted(p.name for p in records.iterdir()
+                                                   if p.is_dir() and any(p.rglob("*.json")))
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
-    Path(a.out).write_text(page(load_policy(a.policy), runs, now, a.audits, a.approvals))
+    Path(a.out).write_text(page(load_policy(a.policy), runs, now, a.audits, a.approvals, records))
     print(a.out)
 
 

@@ -61,119 +61,133 @@
     "backend": "trt",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0.692308 < min 0.9",
+      "event_recall: 0.692308 is 0.153846 below reference 0.846154 (max_drop 0.05)",
+      "false_alerts_per_h: 5.29846 > max 1",
+      "duplicate_alerts: 1 > max 0"
     ],
     "metrics": {
-      "event_recall": 0.6363636363636364,
-      "false_alerts_per_h": 4.503871982496579,
+      "event_recall": 0.6923076923076923,
+      "false_alerts_per_h": 5.298462852550972,
       "duplicate_alerts": 1,
       "detection_delay_s_p95": 3.3326000000000136,
-      "latency_ms_p95": 23.34554118278902,
-      "peak_mem_mb": 444.68359375
+      "latency_ms_p95": 23.347968130838126,
+      "peak_mem_mb": 457.32421875
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "ff5095034f0c40c1879a15fade46c12ad5e5f11af0b2be80943f5ff70cfccd58",
     "measured": true,
-    "measured_at": "2026-11-02T06:51:56+00:00"
+    "measured_at": "2026-11-03T03:41:34+00:00"
   },
   {
     "candidate": "bgr",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0.769231 < min 0.9",
+      "event_recall: 0.769231 is 0.0769231 below reference 0.846154 (max_drop 0.05)",
+      "false_alerts_per_h: 3.17908 > max 1",
+      "duplicate_alerts: 2 > max 0"
     ],
     "metrics": {
-      "event_recall": 0.7272727272727273,
-      "false_alerts_per_h": 2.627258656456338,
+      "event_recall": 0.7692307692307693,
+      "false_alerts_per_h": 3.179077711530583,
       "duplicate_alerts": 2,
-      "detection_delay_s_p95": 3.465900000000005,
-      "latency_ms_p95": 20.229080569697544,
-      "peak_mem_mb": 251.59375
+      "detection_delay_s_p95": 3.3326000000000136,
+      "latency_ms_p95": 20.407551317475736,
+      "peak_mem_mb": 251.375
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "ef1959601df3fce648bc63481c342d68b22b5836ae1864c2e631a83bd3bf56d3",
     "measured": true,
-    "measured_at": "2026-11-02T06:50:29+00:00"
+    "measured_at": "2026-11-03T04:50:45+00:00"
   },
   {
     "candidate": "no_norm",
     "backend": "trt",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "event_recall: 0 < min 0.9",
+      "event_recall: 0 is 0.846154 below reference 0.846154 (max_drop 0.05)",
+      "detection_delay_s_p95: missing or not a finite number: None"
     ],
     "metrics": {
       "event_recall": 0.0,
       "false_alerts_per_h": 0.0,
       "duplicate_alerts": 0,
       "detection_delay_s_p95": null,
-      "latency_ms_p95": 53.6348836903926,
-      "peak_mem_mb": 441.33203125
+      "latency_ms_p95": 53.57793064904399,
+      "peak_mem_mb": 440.47265625
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "4f3132f05a0e8bb18bc46f94d5eb4a0c80b33f4f606a44cbc582c24252a94318",
     "measured": true,
-    "measured_at": "2026-11-02T08:56:42+00:00"
+    "measured_at": "2026-11-03T05:53:58+00:00"
   },
   {
     "candidate": "no_norm",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "tool: measurement tool failed: 'RuntimeError: ssh -o BatchMode=yes... exit 255: ssh: connect to host device port 22: No route to host\\n'",
+      "device: measured on 'hailo8', not the target device",
+      "runtime: record names no runtime"
     ],
     "metrics": {
-      "event_recall": 0.3181818181818182,
-      "false_alerts_per_h": 3.3779039868724343,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": 2.5328999999999837,
-      "latency_ms_p95": 30.606305351830088,
-      "peak_mem_mb": 254.875
+      "event_recall": null,
+      "false_alerts_per_h": null,
+      "duplicate_alerts": null,
+      "detection_delay_s_p95": null,
+      "latency_ms_p95": null,
+      "peak_mem_mb": null
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "5cd23d5157b3b231a85246e60376d6b4cee7e657289834dcab9650f6b403c959",
     "measured": true,
-    "measured_at": "2026-11-02T07:55:52+00:00"
+    "measured_at": "2026-11-03T02:45:49+00:00"
   },
   {
     "candidate": "w4",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "tool: measurement tool failed: 'RuntimeError: ssh -o BatchMode=yes... exit 255: ssh: connect to host device port 22: No route to host\\n'",
+      "device: measured on 'hailo8', not the target device",
+      "runtime: record names no runtime"
     ],
     "metrics": {
-      "event_recall": 0.2727272727272727,
-      "false_alerts_per_h": 0.3753226652080483,
-      "duplicate_alerts": 0,
-      "detection_delay_s_p95": 3.3992000000000075,
-      "latency_ms_p95": 20.902750396635383,
-      "peak_mem_mb": 247.59375
+      "event_recall": null,
+      "false_alerts_per_h": null,
+      "duplicate_alerts": null,
+      "detection_delay_s_p95": null,
+      "latency_ms_p95": null,
+      "peak_mem_mb": null
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "294830dc101ce58c2e4aae2ef24d54294951d5b3b2c9a48da2f4d90e74a0e59f",
     "measured": true,
-    "measured_at": "2026-11-02T08:44:13+00:00"
+    "measured_at": "2026-11-03T02:46:14+00:00"
   },
   {
     "candidate": "calib10",
     "backend": "hailo8",
     "verdict": "HOLD",
     "reasons": [
-      "eval_set: measured on a different eval set"
+      "tool: measurement tool failed: 'RuntimeError: ssh -o BatchMode=yes... exit 255: ssh: connect to host device port 22: No route to host\\n'",
+      "device: measured on 'hailo8', not the target device",
+      "runtime: record names no runtime"
     ],
     "metrics": {
-      "event_recall": 0.8636363636363636,
-      "false_alerts_per_h": 3.3779039868724343,
-      "duplicate_alerts": 2,
-      "detection_delay_s_p95": 3.1326999999999714,
-      "latency_ms_p95": 20.70242603076622,
-      "peak_mem_mb": 252.109375
+      "event_recall": null,
+      "false_alerts_per_h": null,
+      "duplicate_alerts": null,
+      "detection_delay_s_p95": null,
+      "latency_ms_p95": null,
+      "peak_mem_mb": null
     },
     "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
     "artifact_sha256": "13b69276f3522b6790d62cba304f92b887acdea0b86016e230e6c3ff8ccb0904",
     "measured": true,
-    "measured_at": "2026-11-02T09:33:19+00:00"
+    "measured_at": "2026-11-03T02:46:40+00:00"
   }
 ]

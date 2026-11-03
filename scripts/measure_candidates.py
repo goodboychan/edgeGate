@@ -78,22 +78,32 @@ def measure(a, names, build, out):
 def judge(policy, names, build, out, now=None):
     """Rule verdicts per candidate, each on its own records plus the reference (`now`: replay a date)."""
     ref = load_records(sorted((out / "reference").glob("*.json")))
-    model_sha = sha256_file(build / "student.onnx")
+    # Without build/ (a replay from committed records alone) the model and artifact hashes
+    # are taken from the latest records themselves; with build/ they are hashed from the files.
+    replay = not (build / "student.onnx").exists()
+    if replay:
+        latest = _latest(ref, GATE_NAME["onnx"]) or next(
+            (r for c in names if c in CANDIDATES for r in load_records(sorted((out / c).glob("*.json")))), None)
+        model_sha = (latest or {}).get("model_sha256")
+    else:
+        model_sha = sha256_file(build / "student.onnx")
     metrics = lambda rec: {k: ((rec or {}).get("metrics") or {}).get(k) for k in COLUMNS}  # noqa: E731
     rows = [{"candidate": "reference", "backend": GATE_NAME["onnx"], "verdict": "-", "reasons": [],
-             "metrics": metrics(_latest(ref, GATE_NAME["onnx"])), "model_sha256": model_sha}]
+             "metrics": metrics(_latest(ref, GATE_NAME["onnx"])), "model_sha256": model_sha, "replay": replay}]
     for c in names:
         if c not in CANDIDATES:
             continue
         recs = load_records(sorted((out / c).glob("*.json")))
-        artifacts = {GATE_NAME[r]: sha256_file(build / f) if (build / f).exists() else None
+        artifacts = {GATE_NAME[r]: sha256_file(build / f) if (build / f).exists()
+                     else ((_latest(recs, GATE_NAME[r]) or {}).get("artifact_sha256") if replay else None)
                      for r, f in CANDIDATES[c].items()}
         for d in decide(policy, ref + recs, model_sha, artifacts, now):
             rec = _latest(recs, d.backend)
             rows.append({"candidate": c, "backend": d.backend, "verdict": d.verdict,
                          "reasons": [f"{k}: {t}" for k, t in d.reasons], "metrics": metrics(rec),
                          "model_sha256": model_sha, "artifact_sha256": artifacts[d.backend],
-                         "measured": rec is not None, "measured_at": (rec or {}).get("measured_at")})
+                         "measured": rec is not None, "measured_at": (rec or {}).get("measured_at"),
+                         "replay": replay})
     return rows
 
 

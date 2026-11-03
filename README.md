@@ -2,7 +2,31 @@
 
 EdgeGate measures a new perception skill on each edge chip in a home before it ships, and refuses to deploy what misses the rules. The skill here, "tell me when a package is left at the entrance", was taught from our own recordings (SAM 3.1 labels, a distilled YOLOv8n student) and compiled for a Jetson and a Hailo-8. The rules decide from measurements taken on the device itself. Muse Glimmer, running locally, is a veto-only audit: it reads the measurement evidence, explains it, and can only add a HOLD, never remove one.
 
-Meta Global AI Developer Hackathon, Indie track, "Push the Frontier". Everything in this repository was written between 2026-10-26 and 2026-11-04; the commit history shows when.
+Meta Global AI Developer Hackathon, Indie track, "Push the Frontier". Everything in this repository was written between 2026-10-26 and 2026-11-04; the commit history shows when. No code from earlier projects was reused; the third-party tools are dependencies, listed under [Hardware and external tools](#hardware-and-external-tools).
+
+**Demo video (3 min):** link added on submission day · **Results page:** [edge-gate results](https://claude.ai/artifact/AJ8DSn9iHrBThySAk8GhPD) (every build, every false alert, the four policies) · **Evidence:** [`results/`](results/) (every record and audit) · **Eval data:** [chans/edgegate-package-entrance-eval](https://huggingface.co/datasets/chans/edgegate-package-entrance-eval) on Hugging Face (people blurred)
+
+> **For judges: the whole project in three minutes**
+>
+> 1. **The gate held our own best model.** s3 caught 25 of 26 arrivals on both chips, ran at p95 19.5 ms (Jetson) and 15.9 ms (Hailo-8), and raised 4.2 false alerts an hour against a limit of 1. HOLD on both, nothing deployed. [Results](#results) · [`results/table_s3.md`](results/table_s3.md) · [`results/records/s3/`](results/records/s3/)
+> 2. **It held every build we broke on purpose**, twelve of them, including the one a single-metric gate would ship: `s4 w4` has the fewest false alerts of any build because it misses most of the arrivals. [Fault builds](#results) · [`results/records/s4/w4/`](results/records/s4/w4/)
+> 3. **Four ways to decide, from the same records.** Always deploy ships 8 builds that all raise more than one false alert an hour; a false-alert-only gate ships `w4`; the rules ship none; the rules plus Glimmer ship none. Glimmer, running locally, audited s3 in 188 s and the 5 synthetic cases 3 times each: 30 of 30 verdicts as expected, no wrong HOLD. [The four ways](#results) · [`results/compare_gates.md`](results/compare_gates.md) · [`results/audits/`](results/audits/) · [`results/audits_synthetic/`](results/audits_synthetic/)
+> 4. **The refusal is real.** `scripts/deploy.py` reads the records, prints HOLD with the reasons and starts nothing on the devices; there is no override flag. The live path runs only as a labeled measurement whose alerts say TEST. [`results/deploy_s3_hold.txt`](results/deploy_s3_hold.txt) · [The gate](#the-gate)
+> 5. **Measured on frozen data you can download.** The eval set's hash was written into the policy before any candidate was measured, and what we chose after seeing results is written down. The eval sessions are public with people blurred. [What we chose after seeing results](#what-we-chose-after-seeing-results) · [Sessions](#sessions) · [Known limits](#known-limits)
+>
+> Without hardware or keys: `python3 -m unittest discover -s tests` (80 tests) and the gate comparison and dashboard rebuilt from `results/`, see [Running it](#running-it).
+
+### Where Meta AI is used
+
+| Meta model | Where | What it does |
+|---|---|---|
+| Muse Glimmer 30B, open weights, vLLM FP8 on the GX10 | `edgegate/audit.py`, `edgegate/audit_mcp.py`, `scripts/audit.py` | The veto-only auditor: reads the records through MCP tools, explains the verdict, can add a HOLD and never remove one |
+| SAM 3.1, local (`facebookresearch/sam3`) | `scripts/label_sam.py` | The teacher: labels "package" and "person" on our own train recordings; the YOLOv8n student is distilled from them |
+| Muse Spark 1.3, Meta Model API | `scripts/teach.py` | Writes the task spec (name, classes as SAM prompts, what alerts, what must not) from one sentence; the spec is checked against the policy, never written into it |
+| Muse Voice Transcribe 1.0, Meta Model API | `scripts/teach.py --wav` | The spoken sentence to text |
+| Muse Spark Open, open weights on Baseten | `scripts/teach.py --base` | The same task spec on open weights |
+
+None of them decides what ships. The rules in `edgegate/gate.py` do, from measurements taken on the device.
 
 **What happened:** we recorded our own sessions, labeled them with SAM 3.1, distilled a small detector, compiled it for a Jetson (TensorRT) and a Raspberry Pi 5 with a Hailo-8, and measured every build on its device over 2 h 50 min of frozen eval recordings. Our best student ran fast on both chips (p95 19.5 ms on the Jetson, 15.9 ms on the Hailo-8) and caught 25 of 26 arrivals, but raised 4.2 false alerts an hour against a limit of 1. **The gate held it, and every one of the twelve builds we broke on purpose.** Nothing was deployed. Section [Results](#results) has the numbers, [What we chose after seeing results](#what-we-chose-after-seeing-results) what a judge should know before trusting them.
 
@@ -111,6 +135,17 @@ Everything a judge should know before trusting the numbers above.
 - **The front end came last, and proves less than the headline.** `scripts/teach.py` (one sentence, typed or spoken, to a task spec through Muse Voice Transcribe and Muse Spark) was written on 11/3, after every candidate had been measured. The policy's instruction, classes, zone, rule and thresholds were written by hand before any of that; what the script shows is that the sentence yields the spec the policy already holds, and its classes are the prompts SAM 3.1 was given, not a new input to the pipeline. On five other phrasings ("a parcel shows up at the door", "someone leaves a box by the entrance", "a delivery is dropped off inside the door", "something is left at the door", "watch the entrance for deliveries") Spark gave `person` plus the target noun every time, `package` for three and the sentence's own noun (`parcel`, `box`) for two, and every run reported that its instruction differs from the policy, as it should (`runs/teach/`). On the policy's sentence, spoken through a Kokoro-synthesized WAV, Spark returned the same name, the classes `package, person`, "a package is left unattended in the entrance drop zone" as the event, "a person carrying or walking with a package must not alert" as the non-event, and "low light at night, dim room evenings, package occluded in zone" to watch; the script reports any difference and exits non-zero, as it does for a different sentence (`runs/teach/`, copied to `results/`).
 - **Not built.** A Creoqode Nova head turning toward the package, Home Assistant integration and two more backends were in the plan and were not started.
 
+## Known limits
+
+- **One home, one camera, one zone.** 26 scored arrivals in 2 h 50 min: the 95% one-sided lower bound on s3's recall is 0.83, and e06, the only session recorded after the students, has 4 arrivals (4 of 4 caught, lower bound 0.47). The numbers say "held for false alerts", not "this is a 0.96 detector".
+- **The rule counts a box in a hand.** 6 of s3's 12 false alerts are a package carried or picked up inside the zone, and 3 more are a box set across the zone's edge; the rule, not the model, raises them. The fix is a new policy version measured on a new session, which we did not start: one improvement round was the budget, and it went to the dark sessions.
+- **The dark is still hard.** With one floor lamp the zone sits near 11/255; detections drop out for 12–18 s and one arrival (e05, 500 s) was never detected by any build.
+- **The phone hop is not in the records.** `notify_s` is measured to the push server; when the phone's screen showed the alert is not recorded, so the 10 s requirement is verified only that far.
+- **No real build has passed.** Every candidate was held, so the PASS path (approval record, `deploy.py` starting the runner) is shown with synthetic cases and a dry run, not with a real approved build.
+- **Glimmer's veto was never needed.** The rules held every build before Glimmer saw it, so its effect as a veto is shown on the 5 synthetic cases only (30 of 30 verdicts as expected). One audit takes 3–8 min at FP8 on the GX10.
+- **The faults are the ones we chose.** Four kinds, all of which move the metrics past a limit. A fault that keeps every metric inside the limits passes, by design: the gate judges measurements, not intentions.
+- **Records expire after 24 h**, so everything in `results/` is evidence of what was measured, not a standing approval; a live run needs a fresh measurement first.
+
 ## Sessions
 
 All recorded with the one OAK-D Pro, fixed in place at the indoor drop zone, 1280×720 at 15 fps. Train boxes (brown, black, gray) and eval boxes (white, a robot-arm box) are different objects, and each set was kept out of the other's sessions. The eval sessions are public on Hugging Face as [chans/edgegate-package-entrance-eval](https://huggingface.co/datasets/chans/edgegate-package-entrance-eval) with people, the monitor and the hallway blurred (`scripts/blur_sessions.py`); the blurred JPEGs do not reproduce the policy's eval set hash, so the manifests with the original per-frame hashes are included, and the originals can be shared with reviewers on request.
@@ -144,14 +179,24 @@ The external tools are used as-is, without modification:
 | Kokoro-82M | A spoken instruction for the Voice Transcribe check |
 | ntfy | Alerts to the phone |
 
-**Meta models used:** Muse Glimmer 30B (local audit agent, open weights, vLLM on the GX10), SAM 3.1 (teacher labels, local), Muse Spark 1.3 and Muse Voice Transcribe through the Meta Model API in the front end (`scripts/teach.py`, added 11/3; with `--base` it uses Muse Spark Open on Baseten instead, which gave the same classes and a closer event sentence in 5 s).
+**Meta models:** see [Where Meta AI is used](#where-meta-ai-is-used). `scripts/teach.py` was added on 11/3; with `--base` it uses Muse Spark Open on Baseten instead of Muse Spark 1.3, which gave the same classes and a closer event sentence in 5 s.
 
 ## Running it
+
+Without hardware or keys, from a fresh clone: the rule engine, the evaluator and the audit tools run on synthetic data, and the gate comparison and the dashboard are rebuilt from the committed `results/` (the builds are not in git, so in this replay the model and file hashes are read from the records themselves, and `--now` is the snapshot time because records expire after 24 h):
+
+```bash
+python3 -m unittest discover -s tests    # 80 tests, no hardware, no keys
+NOW=$(cat results/snapshot_at.txt)
+python3 scripts/compare_gates.py --records results/records --audits results/audits --now "$NOW"
+python3 scripts/dashboard.py --records results/records --audits results/audits --approvals results/approvals --now "$NOW" --out /tmp/dashboard.html
+```
+
+The full pipeline needs the hardware below:
 
 ```bash
 bash scripts/setup_gx10.sh               # model downloads + SAM 3.1, TTS and OAK envs + checks
 bash scripts/start_glimmer.sh            # Glimmer vLLM server (:8001, FP8 by default)
-python3 -m unittest discover -s tests    # rule engine, evaluator, audit tools, comparison (72 tests)
 
 .venv-oak/bin/python scripts/capture_oak.py t01 --split train --light night --minutes 10   # record a session
 scripts/make_student.sh s3 data/sessions/t01 data/sessions/t02 ...   # SAM 3.1 labels for what is unlabeled, then train
@@ -181,3 +226,7 @@ Live path: `capture_oak.py --stream HOST:8790` sends the camera's JPEG frames to
 - `docs/pipeline.svg` — the diagram above.
 - `results/` — a snapshot of `runs/` taken with `scripts/snapshot_results.sh`: every measurement record and audit, the verdict table per student, the gate comparison and the dashboard page, so the tables above can be checked without the devices (`results/snapshot_at.txt` says when).
 - `data/`, `build/`, `runs/`, `logs/` are not in git (recordings, models, training outputs, the live records).
+
+## License
+
+AGPL-3.0, see `LICENSE`: the students are YOLOv8n models trained with Ultralytics, whose code and weights are AGPL-3.0, and the training and export scripts import it. The eval sessions on Hugging Face are CC BY-NC 4.0. Third-party tools and their licenses: [Hardware and external tools](#hardware-and-external-tools).

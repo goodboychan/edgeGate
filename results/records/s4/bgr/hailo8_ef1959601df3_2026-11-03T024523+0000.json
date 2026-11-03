@@ -1,0 +1,79 @@
+{
+  "schema": 2,
+  "backend": "hailo8",
+  "runtime": "hailo",
+  "device": {
+    "label": "hailo8"
+  },
+  "model_sha256": "6cbc104441d8f37e98b846866bc51ac7d434f2dc84f962ff097cd350edf95d68",
+  "artifact_sha256": "ef1959601df3fce648bc63481c342d68b22b5836ae1864c2e631a83bd3bf56d3",
+  "eval_set_sha256": "b7e333a9b347e66123e017752350c0aafcc242247a64241c43f75f52571fa4ec",
+  "eval_config_sha256": "d347ea2a2e62464f53a3f2efcb2213fd96ff82dbf2c617e02892db3c3e5b9b6c",
+  "evaluation": "recorded sessions; alert delivery only through notify_s",
+  "sessions": [
+    "e01",
+    "e02",
+    "e03",
+    "e04",
+    "e05",
+    "e06",
+    "u01"
+  ],
+  "measured_at": "2026-11-03T02:45:23+00:00",
+  "tool": {
+    "ok": false,
+    "error": "RuntimeError: ssh -o BatchMode=yes... exit 255: ssh: connect to host device port 22: No route to host\n"
+  },
+  "metrics": {},
+  "eval_manifest": {
+    "e01": {
+      "gt": "43bb7e1d1fe139a6f8d3e860f1d7b1e29f8b36e7d2fb0a5469ec158bca88a24b",
+      "frames_csv": "d94287da230122c2801eaf34fcc6d8103edc4b2c81f612ef4e5eb90d4156b362",
+      "meta": "3122fd27f517debcb176b5726176a1af2b684914ec3a4932adc20fc57c7d3ad9",
+      "frames": 4313,
+      "frames_sha256": "c376d67e1cbf3d3c5b3148c8525f642a6717c3ea80942447c2f207a39011dfdf"
+    },
+    "e02": {
+      "gt": "4934430dacbefe0699ad3a84a74fa0c8e227aab99ff5c18bfd42038a3139811e",
+      "frames_csv": "80e5e31c178f9796e5d727961306c3343b305e6a67a15fb14bd225f65372a61f",
+      "meta": "6897584060f064401ec635b28629229e1a8661eaea1abb0f12e8df7b44d3f8e3",
+      "frames": 6255,
+      "frames_sha256": "6859076d473f897d1e0ebc0cea6c7f0d992cb81ce76319a8d4da3749101e92b6"
+    },
+    "e03": {
+      "gt": "5f4ea8b5c677512eaee83bc6e5919c6badf444fab1e72489e6e76b332b15bc57",
+      "frames_csv": "aecdf682e580d6447ad5e3ad59c29bfb2b8892be5f622a9bb7b5648da5d71156",
+      "meta": "5c9057aca35b38546492aef95b5ab11cc45c140282ef5c82c098101bfc1f3dbb",
+      "frames": 7182,
+      "frames_sha256": "cad3be979086231617d3b388accc02a57d335395353824c3d8da0c2f8c8abd1c"
+    },
+    "e04": {
+      "gt": "b0437a63c0a244f0b053df3d551a9792f97ccaa52408070bbd24b545748226da",
+      "frames_csv": "96bd6befa8cc46619ec67e4edbc7ce3ee659de45217b22b2115ac865bb16f3d0",
+      "meta": "557fa3d4f0aacd6a9f5d4a4f00ca585d2bed795854a6439ee3f48740816f13f4",
+      "frames": 8956,
+      "frames_sha256": "be6b9cb7967cbebf0de410e503dcb002265139ffec5e575cb83263b073cbfca9"
+    },
+    "e05": {
+      "gt": "c65e24f7f49d88d87ea942ec87704cce1e096fa004653fe69dc039263e87248e",
+      "frames_csv": "7ab9a97dd2e7de2e9201a8f9e06a6711dbf7e5a89e64e4345f05398239039c00",
+      "meta": "eb69ceb3621ba8da5d65a917c6a4eddfc71dc5d1f754a70209d8be9e08e1295c",
+      "frames": 8956,
+      "frames_sha256": "cc9f291510f62eb2c0ad98399eca68742712257e9bd2d9f2d276bfcbf7eba2cc"
+    },
+    "e06": {
+      "gt": "470d2a6125f18601dd6bb55153b37b1a4f14984fc6d149c7e1e3613a29d59e08",
+      "frames_csv": "846780e46d6e2761ccd0923e956d2570d342d9c888319f3a3e83f20fea35dfa7",
+      "meta": "d01cc6fef5fb39a6b38232ee460fddd00be77e1ca9ffdbd83835e49d7a8ab2e6",
+      "frames": 8955,
+      "frames_sha256": "a2ce870926ac4e9f2f3af4219a6c52e749f1f68c67ce0925eab0bcb09e58435b"
+    },
+    "u01": {
+      "gt": "9b5ae4bbea6e25684dc3340223730aa080094c1832b758763874b9392473ce5e",
+      "frames_csv": "6e3c18e2813857bc544a92527dc237966f37c8a8495229e7c44b4e603ed20130",
+      "meta": "023f48d422f41af179488eb732870799c5f0168ff56cbbba7b0c227f93949015",
+      "frames": 107990,
+      "frames_sha256": "f5002e69c57b350ae473815f428e685a51a845c7b20fc67a6cd5ef2db2e3cb3a"
+    }
+  }
+}
