@@ -14,7 +14,7 @@ Meta Global AI Developer Hackathon, Indie track, "Push the Frontier". Everything
 > 4. **The refusal is real.** `scripts/deploy.py` reads the records, prints HOLD with the reasons and starts nothing on the devices; there is no override flag. The live path runs only as a labeled measurement whose alerts say TEST. [`results/deploy_s3_hold.txt`](results/deploy_s3_hold.txt) · [The gate](#the-gate)
 > 5. **Measured on frozen data you can download.** The eval set's hash was written into the policy before any candidate was measured, and what we chose after seeing results is written down. The eval sessions are public with people blurred. [What we chose after seeing results](#what-we-chose-after-seeing-results) · [Sessions](#sessions) · [Known limits](#known-limits)
 >
-> Without hardware or keys: `python3 -m unittest discover -s tests` (84 tests) and the gate comparison and dashboard rebuilt from `results/`, see [Running it](#running-it).
+> Without hardware or keys: `python3 -m unittest discover -s tests` (95 tests) and the gate comparison and dashboard rebuilt from `results/`, see [Running it](#running-it).
 
 ### Where Meta AI is used
 
@@ -187,7 +187,7 @@ The external tools are used as-is, without modification:
 Without hardware or keys, from a fresh clone: the rule engine, the evaluator and the audit tools run on synthetic data, and the gate comparison and the dashboard are rebuilt from the committed `results/` (the builds are not in git, so in this replay the model and file hashes are read from the records themselves, and `--now` is the snapshot time because records expire after 24 h):
 
 ```bash
-python3 -m unittest discover -s tests    # 84 tests, no hardware, no keys
+python3 -m unittest discover -s tests    # 95 tests, no hardware, no keys
 NOW=$(cat results/snapshot_at.txt)
 python3 scripts/compare_gates.py --records results/records --audits results/audits --now "$NOW"
 python3 scripts/dashboard.py --records results/records --audits results/audits --approvals results/approvals --now "$NOW" --out /tmp/dashboard.html
