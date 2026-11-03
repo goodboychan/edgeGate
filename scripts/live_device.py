@@ -30,7 +30,7 @@ import sys
 import threading
 import time
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import cv2
@@ -56,22 +56,43 @@ def sha256(path):
     return h.hexdigest()
 
 
+def approval_problems(ap, dev, model_sha, now=None):
+    """Why this device must not start from this approval record; empty when it may.
+    The approval must say PASS for exactly this file on this device and runtime, be
+    younger than the policy's max_age_hours (an approval expires with the records it
+    rests on), and carry the events/measure settings its own eval_config_sha256 names."""
+    now = now or datetime.now(timezone.utc)
+    problems = []
+    if ap.get("verdict") != "PASS":
+        problems.append(f"the approval says {ap.get('verdict')!r}")
+    if ap.get("artifact_sha256") != model_sha:
+        problems.append("this model file is not the approved one")
+    if ap.get("device_id") != dev["device_id"]:
+        problems.append("the approval is for another device")
+    if ap.get("runtime") != dev["runtime"]:
+        problems.append(f"approved for {ap.get('runtime')!r}, this device runs {dev['runtime']!r}")
+    max_age = ap.get("max_age_hours")
+    try:
+        age_h = (now - datetime.fromisoformat(str(ap.get("approved_at")).replace("Z", "+00:00"))).total_seconds() / 3600
+    except (ValueError, TypeError):
+        age_h = None
+    if max_age is None or age_h is None:
+        problems.append("the approval carries no usable approved_at and max_age_hours; deploy again")
+    elif age_h > max_age:
+        problems.append(f"the approval is {age_h:.1f} h old, older than {max_age} h; deploy again")
+    cfg = {"events": ap.get("events", {}), "measure": ap.get("measure", {})}
+    if hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()).hexdigest() != ap.get("eval_config_sha256"):
+        problems.append("the approval's events/measure settings do not match its eval_config_sha256")
+    return problems
+
+
 def load_rule(a):
     """(events settings, measure settings) from the approval, or from --events for a measurement."""
     if a.measurement:
         cfg = json.loads(Path(a.events).read_text())
         return cfg["events"], cfg["measure"]
     ap = json.loads(Path(a.approval).read_text())
-    dev = device_info(a.backend)
-    problems = []
-    if ap.get("verdict") != "PASS":
-        problems.append(f"the approval says {ap.get('verdict')!r}")
-    if ap.get("artifact_sha256") != sha256(a.model):
-        problems.append("this model file is not the approved one")
-    if ap.get("device_id") != dev["device_id"]:
-        problems.append("the approval is for another device")
-    if ap.get("runtime") != dev["runtime"]:
-        problems.append(f"approved for {ap.get('runtime')!r}, this device runs {dev['runtime']!r}")
+    problems = approval_problems(ap, device_info(a.backend), sha256(a.model))
     if problems:
         raise SystemExit("not starting: " + "; ".join(problems))
     return ap["events"], ap["measure"]

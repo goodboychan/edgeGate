@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from edgegate.audit import artifact_sha  # noqa: E402
 from edgegate.gate import PASS, _parse_time, apply_veto, decide, load_policy, load_records  # noqa: E402
+from edgegate.gate import eval_config_sha256, sha256_file  # noqa: E402,F811
 
 SYSTEM = """Reasoning strength: {reasoning}
 
@@ -155,7 +156,9 @@ def main():
         else:
             final = apply_veto(rules, {b: v["reason"] for b, v in run["vetoes"].items()})
         rec = {"schema": 1, "label": a.label, "repeat": i, "model_sha256": a.model_sha, "artifacts": artifacts,
-               "records": records, "reasoning": a.reasoning, "temperature": a.temperature, "url": a.url,
+               "records": records, "record_sha256": {p: sha256_file(p) for p in records},
+               "eval_config_sha256": eval_config_sha256(policy), "policy_sha256": sha256_file(a.policy),
+               "reasoning": a.reasoning, "temperature": a.temperature, "url": a.url,
                "audited_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                "wall_s": round(time.perf_counter() - t0, 1), "rules": rule_view,
                "final": [{"backend": d.backend, "verdict": d.verdict, "reasons": list(d.reasons),

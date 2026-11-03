@@ -46,11 +46,21 @@ STOP = (f"if [ -f {LIVE}/live.pid ] && ps -p $(cat {LIVE}/live.pid) -o args= | g
         f"then kill $(cat {LIVE}/live.pid); sleep 1; fi; rm -f {LIVE}/live.pid")
 
 
-def audit_vetoes(path, model_sha, artifacts):
-    """{backend: (reason, by)} the audit held; it must be about this model and these files."""
+def audit_vetoes(path, model_sha, artifacts, record_paths, policy):
+    """{backend: (reason, by)} the audit held. The audit must be about this model, these
+    files, every record being deployed and these evaluation settings; an older audit of
+    the same model is not evidence about the records in front of us."""
     audit = json.loads(Path(path).read_text())
     if audit.get("model_sha256") != model_sha or audit.get("artifacts") != artifacts:
         raise SystemExit(f"{path} audited another model or other files")
+    bound = set((audit.get("record_sha256") or {}).values())
+    if not bound or not audit.get("eval_config_sha256"):
+        raise SystemExit(f"{path} is not bound to its records and settings (audited before that was recorded); audit again")
+    missing = [str(p) for p in record_paths if sha256_file(p) not in bound]
+    if missing:
+        raise SystemExit(f"{path} did not audit {', '.join(missing)}; audit the records being deployed")
+    if audit["eval_config_sha256"] != eval_config_sha256(policy):
+        raise SystemExit(f"{path} audited other evaluation settings")
     return audit, {f["backend"]: (f["reasons"][-1][1], f["vetoed_by"])
                    for f in audit["final"] if f.get("vetoed_by")}
 
@@ -65,6 +75,7 @@ def approval(policy, a, backend, rec, path, artifact_sha, audit):
         "runtime": rec["device"]["runtime"], "device": rec["device"],
         "eval_set_sha256": rec["eval_set_sha256"], "eval_config_sha256": eval_config_sha256(policy),
         "events": policy["events"], "measure": policy["measure"], "metrics": rec["metrics"], "thresholds": limits,
+        "max_age_hours": task["max_age_hours"],
         "record": {"path": str(path), "sha256": sha256_file(path), "measured_at": rec["measured_at"]},
         "audit": None if audit is None else {"path": str(a.audit), "sha256": sha256_file(a.audit),
                                              "label": audit.get("label"), "audited_at": audit.get("audited_at"),
@@ -123,11 +134,15 @@ def main():
         rec = json.loads(Path(p).read_text())
         paths[id(rec)] = p
         records.append(rec)
-    now = _parse_time(a.now) if a.now else None
+    now = None
+    if a.now:
+        now = _parse_time(a.now)
+        if now is None:  # a replay with an unreadable time must not fall through to a live deployment
+            ap.error(f"--now {a.now!r} is not an ISO 8601 time with a timezone; nothing judged, nothing deployed")
     decisions = decide(policy, records, a.model_sha, artifacts, now)
     audit = None
     if a.audit:
-        audit, vetoes = audit_vetoes(a.audit, a.model_sha, artifacts)
+        audit, vetoes = audit_vetoes(a.audit, a.model_sha, artifacts, a.records, policy)
         for b, (reason, by) in vetoes.items():
             apply_veto(decisions, {b: reason}, by=by)
     out = ROOT / "runs/approvals"
@@ -136,7 +151,7 @@ def main():
         if d.verdict != PASS:
             print(f"{d.backend}: HOLD, not deployed" + "".join(f"\n    {c}: {t}" for c, t in d.reasons))
             continue
-        if now is not None:
+        if a.now:
             print(f"{d.backend}: PASS as of {a.now}; a replayed decision deploys nothing")
             continue
         rec = _latest(records, d.backend)
