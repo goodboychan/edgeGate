@@ -66,8 +66,12 @@ def main():
         boxes = load_boxes(dets, n)
         covered = sum(1 for b in boxes if b)
         odir = out / "sessions" / sess
-        (odir / "frames").mkdir(parents=True, exist_ok=True)
-        jobs = [(sdir / "frames" / f"{i:06d}.jpg", odir / "frames" / f"{i:06d}.jpg", boxes[i]) for i in range(n)]
+        # a folder on the Hub holds at most 10,000 files: long sessions go 1,000 frames per folder
+        def dst(i):
+            return odir / "frames" / (f"{i:06d}"[:3] if n > 10000 else "") / f"{i:06d}.jpg"
+        for i in range(0, n, 1000):
+            dst(i).parent.mkdir(parents=True, exist_ok=True)
+        jobs = [(sdir / "frames" / f"{i:06d}.jpg", dst(i), boxes[i]) for i in range(n)]
         with Pool(8) as pool:
             for k, _ in enumerate(pool.imap_unordered(blur_one, jobs, chunksize=64), 1):
                 if k % 5000 == 0:
