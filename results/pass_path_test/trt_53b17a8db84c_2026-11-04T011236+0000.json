@@ -3,6 +3,8 @@
   "task": "package-at-entrance",
   "instruction": "Tell me when a package is left at the entrance.",
   "backend": "trt",
+  "records_measured_at": "2026-11-03T12:47:04+00:00",
+  "expires_at": "2026-11-04T12:47:04+00:00",
   "verdict": "PASS",
   "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
   "artifact_sha256": "53b17a8db84cba4ebe027b36b01c5eafe9eccbc55a413b5f8570cd45368fb9c1",
@@ -100,5 +102,5 @@
   },
   "audit": null,
   "policy_sha256": "d946824edf81abfe3ba1ff3aff0fd57f4ec570aaa196a7691af1176fcb8df545",
-  "approved_at": "2026-11-03T22:48:36+00:00"
+  "approved_at": "2026-11-04T01:12:36+00:00"
 }

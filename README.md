@@ -56,13 +56,13 @@ Eval set v2: sessions e01–e06 and u01, 2 h 50 min, 26 scored arrivals (night w
 | student | trained on | backend | recall | false/h | dup | delay p95 | latency p95 | verdict, held for |
 |---|---|---|---|---|---|---|---|---|
 | s1 (YOLOv8n) | t01–t03 | trt | 0.885 | 5.65 | 1 | 3.4 s | 19.4 ms | HOLD: recall, false alerts, duplicates |
-| | | hailo8 | 0.846 | 7.06 | 1 | 4.3 s | 15.5 ms | HOLD: recall, false alerts, duplicates |
+| | | hailo8 | 0.846 | 7.06 | 1 | 4.3 s | 16.1 ms | HOLD: recall, false alerts, duplicates |
 | s2 (YOLOv8n) | t01, t02, t03 relabeled | trt | 0.731 | 3.18 | 0 | 3.2 s | 19.4 ms | HOLD: recall, false alerts |
-| | | hailo8 | 0.731 | 2.12 | 0 | 3.2 s | 15.1 ms | HOLD: recall, false alerts |
+| | | hailo8 | 0.731 | 2.12 | 0 | 3.2 s | 15.4 ms | HOLD: recall, false alerts |
 | **s3 (YOLOv8n)** | t01–t05 | trt | **0.962** | 4.24 | 0 | 3.3 s | 19.5 ms | HOLD: false alerts |
 | | | hailo8 | **0.962** | 4.59 | 1 | 3.0 s | 15.9 ms | HOLD: false alerts, duplicates |
 | s4 (YOLOv8s) | t01–t05 | trt | 0.846 | 4.95 | 0 | 3.8 s | 22.9 ms | HOLD: recall, false alerts |
-| | | hailo8 | 0.885 | 4.95 | 0 | 3.3 s | 20.9 ms | HOLD: recall, false alerts |
+| | | hailo8 | 0.885 | 4.95 | 0 | 3.3 s | 21.5 ms | HOLD: recall, false alerts |
 
 s3 is the one improvement round: after s1 missed arrivals in the dark, two more training nights were recorded (t04 under one floor lamp, t05 hard negatives with the lights on) and s3 and s4 were trained once on t01–t05. Recall went from 0.885 to 0.962 and the duplicate alert went away; the false alerts did not. The ONNX reference on the GX10 gives the same recall and false-alert count as the TensorRT build, so the conversion adds nothing on these metrics. Half of the false alerts are in e03 (room lights on, eight minutes of drops and walk-throughs); the two-hour unattended session has none.
 
@@ -110,7 +110,7 @@ From the same records (`scripts/compare_gates.py`, [`results/compare_gates.md`](
 3. **Measure.** `scripts/measure.py` runs a build on its device over every eval frame (`scripts/run_backend.py`: letterbox, inference, decoding and NMS on the device, timed per frame), turns the detections into arrival alerts with the policy's event rule, scores them against the human marks and writes a record: model and file hashes, device id and runtime, the eval set hash, the metrics, per-session and per-event rows. `scripts/measure_candidates.py` does it for every build of one student.
 4. **Decide.** `edgegate/gate.py` reads the policy and the records and prints PASS or HOLD per backend with reasons. Missing, stale, NaN or failed measurements, another model, another eval set, other event settings, another device or runtime, or a file to deploy that is not the file measured are all HOLD.
 5. **Audit.** `scripts/audit.py` gives Glimmer the MCP tools in `edgegate/audit_mcp.py` (rule verdicts, eval coverage, recall per slice by lighting, package size, tag or session) and lets it propose a HOLD for a backend the rules passed, citing evidence ids from that audit. A proposal without evidence is rejected; an audit that does not finish holds every backend the rules passed. The audit record names the records it read and the evaluation settings, and is accepted for a deployment only if they are the same.
-6. **Deploy.** `scripts/deploy.py` takes the same records and files as the gate, plus an audit record if there is one. HOLD prints the reasons and starts nothing; there is no override. PASS writes an approval record and starts the runner on the device, which checks before it runs that the approval names its device, its runtime and that exact file, is younger than `max_age_hours`, and still carries the settings its own hash names. A replayed decision (`--now`) never starts anything. Arrival alerts go out as an HTTP POST (an ntfy topic on the phone).
+6. **Deploy.** `scripts/deploy.py` takes the same records and files as the gate, plus an audit record if there is one. HOLD prints the reasons and starts nothing; there is no override. PASS writes an approval record and starts the runner on the device, which checks before it runs that the approval names its device, its runtime and that exact file, has not expired, is not dated in the future, and still carries the settings its own hash names. An approval expires when the records behind it do: its `expires_at` is the oldest record's `measured_at` plus `max_age_hours`, not the approval time plus `max_age_hours`, so approving late never extends a measurement's life. A replayed decision (`--now`) never starts anything. Arrival alerts go out as an HTTP POST (an ntfy topic on the phone).
 
 Run on 11/3 with the s3 records:
 
@@ -131,7 +131,7 @@ The rules decide; Glimmer can only veto a PASS and explain. A record counts only
 - **its device:** the policy's `[targets]` names each backend's device (a hash of its machine id) and runtime version. A record from another device, a reinstalled OS or another runtime version holds.
 - **its eval set:** `eval_set_sha256` is a manifest of every frame's sha256 plus the marks, `frames.csv` and `meta.json`; the device reports a digest of the frames it actually read and it must match.
 - **its evaluation settings:** `eval_config_sha256` covers the policy's `[events]` (zone, dwell, windows, the measured alert delay) and `[measure]` (class order, detection threshold). Changing any of them voids older records. Thresholds are applied at decision time and are not in the hash.
-- **its age:** older than `max_age_hours` (24) is stale. So everything in `results/` is evidence of what was measured, not a standing approval; a live run needs a fresh measurement first, and the replay commands under [Running it](#running-it) judge as of the snapshot time.
+- **its age:** older than `max_age_hours` (24) is stale, and an approval inherits this: it expires when the records it rests on do. So everything in `results/` is evidence of what was measured, not a standing approval; a live run needs a fresh measurement first, and the replay commands under [Running it](#running-it) judge as of the snapshot time.
 
 **Arrival rule** (`edgegate/events.py`, fixed 10/27 before any session was recorded, not tuned): a package whose box bottom-center is inside the zone, seen for 2 s in an empty zone, is an arrival; the alert must be received within 10 s of the package being let go, dwell included. One alert while it stays; a new arrival needs the zone empty, not just hidden by a person, for 2 s. A second package next to the first is out of scope and scored apart. When the camera drops out, the zone state is unknown, not empty.
 

@@ -27,7 +27,7 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -65,11 +65,16 @@ def audit_vetoes(path, model_sha, artifacts, record_paths, policy):
                    for f in audit["final"] if f.get("vetoed_by")}
 
 
-def approval(policy, a, backend, rec, path, artifact_sha, audit):
+def approval(policy, a, backend, rec, path, artifact_sha, audit, basis_at):
+    """The approval record. It expires with the records it rests on: expires_at is the
+    oldest measured_at among the records judged plus max_age_hours, never approved_at
+    plus max_age_hours, so approving late does not extend a measurement's life."""
     task = policy["task"]
     limits = {**policy.get("thresholds", {}), **policy.get("backends", {}).get(backend, {})}
     return {
         "schema": 1, "task": task["name"], "instruction": task["instruction"], "backend": backend,
+        "records_measured_at": basis_at.isoformat(timespec="seconds"),
+        "expires_at": (basis_at + timedelta(hours=task["max_age_hours"])).isoformat(timespec="seconds"),
         "verdict": PASS, "model_sha256": a.model_sha, "artifact_sha256": artifact_sha,
         "artifact_file": Path(a.files[backend]).name, "device_id": rec["device"]["device_id"],
         "runtime": rec["device"]["runtime"], "device": rec["device"],
@@ -155,7 +160,10 @@ def main():
             print(f"{d.backend}: PASS as of {a.now}; a replayed decision deploys nothing")
             continue
         rec = _latest(records, d.backend)
-        ap_rec = approval(policy, a, d.backend, rec, paths[id(rec)], artifacts[d.backend], audit)
+        basis = [_parse_time(r.get("measured_at", "")) for r in records]
+        if any(b is None for b in basis):
+            raise SystemExit("a record has no readable measured_at; nothing deployed")
+        ap_rec = approval(policy, a, d.backend, rec, paths[id(rec)], artifacts[d.backend], audit, min(basis))
         ap_path = out / f"{d.backend}_{artifacts[d.backend][:12]}_{ap_rec['approved_at'].replace(':', '')}.json"
         ap_path.write_text(json.dumps(ap_rec, indent=2) + "\n")
         print(f"{d.backend}: PASS, approval {ap_path.relative_to(ROOT)}")

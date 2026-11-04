@@ -30,7 +30,7 @@ import sys
 import threading
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import cv2
@@ -56,11 +56,21 @@ def sha256(path):
     return h.hexdigest()
 
 
+def _iso(s):
+    """An aware datetime from an ISO string, else None."""
+    try:
+        t = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return None
+    return t if t.tzinfo else None
+
+
 def approval_problems(ap, dev, model_sha, now=None):
     """Why this device must not start from this approval record; empty when it may.
-    The approval must say PASS for exactly this file on this device and runtime, be
-    younger than the policy's max_age_hours (an approval expires with the records it
-    rests on), and carry the events/measure settings its own eval_config_sha256 names."""
+    The approval must say PASS for exactly this file on this device and runtime, not
+    be expired (expires_at: the records' measured_at plus max_age_hours, so an approval
+    issued late never outlives its measurement), not be dated in the future, and carry
+    the events/measure settings its own eval_config_sha256 names."""
     now = now or datetime.now(timezone.utc)
     problems = []
     if ap.get("verdict") != "PASS":
@@ -72,14 +82,20 @@ def approval_problems(ap, dev, model_sha, now=None):
     if ap.get("runtime") != dev["runtime"]:
         problems.append(f"approved for {ap.get('runtime')!r}, this device runs {dev['runtime']!r}")
     max_age = ap.get("max_age_hours")
-    try:
-        age_h = (now - datetime.fromisoformat(str(ap.get("approved_at")).replace("Z", "+00:00"))).total_seconds() / 3600
-    except (ValueError, TypeError):
-        age_h = None
-    if max_age is None or age_h is None:
-        problems.append("the approval carries no usable approved_at and max_age_hours; deploy again")
-    elif age_h > max_age:
-        problems.append(f"the approval is {age_h:.1f} h old, older than {max_age} h; deploy again")
+    approved, expires = _iso(ap.get("approved_at")), _iso(ap.get("expires_at"))
+    measured = _iso((ap.get("record") or {}).get("measured_at"))
+    if not isinstance(max_age, (int, float)) or approved is None or expires is None:
+        problems.append("the approval carries no usable approved_at, expires_at and max_age_hours; deploy again")
+    else:
+        if approved > now + timedelta(minutes=5):
+            problems.append("the approval's approved_at is in the future; a clock is wrong or the file was edited")
+        if measured is not None and expires > measured + timedelta(hours=max_age):
+            problems.append("the approval's expires_at is later than its record's measured_at allows; the file was edited")
+        if now > expires:
+            problems.append(f"the approval expired at {expires.isoformat(timespec='seconds')}: the records it rests on are "
+                            f"older than {max_age} h; measure and deploy again")
+        elif (now - approved) > timedelta(hours=max_age):
+            problems.append(f"the approval is older than {max_age} h; deploy again")
     cfg = {"events": ap.get("events", {}), "measure": ap.get("measure", {})}
     if hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()).hexdigest() != ap.get("eval_config_sha256"):
         problems.append("the approval's events/measure settings do not match its eval_config_sha256")

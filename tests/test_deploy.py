@@ -64,9 +64,16 @@ class ReplayNeverDeploys(unittest.TestCase):
             self.assertFalse((Path(d) / "runs/approvals").exists())
 
 
-def approval(**over):
+def approval(measured_h_ago=2.0, approved_h_ago=1.0, **over):
+    """A PASS approval like deploy.py writes: the record measured measured_h_ago hours
+    ago, approved approved_h_ago hours ago, expiring 24 h after the measurement."""
+    now = datetime.now(timezone.utc)
+    measured = now - timedelta(hours=measured_h_ago)
     ap = {"verdict": "PASS", "artifact_sha256": "a" * 64, "device_id": "dev-1", "runtime": "tensorrt 10.3.0",
-          "approved_at": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(timespec="seconds"),
+          "approved_at": (now - timedelta(hours=approved_h_ago)).isoformat(timespec="seconds"),
+          "records_measured_at": measured.isoformat(timespec="seconds"),
+          "expires_at": (measured + timedelta(hours=24)).isoformat(timespec="seconds"),
+          "record": {"path": "trt.json", "sha256": "c" * 64, "measured_at": measured.isoformat(timespec="seconds")},
           "max_age_hours": 24, "events": {"dwell_s": 2.0, "zone": [[0, 0], [1, 0], [1, 1]]}, "measure": {"det_conf": 0.5}}
     ap.update(over)
     ap.setdefault("eval_config_sha256", deploy.eval_config_sha256({"events": ap["events"], "measure": ap["measure"]}))
@@ -84,9 +91,41 @@ class ApprovalChecks(unittest.TestCase):
         self.assertEqual(live.approval_problems(approval(), DEV, "a" * 64), [])
 
     def test_an_expired_approval_does_not(self):
-        old = (datetime.now(timezone.utc) - timedelta(hours=30)).isoformat(timespec="seconds")
-        problems = live.approval_problems(approval(approved_at=old), DEV, "a" * 64)
+        problems = live.approval_problems(approval(measured_h_ago=31, approved_h_ago=30), DEV, "a" * 64)
         self.assertTrue(any("older than 24 h" in p for p in problems), problems)
+
+    def test_a_late_approval_expires_with_its_record(self):
+        # approved an hour ago, but the record behind it is 25 h old: the approval must not
+        # outlive the measurement (expiry counts from measured_at, not approved_at)
+        problems = live.approval_problems(approval(measured_h_ago=25, approved_h_ago=1), DEV, "a" * 64)
+        self.assertTrue(any("expired" in p for p in problems), problems)
+
+    def test_a_future_approval_does_not(self):
+        problems = live.approval_problems(approval(approved_h_ago=-2), DEV, "a" * 64)
+        self.assertTrue(any("future" in p for p in problems), problems)
+
+    def test_an_edited_expiry_does_not(self):
+        late = (datetime.now(timezone.utc) + timedelta(hours=40)).isoformat(timespec="seconds")
+        problems = live.approval_problems(approval(expires_at=late), DEV, "a" * 64)
+        self.assertTrue(any("expires_at is later" in p for p in problems), problems)
+
+    def test_an_approval_without_an_expiry_does_not(self):
+        ap = approval()
+        del ap["expires_at"]
+        problems = live.approval_problems(ap, DEV, "a" * 64)
+        self.assertTrue(any("expires_at" in p for p in problems), problems)
+
+    def test_deploy_writes_the_expiry_from_the_oldest_record(self):
+        rec = record("trt")
+        ref = record("onnx-gx10", event_recall=0.96)
+        ref["measured_at"] = "2026-10-30T20:00:00+00:00"  # older than the device record
+        pol = policy()
+        a = type("A", (), {"model_sha": MODEL, "files": {"trt": "x.engine"}, "audit": None, "policy": __file__})()
+        with mock.patch.object(deploy, "sha256_file", lambda p: "f" * 64):
+            ap = deploy.approval(pol, a, "trt", rec, "trt.json", art("trt"), None,
+                                 min(deploy._parse_time(r["measured_at"]) for r in (rec, ref)))
+        self.assertEqual(ap["records_measured_at"], "2026-10-30T20:00:00+00:00")
+        self.assertEqual(ap["expires_at"], "2026-10-31T20:00:00+00:00")
 
     def test_changed_settings_do_not(self):
         ap = approval()

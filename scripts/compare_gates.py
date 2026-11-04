@@ -11,7 +11,11 @@ judged the way scripts/measure_candidates.py judges it, then placed under each p
                    nothing else: the single-metric gate a quick demo would use.
   rules            the policy verdict (edgegate/gate.py), as of --now if given.
   rules + Glimmer  the rules verdict plus the latest audit of that exact model and file
+                   that also names this measurement record (the record file it lists:
+                   backend, artifact and measurement time) and these evaluation settings
                    (runs/audits/, scripts/audit.py); a veto only turns PASS into HOLD.
+                   An audit of the same model's earlier measurement is not evidence
+                   about this one, the same rule deploy.py applies.
 
 Usage:  python3 scripts/compare_gates.py [--runs s1,s3] [--now ISO] [--json out.json]
 """
@@ -23,7 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
-from edgegate.gate import PASS, _parse_time, load_policy  # noqa: E402
+from edgegate.gate import PASS, _parse_time, eval_config_sha256, load_policy  # noqa: E402
 from measure_candidates import CANDIDATES, judge  # noqa: E402
 
 POLICIES = ("always deploy", "false alerts only", "rules", "rules + Glimmer")
@@ -51,20 +55,39 @@ def builds(policy, runs, now=None, all_sets=False, records=None):
 
 
 def load_audits(path):
-    """{(model sha, backend, artifact sha): latest final verdict for that backend}."""
+    """{(model sha, backend, artifact sha): [final verdicts for that backend, newest first]},
+    each with the record file names the audit listed and its eval_config_sha256."""
     out = {}
     for p in sorted(Path(path).glob("*.json")):
         a = json.loads(p.read_text())
         for f in a.get("final", []):
             key = (a.get("model_sha256"), f["backend"], (a.get("artifacts") or {}).get(f["backend"]))
-            hit = {"path": str(p), "audited_at": a.get("audited_at") or "", "vetoed_by": f.get("vetoed_by"),
-                   "reason": f["reasons"][-1][1] if f.get("vetoed_by") and f.get("reasons") else None}
-            if key not in out or hit["audited_at"] > out[key]["audited_at"]:
-                out[key] = hit
+            out.setdefault(key, []).append({
+                "path": str(p), "audited_at": a.get("audited_at") or "", "vetoed_by": f.get("vetoed_by"),
+                "reason": f["reasons"][-1][1] if f.get("vetoed_by") and f.get("reasons") else None,
+                "records": {Path(x).name for x in (a.get("records") or [])},
+                "eval_config_sha256": a.get("eval_config_sha256")})
+    for hits in out.values():
+        hits.sort(key=lambda h: h["audited_at"], reverse=True)
     return out
 
 
-def compare(rows, audits, limits):
+def record_name(r):
+    """The record file name measure.py gave this row's measurement: backend, the first 12
+    hex of the artifact sha and the measurement time without colons."""
+    return f"{r['backend']}_{(r['artifact_sha256'] or '')[:12]}_{str(r['measured_at'] or '').replace(':', '')}.json"
+
+
+def bound_audit(audits, r, cfg_sha):
+    """The newest audit of this row's model and file that names this very record and these
+    evaluation settings, else None: what deploy.py would accept as evidence about it."""
+    for h in audits.get((r["model_sha256"], r["backend"], r["artifact_sha256"]), []):
+        if record_name(r) in h["records"] and h["eval_config_sha256"] == cfg_sha:
+            return h
+    return None
+
+
+def compare(rows, audits, limits, cfg_sha):
     """Add each policy's verdict to every row; the metrics are the latest record's."""
     fmax = limits["false_alerts_per_h"]["max"]
     for r in rows:
@@ -73,7 +96,7 @@ def compare(rows, audits, limits):
         r["false alerts only"] = "-" if fa is None else "ships" if fa <= fmax else "holds"
         held = ", ".join(dict.fromkeys(x.split(":")[0] for x in r["reasons"]))
         r["rules"] = PASS if r["verdict"] == PASS else f"HOLD ({held})"
-        audit = audits.get((r["model_sha256"], r["backend"], r["artifact_sha256"]))
+        audit = bound_audit(audits, r, cfg_sha)
         r["audited"], r["vetoed"] = audit is not None, bool(audit and audit["vetoed_by"])
         if r["verdict"] != PASS:
             r["rules + Glimmer"] = "HOLD (rules)" + (", audited" if audit else "")
@@ -138,7 +161,7 @@ def main():
                                                    if p.is_dir() and any(p.rglob("*.json")))
     policy = load_policy(a.policy)
     rows, left_out = builds(policy, runs, now, a.all, records)
-    rows = compare(rows, load_audits(a.audits), policy["thresholds"])
+    rows = compare(rows, load_audits(a.audits), policy["thresholds"], eval_config_sha256(policy))
     lines = summary(rows, policy["thresholds"])
     if left_out:
         lines.append(f"left out: {left_out} builds measured on another eval set (--all shows them)")
