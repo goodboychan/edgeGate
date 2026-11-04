@@ -48,7 +48,8 @@ def status(pe, dt, stamp):
             return f"ALERT  +{pe['delay']:.1f} s" + ("  (late)" if out == "late" else ""), GREEN if out == "on_time" else ORANGE
         return "no alert yet", GRAY
     if out == "missed":
-        return ("MISSED  (no alert within 10 s)" if stamp else "no alert"), (RED if stamp else GRAY)
+        # the stamp is the record's outcome, shown before the clip reaches 10 s after the release
+        return ("RECORDED: no alert within 10 s" if stamp else "no alert"), (RED if stamp else GRAY)
     return out, ORANGE
 
 
