@@ -115,6 +115,37 @@ class ApprovalChecks(unittest.TestCase):
         problems = live.approval_problems(ap, DEV, "a" * 64)
         self.assertTrue(any("expires_at" in p for p in problems), problems)
 
+    def test_a_real_pass_expires_with_the_records_the_decision_used(self):
+        # an older record of the same backend is passed too (a *.json glob): the expiry
+        # must follow the latest device record and the reference, not the old one
+        now = datetime.now(timezone.utc).replace(microsecond=0)
+        fresh, old, ref_at = now - timedelta(hours=1), now - timedelta(hours=30), now - timedelta(hours=2)
+        with tempfile.TemporaryDirectory() as d:
+            tmp = Path(d)
+            (tmp / "policy.toml").write_text("# mocked\n")
+            files = {}
+            for name, backend, at in (("trt_new.json", "trt", fresh), ("trt_old.json", "trt", old), ("ref.json", "onnx-gx10", ref_at)):
+                r = record(backend, event_recall=0.96)
+                r["measured_at"] = at.isoformat(timespec="seconds")
+                (tmp / name).write_text(json.dumps(r))
+                files[name] = tmp / name
+            eng = tmp / "student_fp16.engine"
+            eng.write_bytes(b"engine")
+            real = deploy.sha256_file
+            argv = ["deploy.py", str(tmp / "policy.toml"), str(files["trt_old.json"]), str(files["trt_new.json"]), str(files["ref.json"]),
+                    "--model-sha", MODEL, "--artifact", f"trt={eng}", "--notify", "http://push.example/topic"]
+            with mock.patch.object(deploy, "load_policy", lambda p: policy()), \
+                    mock.patch.object(deploy, "sha256_file", lambda p: art("trt") if str(p).endswith(".engine") else real(p)), \
+                    mock.patch.object(deploy, "start", lambda *a: "listening"), mock.patch.object(deploy, "ROOT", tmp), \
+                    mock.patch.object(deploy.sys, "argv", argv), redirect_stdout(io.StringIO()):
+                deploy.main()
+            written = list((tmp / "runs/approvals").glob("*.json"))
+            self.assertEqual(len(written), 1, written)
+            ap = json.loads(written[0].read_text())
+            self.assertEqual(ap["records_measured_at"], ref_at.isoformat(timespec="seconds"))
+            self.assertEqual(ap["expires_at"], (ref_at + timedelta(hours=24)).isoformat(timespec="seconds"))
+            self.assertEqual(live.approval_problems(ap, {"device_id": ap["device_id"], "runtime": ap["runtime"]}, art("trt")), [])
+
     def test_deploy_writes_the_expiry_from_the_oldest_record(self):
         rec = record("trt")
         ref = record("onnx-gx10", event_recall=0.96)

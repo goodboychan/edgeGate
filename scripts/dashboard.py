@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
-from edgegate.gate import PASS, load_policy  # noqa: E402
+from edgegate.gate import PASS, eval_config_sha256, load_policy  # noqa: E402
 from compare_gates import POLICIES, builds, compare, load_audits, summary  # noqa: E402
 from measure_candidates import CANDIDATES, COLUMNS, judge  # noqa: E402
 
@@ -141,7 +141,7 @@ def page(policy, runs, now, audits_dir, approvals_dir, records=None):
     task, limits = policy["task"], policy["thresholds"]
     records = Path(records) if records else ROOT / "runs/records"
     comparable, left_out = builds(policy, runs, now, records=records)
-    comparable = compare(comparable, load_audits(audits_dir), limits)
+    comparable = compare(comparable, load_audits(audits_dir), limits, eval_config_sha256(policy))
     lines = summary(comparable, limits)
     approved = sum(r["verdict"] == PASS for r in comparable)
     audited, vetoed = sum(r["audited"] for r in comparable), sum(r["vetoed"] for r in comparable)

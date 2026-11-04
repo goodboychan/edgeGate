@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "label": "s3",
+  "repeat": 0,
+  "model_sha256": "3672c7b8ab2bdc0a0ff24142c91cdd5611867b6a56b048dcc710e5424b7fc0ce",
+  "artifacts": {
+    "trt": "53b17a8db84cba4ebe027b36b01c5eafe9eccbc55a413b5f8570cd45368fb9c1",
+    "hailo8": "b98cea04b566079765bc79072fe645e64fa3e85725dadad621a9742d227dc80c"
+  },
+  "records": [
+    "runs/records/s3/reference/onnx-gx10_3672c7b8ab2b_2026-11-03T133415+0000.json",
+    "runs/records/s3/clean/hailo8_b98cea04b566_2026-11-03T123631+0000.json",
+    "runs/records/s3/clean/trt_53b17a8db84c_2026-11-03T124704+0000.json"
+  ],
+  "record_sha256": {
+    "runs/records/s3/reference/onnx-gx10_3672c7b8ab2b_2026-11-03T133415+0000.json": "5d89f3df9cdf35c3f35c8b96fbbee210578cc608404648427229c19b474230b9",
+    "runs/records/s3/clean/hailo8_b98cea04b566_2026-11-03T123631+0000.json": "d30d65e0955b4f78c2af5fbd8fa35da431f36b9692ccb6dd341cb4b37d391ada",
+    "runs/records/s3/clean/trt_53b17a8db84c_2026-11-03T124704+0000.json": "70b0d557e2062e4b2a76a6b4edcc651e7f1f3bbe2ac2d13dd1964537bf863cf5"
+  },
+  "eval_config_sha256": "d347ea2a2e62464f53a3f2efcb2213fd96ff82dbf2c617e02892db3c3e5b9b6c",
+  "policy_sha256": "8a5601fc8dd3f0260ec7ba92579d430f87380164f684dd36082c48b656ed36cc",
+  "reasoning": "medium",
+  "temperature": 1.0,
+  "url": "http://127.0.0.1:8001/v1/chat/completions",
+  "audited_at": "2026-11-04T01:19:49+00:00",
+  "wall_s": 163.3,
+  "rules": [
+    {
+      "backend": "trt",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.23877 > max 1"
+        ]
+      ]
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.592 > max 1"
+        ],
+        [
+          "duplicate_alerts",
+          "1 > max 0"
+        ]
+      ]
+    }
+  ],
+  "final": [
+    {
+      "backend": "trt",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.23877 > max 1"
+        ]
+      ],
+      "vetoed_by": null
+    },
+    {
+      "backend": "hailo8",
+      "verdict": "HOLD",
+      "reasons": [
+        [
+          "false_alerts_per_h",
+          "4.592 > max 1"
+        ],
+        [
+          "duplicate_alerts",
+          "1 > max 0"
+        ]
+      ],
+      "vetoed_by": null
+    }
+  ],
+  "vetoes": {},
+  "rejected": [],
+  "tool_calls": [
+    {
+      "name": "gate_decisions",
+      "args": {},
+      "result": "{\"evidence_id\": \"E1\", \"backends\": {\"trt\": {\"verdict\": \"HOLD\", \"reasons\": [\"false_alerts_per_h: 4.23877 > max 1\"], \"device\": {\"label\": \"trt\", \"device_id\": \"28e2cf10ddf70d2ef8221c82c013d27d\", \"hostname\": \"ubuntu\", \"board\": \"NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super\", \"runtime\": \"tensorrt 10.3.0\"}, \"metrics\": {\"event_recall\": 0.9615384615384616, \"false_alerts_per_h\": 4.238770282040777, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 2.5996000000000095, \"detection_delay_s_p95\": 3.3326000000000136, \"latency_ms_p50\": 18.73892603907734, \"latency_ms_p95\": 19.524034450296313, \"peak_mem_mb\": 427.95703125}}, \"hailo8\": {\"verdict\": \"HOLD\", \"reasons\": [\"false_alerts_per_h: 4.592 > max 1\", \"duplicate_alerts: 1 > max 0\"], \"device\": {\"label\": \"hailo8\", \"device_id\": \"8db76e25b0fb515f0893a1d0c62e06d7\", \"hostname\": \"raspberrypi-hailo\", \"board\": \"Raspberry Pi 5 Model B Rev 1.0\", \"runtime\": \"hailort 4.20.0\"}, \"metrics\": {\"event_recall\": 0.9615384615384616, \"false_alerts_per_h\": 4.592001138877508, \"duplicate_alerts\": 1, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 2.5994999999999777, \"detection_delay_s_p95\": 2.9995999999999867, \"latency_ms_p50\": 15.571427007671446, \"latency_ms_p95\": 15.933309472166002, \"peak_mem_mb\": 228.71875}}}, \"reference\": {\"backend\": \"onnx-gx10\", \"metrics\": {\"event_recall\": 0.9615384615384616, \"false_alerts_per_h\": 4.238770282040777, \"duplicate_alerts\": 0, \"late_alerts\": 0, \"outage_misses\": 0, \"second_packages\": 2, \"detection_delay_s_p50\": 2.599500000000006, \"detection_delay_s_p95\": 3.332599999999985, \"latency_ms_p50\": 34.72666000016034, \"latency_ms_p95\": 63.33883746992797, \"peak_mem_mb\": 328.2109375}}, \"thresholds\": {\"event_recall\": {\"min\": 0.9, \"max_drop\": 0.05}, \"false_alerts_per_h\": {\"max\": 1.0}, \"duplicate_alerts\": {\"max\": 0}, \"detection_delay_s_p95\": {\"max\": 5.0}, \"latency_ms_p95\": {\"max\": 100.0}, \"peak_mem_mb\": {\"max\": 2048.0}}, \"backend_"
+    },
+    {
+      "name": "eval_coverage",
+      "args": {},
+      "result": "{\"evidence_id\": \"E2\", \"sessions\": 7, \"by_lighting\": {\"day\": {\"sessions\": 2, \"hours\": 2.167, \"events\": 4}, \"night\": {\"sessions\": 5, \"hours\": 0.664, \"events\": 24}}, \"events_by_size\": {\"medium\": 26, \"small\": 2}, \"events_by_tag\": {\"edge\": 4, \"occluded\": 2, \"untagged\": 22}, \"size_edges\": [0.08, 0.15]}"
+    }
+  ],
+  "turns": [
+    {
+      "s": 21.3,
+      "reasoning": "Audit this candidate.\n\nWe need to audit deployment decision for edge perception skill. Task: Tell me when a package is left at entrance. Deployment: Indoor staged drop zone in a room, standing in for entrance. Camera watches around clock, including evenings and nights with room lights low.\n\nWe have tools: gate_decisions, eval_coverage, slice_metrics, propose_hold.\n\nWe need start with gate_decisions. Then check eval_coverage, and slice_metrics for each device rules passed.\n\nWe cannot approve anything rules held. Only power to propose HOLD for device rules passed when audit tools show risk summary metrics hide.\n\nWe must call gate_decisions first.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 14.1,
+      "reasoning": "Audit this candidate.\n\nWe have gate_decisions: trt HOLD, hailo8 HOLD. Both already held. No device passed? Wait maybe both held. The task says you cannot approve anything rules held. Your only power is propose HOLD for device rules passed. Here both are held. So maybe nothing to do? Let's check eval_coverage.",
+      "content": null,
+      "tool_calls": 1
+    },
+    {
+      "s": 127.5,
+      "reasoning": "Audit this candidate. We have gate_decisions. backends: trt HOLD, hailo8 HOLD. Both held by rules. No passed devices. Task says cannot approve anything rules held. Your only power is to propose HOLD for device rules passed. But none passed. So we just audit, no propose hold.\n\nWe still need check coverage and slice metrics? The instruction says start with gate_decisions then check what summary could hide: eval_coverage, and slice_metrics for each device rules passed. Since none passed, we may not need slice_metrics. But perhaps we should check coverage to note issues? Might be good to note.\n\nThe rule verdicts: trt HOLD due false_alerts_per_h 4.238 >1. hailo8 HOLD due false_alerts_per_h 4.592 >1 and duplicate_alerts 1 >0.\n\nReference metrics false_alerts_per_h 4.238... same as trt. Interesting reference has same false alerts. So threshold maybe unrealistic? But gate decision already hold.\n\nEval coverage: sessions 7, by lighting day sessions 2 hours 2.167 events 4, night sessions 5 hours 0.664 events 24. No evening? Lighting: day/evening/night. Night has 0.664 hours but 24 events. Day 2.167 hours 4 events. Evening missing? Maybe zero.\n\nEvents by size: medium 26, small 2. No large.\n\nEvents by tag: edge 4, occluded 2, untagged 22.\n\nSize edges [0.08,0.15]\n\nDeployment: indoor staged drop zone, camera watches around clock including evenings and nights with room lights low.\n\nCoverage lacks evening lighting entirely, night hours only 0.664 hours, day dominates hours but events mostly night. Small packages underrepresented.\n\nBut no device passed, so no propose_hold needed.\n\nWe should output paragraph per device verdict after audit and why citing evidence ids.\n\nWe need cite evidence ids. We have E1 for gate decisions, E2 for coverage.\n\nPotentially we should still check slice_metrics? The instruction says check slice metrics for each device rules passed. None passed, so skip.\n\nWe can note that both held, no risk to approve.\n\nFinal answer: trt remains HOLD, hailo8 remains HOLD.\n\nProvide short paragraph per device.\n\nLet's produce final.\n\n",
+      "content": "**Gate decisions**\n\n* `trt` \u2013 HOLD\nRule verdict is HOLD.  The summary metrics judged by the rules show `false_alerts_per_h: 4.238770282040777 > max 1` with `event_recall` 0.9615, `duplicate_alerts` 0, `detection_delay_s_p95` 3.33 s and `latency_ms_p95` 19.5 ms [E1]. The reference backend `onnx-gx10` has the same `false_alerts_per_h` 4.238770282040777 and identical recall on the summary set [E1]. No device was passed by the rules, so no hold proposal is required.\n\n* `hailo8` \u2013 HOLD\nRule verdict is HOLD.  The summary metrics judged by the rules show `false_alerts_per_h: 4.592001138877508 > max 1` and `duplicate_alerts: 1 > max 0` with `event_recall` 0.9615, `detection_delay_s_p95` 3.00 s and `latency_ms_p95` 15.93 ms [E1]. The reference backend `onnx-gx10` has `false_alerts_per_h` 4.238770282040777 and `duplicate_alerts` 0 on the same summary [E1]. No device was passed by the rules, so no hold proposal is required.\n\n**Eval coverage context**\n\nEval coverage is 7 sessions. Lighting: day 2 sessions, 2.167 h, 4 events; night 5 sessions, 0.664 h, 24 events; evening is absent from the counts [E2]. Size: medium 26 events, small 2 events, large 0 events [E2]. Tags: edge 4, occluded 2, untagged 22 [E2]. The deployment requires around-the-clock operation including evenings and nights with low room light. Evening lighting is not represented, night hours are only 0.664 h despite 24 events, and small/large sizes and edge/occluded tags are sparse. This coverage gap is visible in the eval set, but it does not create a new approve-able candidate because both backends are already held by the rule engine.\n\nNo `propose_hold` is issued; both backends remain HOLD per the rule engine.",
+      "tool_calls": 0
+    }
+  ],
+  "answer": "**Gate decisions**\n\n* `trt` \u2013 HOLD\nRule verdict is HOLD.  The summary metrics judged by the rules show `false_alerts_per_h: 4.238770282040777 > max 1` with `event_recall` 0.9615, `duplicate_alerts` 0, `detection_delay_s_p95` 3.33 s and `latency_ms_p95` 19.5 ms [E1]. The reference backend `onnx-gx10` has the same `false_alerts_per_h` 4.238770282040777 and identical recall on the summary set [E1]. No device was passed by the rules, so no hold proposal is required.\n\n* `hailo8` \u2013 HOLD\nRule verdict is HOLD.  The summary metrics judged by the rules show `false_alerts_per_h: 4.592001138877508 > max 1` and `duplicate_alerts: 1 > max 0` with `event_recall` 0.9615, `detection_delay_s_p95` 3.00 s and `latency_ms_p95` 15.93 ms [E1]. The reference backend `onnx-gx10` has `false_alerts_per_h` 4.238770282040777 and `duplicate_alerts` 0 on the same summary [E1]. No device was passed by the rules, so no hold proposal is required.\n\n**Eval coverage context**\n\nEval coverage is 7 sessions. Lighting: day 2 sessions, 2.167 h, 4 events; night 5 sessions, 0.664 h, 24 events; evening is absent from the counts [E2]. Size: medium 26 events, small 2 events, large 0 events [E2]. Tags: edge 4, occluded 2, untagged 22 [E2]. The deployment requires around-the-clock operation including evenings and nights with low room light. Evening lighting is not represented, night hours are only 0.664 h despite 24 events, and small/large sizes and edge/occluded tags are sparse. This coverage gap is visible in the eval set, but it does not create a new approve-able candidate because both backends are already held by the rule engine.\n\nNo `propose_hold` is issued; both backends remain HOLD per the rule engine.",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 5176,
+    "completion_tokens": 1270
+  }
+}

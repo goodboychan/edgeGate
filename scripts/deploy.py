@@ -160,7 +160,11 @@ def main():
             print(f"{d.backend}: PASS as of {a.now}; a replayed decision deploys nothing")
             continue
         rec = _latest(records, d.backend)
-        basis = [_parse_time(r.get("measured_at", "")) for r in records]
+        # the expiry rests on the records this decision used: the latest for this backend and
+        # the latest reference (older records passed on the command line were not judged)
+        ref = _latest(records, policy["task"].get("reference_backend"))
+        used = [rec] + ([ref] if ref is not None and ref is not rec else [])
+        basis = [_parse_time(r.get("measured_at", "")) for r in used]
         if any(b is None for b in basis):
             raise SystemExit("a record has no readable measured_at; nothing deployed")
         ap_rec = approval(policy, a, d.backend, rec, paths[id(rec)], artifacts[d.backend], audit, min(basis))
