@@ -30,8 +30,9 @@
 It is easy to demo and hard to trust on a 3-watt chip at night, and that gap is what EdgeGate measures.
 
 **Measure on the device, then decide.** EdgeGate checks the gap between a model that runs in a demo and one that may be
-deployed on the device. It turns one sentence into a small vision model for two edge chips, measures every build on the
-chip it will run on, and ships only what passes a policy written before any evaluation. A build that misses the rules
+deployed on the device. For one task, a package left at the entrance, it builds a small vision model for two edge
+chips, measures every build on the chip it will run on, and ships only what passes a policy written before any
+evaluation. A build that misses the rules
 is held, with the reasons printed, and there is no override. It is for teams that must re-validate an edge vision
 model after every retrain, quantization, compiler or device change.
 
@@ -48,10 +49,12 @@ model after every retrain, quantization, compiler or device change.
   untouched), the Jetson runner refused a different model file against the same approval: `not starting: this model
   file is not the approved one` ([`results/pass_path_test/`](results/pass_path_test/), [Positive control](#positive-control)).
 
-> EdgeGate teaches a package-at-the-door skill from one sentence (Muse Spark writes the spec, SAM 3.1 labels our own
-> recordings, a YOLOv8n student is distilled), compiles it for a Jetson Orin Nano and a Raspberry Pi 5 with a Hailo-8,
-> measures each build on its device over 2 h 50 min of frozen eval recordings, and lets the rules decide. Muse Glimmer
-> 30B, open weights on our own GX10, audits the records and can only add a HOLD, never remove one.
+> EdgeGate builds a package-at-the-door skill (SAM 3.1 labels our own recordings, a YOLOv8n student is distilled),
+> compiles it for a Jetson Orin Nano and a Raspberry Pi 5 with a Hailo-8, measures each build on its device over
+> 2 h 50 min of frozen eval recordings, and lets the rules decide. Muse Glimmer 30B, open weights on our own GX10,
+> audits the records and can only add a HOLD, never remove one. Muse Spark turns the one-sentence request into a task
+> spec that matches the hand-written policy; that front end came after the candidates were measured and is shown for
+> this one task, not yet as a way to build any skill from a sentence.
 
 **License: [AGPL-3.0](LICENSE)** · Meta Global AI Developer Hackathon, Indie track, "Push the Frontier" · built
 2026-10-26 to 2026-11-04, from scratch; the commit history shows when.
