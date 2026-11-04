@@ -33,7 +33,7 @@ Meta Global AI Developer Hackathon, Indie track, "Push the Frontier". Everything
 | **The refusal is real.** | `deploy.py` prints HOLD with the reasons and starts nothing; there is no override flag. The PASS path is shown under a labeled test policy, never as a real approval. | [`results/deploy_s3_hold.txt`](results/deploy_s3_hold.txt) · [The gate](#the-gate) |
 | **Frozen data, written-down choices.** | The eval set's hash went into the policy before any candidate was measured; what we chose after seeing results is listed. | [What we chose after seeing results](#what-we-chose-after-seeing-results) · [Known limits](#known-limits) |
 
-Without hardware or keys: `python3 -m unittest discover -s tests` (95 tests), then the gate comparison and the dashboard rebuilt from `results/`, see [Running it](#running-it).
+Without hardware or keys: `python3 -m unittest discover -s tests` (103 tests), then the gate comparison and the dashboard rebuilt from `results/`, see [Running it](#running-it).
 
 ### Where Meta AI is used
 
@@ -131,7 +131,7 @@ The rules decide; Glimmer can only veto a PASS and explain. A record counts only
 - **its device:** the policy's `[targets]` names each backend's device (a hash of its machine id) and runtime version. A record from another device, a reinstalled OS or another runtime version holds.
 - **its eval set:** `eval_set_sha256` is a manifest of every frame's sha256 plus the marks, `frames.csv` and `meta.json`; the device reports a digest of the frames it actually read and it must match.
 - **its evaluation settings:** `eval_config_sha256` covers the policy's `[events]` (zone, dwell, windows, the measured alert delay) and `[measure]` (class order, detection threshold). Changing any of them voids older records. Thresholds are applied at decision time and are not in the hash.
-- **its age:** older than `max_age_hours` (24) is stale, and an approval inherits this: it expires when the records it rests on do. So everything in `results/` is evidence of what was measured, not a standing approval; a live run needs a fresh measurement first, and the replay commands under [Running it](#running-it) judge as of the snapshot time.
+- **its age:** older than `max_age_hours` (24) is stale, and an approval inherits this: it expires when the records it rests on do. So everything in `results/` is evidence of what was measured, not a standing approval; a live run needs a fresh measurement first, and the replay commands under [Running it](#running-it) judge as of the snapshot time. `results/snapshot_at.txt` is when the records were copied and the time the replay judges freshness against; `results/updated_at.txt` is when anything in `results/` last changed (the audits of 11/4 were added to the 11/3 19:45 UTC snapshot without any record changing; judged at the later time, seven of the compared records would already be past 24 h).
 
 **Arrival rule** (`edgegate/events.py`, fixed 10/27 before any session was recorded, not tuned): a package whose box bottom-center is inside the zone, seen for 2 s in an empty zone, is an arrival; the alert must be received within 10 s of the package being let go, dwell included. One alert while it stays; a new arrival needs the zone empty, not just hidden by a person, for 2 s. A second package next to the first is out of scope and scored apart. When the camera drops out, the zone state is unknown, not empty.
 
@@ -191,7 +191,7 @@ Box widths: brown 22 cm, black 27, gray 26 (train); white 27, robot-arm 32 (eval
 Without hardware or keys, from a fresh clone: the rule engine, the evaluator and the audit tools run on synthetic data, and the gate comparison and the dashboard are rebuilt from the committed `results/` (the builds are not in git, so in this replay the model and file hashes are read from the records themselves, and `--now` is the snapshot time because records expire after 24 h):
 
 ```bash
-python3 -m unittest discover -s tests    # 95 tests, no hardware, no keys
+python3 -m unittest discover -s tests    # 103 tests, no hardware, no keys
 NOW=$(cat results/snapshot_at.txt)
 python3 scripts/compare_gates.py --records results/records --audits results/audits --now "$NOW"
 python3 scripts/dashboard.py --records results/records --audits results/audits --approvals results/approvals --now "$NOW" --out /tmp/dashboard.html

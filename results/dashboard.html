@@ -144,7 +144,7 @@ No `propose_hold` is issued.</pre></details>
 
 * trt – jetson 28e2cf10ddf70d2ef8221c82c013d27d – remains HOLD. The rules held it for false_alerts_per_h: 4.23877 &gt; max 1 per E1. No PASS verdict exists to override, so no further audit action is permitted.
 
-* hailo8 – chans@192.168.50.151 – remains HOLD. The rules held it for false_alerts_per_h: 4.592 &gt; max 1 and duplicate_alerts: 1 &gt; max 0 per E1. No PASS verdict exists to override, so no further audit action is permitted.
+* hailo8 – device – remains HOLD. The rules held it for false_alerts_per_h: 4.592 &gt; max 1 and duplicate_alerts: 1 &gt; max 0 per E1. No PASS verdict exists to override, so no further audit action is permitted.
 
 Eval coverage E2 notes the eval set is 7 sessions with a strong night bias: day 2.167 h / 4 events vs night 0.664 h / 24 events, package size is 26 medium / 2 small with no large, and tags are 22 untagged / 4 edge / 2 occluded. Because the rule engine passed no devices, no slice_metrics checks are required and no propose_hold is warranted.</pre></details>
 <details class="audit"><summary><b>s3rep</b> &middot; 2026-11-02T23:20:30+00:00
@@ -158,7 +158,7 @@ Eval coverage E2 notes the eval set is 7 sessions with a strong night bias: day 
 * `trt` – jetson 28e2cf10ddf70d2ef8221c82c013d27d, tensorrt 10.3.0  
 Verdict: HOLD. Rules held for `false_alerts_per_h: 4.23877 &gt; max 1`. Summary metrics: event_recall 0.962, false_alerts_per_h 4.239, duplicate_alerts 0, late_alerts 0, outage_misses 0, detection_delay_s_p95 3.33, latency_ms_p95 19.52, peak_mem_mb 438.2. Reference onnx-gx10 shows the same false_alerts_per_h 4.239 on the eval set. [E1]
 
-* `hailo8` – chans@192.168.50.151 8db76e25b0fb515f0893a1d0c62e06d7, hailort 4.20.0  
+* `hailo8` – device 8db76e25b0fb515f0893a1d0c62e06d7, hailort 4.20.0  
 Verdict: HOLD. Rules held for `false_alerts_per_h: 4.592 &gt; max 1` and `duplicate_alerts: 1 &gt; max 0`. Summary metrics: event_recall 0.962, false_alerts_per_h 4.592, duplicate_alerts 1, late_alerts 0, outage_misses 0, detection_delay_s_p95 3.00, latency_ms_p95 15.89, peak_mem_mb 237.5. [E1]
 
 No device was passed by the rules. The audit power is limited to proposing a HOLD for a rules-passed device with tool evidence of hidden risk. With zero rules-passed candidates, there is no device to promote and no propose_hold action is warranted.
@@ -176,7 +176,7 @@ Verdict after audit:
 
 Gate decisions show no device was passed by the rule engine.  
 E1: trt verdict HOLD – false_alerts_per_h 4.23877 &gt; max 1. Device jetson 28e2cf10ddf70d2ef8221c82c013d27d, tensorrt 10.3.0.  
-E1: hailo8 verdict HOLD – false_alerts_per_h 4.592 &gt; max 1 and duplicate_alerts 1 &gt; max 0. Device chans@192.168.50.151 8db76e25b0fb515f0893a1d0c62e06d7, hailort 4.20.0.
+E1: hailo8 verdict HOLD – false_alerts_per_h 4.592 &gt; max 1 and duplicate_alerts 1 &gt; max 0. Device device 8db76e25b0fb515f0893a1d0c62e06d7, hailort 4.20.0.
 
 Eval coverage E2:
 * Sessions 7. Lighting: day 2 sessions 2.167 h 4 events; night 5 sessions 0.664 h 24 events. No explicit evening slice is reported.
@@ -199,7 +199,7 @@ No hold proposals are issued because the rule engine passed zero devices.</pre><
 
 * **jetson / trt – NVIDIA Jetson Orin Nano Engineering Reference Developer Kit Super, device 28e2cf10ddf70d2ef8221c82c013d27d**: Rule verdict HOLD remains. The gate decision shows event_recall 0.962 meeting the recall threshold but false_alerts_per_h 4.24 &gt; max 1.0, with no duplicate, late or outage misses [E1]. No propose_hold is applicable because the device is already held.
 
-* **chans@192.168.50.151 / hailo8 – Raspberry Pi 5 Model B Rev 1.0, device 8db76e25b0fb515f0893a1d0c62e06d7**: Rule verdict HOLD remains. The gate decision shows event_recall 0.962 meeting the recall threshold but false_alerts_per_h 4.59 &gt; max 1.0 and duplicate_alerts 1 &gt; max 0 [E1]. No propose_hold is applicable because the device is already held.
+* **device / hailo8 – Raspberry Pi 5 Model B Rev 1.0, device 8db76e25b0fb515f0893a1d0c62e06d7**: Rule verdict HOLD remains. The gate decision shows event_recall 0.962 meeting the recall threshold but false_alerts_per_h 4.59 &gt; max 1.0 and duplicate_alerts 1 &gt; max 0 [E1]. No propose_hold is applicable because the device is already held.
 
 Eval coverage is 7 sessions with lighting skewed to night: day 2 sessions / 2.167 h / 4 events vs night 5 sessions / 0.664 h / 24 events, events by size medium 26 / small 2, tags edge 4 / occluded 2 / untagged 22 [E2]. With no rule-PASS candidates, no additional holds are proposed.</pre></details>
 <details class="audit"><summary><b>s3rep</b> &middot; 2026-11-02T23:10:29+00:00
@@ -212,7 +212,7 @@ Eval coverage is 7 sessions with lighting skewed to night: day 2 sessions / 2.16
 
 * **trt – jetson 28e2cf10ddf70d2ef8221c82c013d27d – HOLD after audit.** Rule verdict is HOLD for false_alerts_per_h: 4.23877 &gt; max 1 [E1]. No PASS override is possible. The eval set is night-heavy for the deployment of interest: 5 night sessions / 0.664 h with 24 events vs 2 day sessions / 2.167 h with 4 events, size coverage is medium 26 / small 2 with no large, and tags are untagged 22 / edge 4 / occluded 2 [E2]. The reference backend onnx-gx10 shows the same summary false_alerts_per_h 4.23877 and event_recall 0.9615 as the device [E1], so the high false-alert rate is not isolated to the device.
 
-* **hailo8 – chans@192.168.50.151 – HOLD after audit.** Rule verdict is HOLD for false_alerts_per_h: 4.592 &gt; max 1 and duplicate_alerts: 1 &gt; max 0 [E1]. No PASS override is possible. Coverage context is as above: night-dominant events with very few night hours, no large packages, and limited edge/occluded examples [E2]. The summary metrics already fail policy thresholds, so a hold remains appropriate.
+* **hailo8 – device – HOLD after audit.** Rule verdict is HOLD for false_alerts_per_h: 4.592 &gt; max 1 and duplicate_alerts: 1 &gt; max 0 [E1]. No PASS override is possible. Coverage context is as above: night-dominant events with very few night hours, no large packages, and limited edge/occluded examples [E2]. The summary metrics already fail policy thresholds, so a hold remains appropriate.
 
 No hold proposals are made because the rules already hold both backends and there are no rule-PASS devices to challenge.</pre></details>
 <details class="audit"><summary><b>s3</b> &middot; 2026-11-02T22:48:44+00:00
@@ -225,7 +225,7 @@ No hold proposals are made because the rules already hold both backends and ther
 
 * **trt – jetson 28e2cf10ddf70d2ef8221c82c013d27d** – Rules verdict: HOLD. Reasons: false_alerts_per_h 4.23877 &gt; max 1 [E1]. The summary metrics already fail the false-alert policy and the device is therefore not approvable. No propose_hold is possible because the rules already hold it.
 
-* **hailo8 – chans@192.168.50.151** – Rules verdict: HOLD. Reasons: false_alerts_per_h 4.592 &gt; max 1 and duplicate_alerts 1 &gt; max 0 [E1]. The summary metrics already fail policy on false alerts and duplicate alerts and the device is therefore not approvable. No propose_hold is possible because the rules already hold it.
+* **hailo8 – device** – Rules verdict: HOLD. Reasons: false_alerts_per_h 4.592 &gt; max 1 and duplicate_alerts 1 &gt; max 0 [E1]. The summary metrics already fail policy on false alerts and duplicate alerts and the device is therefore not approvable. No propose_hold is possible because the rules already hold it.
 
 Eval coverage for context: 7 sessions total. Lighting coverage is day 2 sessions / 2.167 h / 4 events and night 5 sessions / 0.664 h / 24 events, with no evening slice reported [E2]. Size coverage is medium 26 events, small 2 events, no large events; tag coverage is edge 4, occluded 2, untagged 22 [E2]. These coverage gaps are noted but no device passed the gate to audit on slices.
 

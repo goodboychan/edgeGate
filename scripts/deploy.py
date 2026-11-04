@@ -32,8 +32,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from edgegate.gate import (PASS, _latest, _parse_time, apply_veto, decide, eval_config_sha256,  # noqa: E402
-                           load_policy, sha256_file)
+from edgegate.gate import (PASS, _latest, _parse_time, apply_veto, audit_binding_problem, decide,  # noqa: E402
+                           eval_config_sha256, load_policy, sha256_file)
 
 RUNTIME = {"trt": "trt", "hailo8": "hailo"}
 HOSTS = {"trt": os.environ.get("JETSON", "jetson"), "hailo8": os.environ.get("HAILO_PI", "hailo")}
@@ -53,14 +53,11 @@ def audit_vetoes(path, model_sha, artifacts, record_paths, policy):
     audit = json.loads(Path(path).read_text())
     if audit.get("model_sha256") != model_sha or audit.get("artifacts") != artifacts:
         raise SystemExit(f"{path} audited another model or other files")
-    bound = set((audit.get("record_sha256") or {}).values())
-    if not bound or not audit.get("eval_config_sha256"):
-        raise SystemExit(f"{path} is not bound to its records and settings (audited before that was recorded); audit again")
-    missing = [str(p) for p in record_paths if sha256_file(p) not in bound]
-    if missing:
-        raise SystemExit(f"{path} did not audit {', '.join(missing)}; audit the records being deployed")
-    if audit["eval_config_sha256"] != eval_config_sha256(policy):
-        raise SystemExit(f"{path} audited other evaluation settings")
+    cfg = eval_config_sha256(policy)
+    for p in record_paths:  # the same check compare_gates.py applies when it marks a build audited
+        problem = audit_binding_problem(audit, p, cfg)
+        if problem:
+            raise SystemExit(f"{path} {problem}")
     return audit, {f["backend"]: (f["reasons"][-1][1], f["vetoed_by"])
                    for f in audit["final"] if f.get("vetoed_by")}
 

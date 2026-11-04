@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -12,21 +14,33 @@ LIMITS = {"event_recall": {"min": 0.9}, "false_alerts_per_h": {"max": 1.0}}
 MODEL = "m" * 64
 CFG = "e" * 64
 AT = "2026-11-02T14:34:34+00:00"
+TMP = tempfile.TemporaryDirectory()
+
+
+def record_file(candidate, backend, measured_at):
+    """A record file like measure.py writes, under a run/candidate folder; its content hash
+    is what an audit binds to."""
+    d = Path(TMP.name) / "s3" / candidate
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / f"{backend}_{candidate[0] * 12}_{measured_at.replace(':', '')}.json"
+    p.write_text(json.dumps({"backend": backend, "measured_at": measured_at, "metrics": {}}))
+    return p
 
 
 def row(candidate, backend, recall, false, verdict="HOLD", reasons=(), measured_at=AT):
     return {"run": "s3", "candidate": candidate, "backend": backend, "verdict": verdict, "reasons": list(reasons),
             "metrics": {"event_recall": recall, "false_alerts_per_h": false}, "measured_at": measured_at,
-            "model_sha256": MODEL, "artifact_sha256": candidate[0] * 64}
+            "model_sha256": MODEL, "artifact_sha256": candidate[0] * 64,
+            "record_path": str(record_file(candidate, backend, measured_at))}
 
 
-def audit(backend, artifact, vetoed=False, measured_at=AT, cfg=CFG):
-    """An audit as load_audits lists it, naming the record file of that measurement."""
-    name = f"{backend}_{artifact[:12]}_{measured_at.replace(':', '')}.json"
+def audit(backend, artifact, vetoed=False, measured_at=AT, cfg=CFG, candidate=None):
+    """An audit as load_audits lists it, bound to the record file of that measurement."""
+    rec = record_file(candidate or {"g": "good", "c": "clean"}[artifact[0]], backend, measured_at)
     return {(MODEL, backend, artifact): [{"path": "a.json", "audited_at": "2026-11-03T00:00:00+00:00",
                                          "vetoed_by": "glimmer" if vetoed else None,
                                          "reason": "lamp-night recall 0.5 (E3)" if vetoed else None,
-                                         "records": {f"runs/records/s3/clean/{name}".split("/")[-1]},
+                                         "record_sha256": {str(rec): compare_gates.sha256_file(rec)},
                                          "eval_config_sha256": cfg}]}
 
 
@@ -61,7 +75,21 @@ class CompareGates(unittest.TestCase):
         self.assertTrue(summary(rows, LIMITS)[3].startswith("rules + Glimmer: ships 0; 2 audited, 2 vetoed"))
 
     def test_audit_of_another_file_does_not_count(self):
-        rows = compare([row("good", "trt", 0.95, 0.2, verdict="PASS")], audit("trt", "x" * 64, vetoed=True), LIMITS, CFG)
+        rows = compare([row("good", "trt", 0.95, 0.2, verdict="PASS")], audit("trt", "x" * 64, vetoed=True, candidate="good"), LIMITS, CFG)
+        self.assertEqual(rows[0]["rules + Glimmer"], "PASS (not audited)")
+
+    def test_audit_without_content_hashes_does_not_count(self):
+        # same file name, but the audit carries no record hashes (audited before that was
+        # recorded): deploy.py refuses it, so the table must not call the build audited
+        a = audit("trt", "g" * 64, vetoed=True)
+        a[(MODEL, "trt", "g" * 64)][0]["record_sha256"] = {}
+        rows = compare([row("good", "trt", 0.95, 0.2, verdict="PASS")], a, LIMITS, CFG)
+        self.assertEqual(rows[0]["rules + Glimmer"], "PASS (not audited)")
+        # and a record whose content changed under the same name is not covered either
+        a = audit("trt", "g" * 64, vetoed=True)
+        r = row("good", "trt", 0.95, 0.2, verdict="PASS")
+        Path(r["record_path"]).write_text(json.dumps({"backend": "trt", "measured_at": AT, "metrics": {"edited": 1}}))
+        rows = compare([r], a, LIMITS, CFG)
         self.assertEqual(rows[0]["rules + Glimmer"], "PASS (not audited)")
 
     def test_audit_of_an_earlier_measurement_does_not_count(self):

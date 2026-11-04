@@ -27,7 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
-from edgegate.gate import PASS, _parse_time, eval_config_sha256, load_policy  # noqa: E402
+from edgegate.gate import PASS, _parse_time, audit_binding_problem, eval_config_sha256, load_policy, sha256_file  # noqa: E402
 from measure_candidates import CANDIDATES, judge  # noqa: E402
 
 POLICIES = ("always deploy", "false alerts only", "rules", "rules + Glimmer")
@@ -50,7 +50,7 @@ def builds(policy, runs, now=None, all_sets=False, records=None):
             if not all_sets and any(x.startswith("eval_set:") for x in r["reasons"]):
                 left_out += 1
                 continue
-            rows.append({"run": run, **r})
+            rows.append({"run": run, "record_path": str(records / run / r["candidate"] / record_name(r)), **r})
     return rows, left_out
 
 
@@ -65,8 +65,7 @@ def load_audits(path):
             out.setdefault(key, []).append({
                 "path": str(p), "audited_at": a.get("audited_at") or "", "vetoed_by": f.get("vetoed_by"),
                 "reason": f["reasons"][-1][1] if f.get("vetoed_by") and f.get("reasons") else None,
-                "records": {Path(x).name for x in (a.get("records") or [])},
-                "eval_config_sha256": a.get("eval_config_sha256")})
+                "record_sha256": a.get("record_sha256") or {}, "eval_config_sha256": a.get("eval_config_sha256")})
     for hits in out.values():
         hits.sort(key=lambda h: h["audited_at"], reverse=True)
     return out
@@ -79,10 +78,14 @@ def record_name(r):
 
 
 def bound_audit(audits, r, cfg_sha):
-    """The newest audit of this row's model and file that names this very record and these
-    evaluation settings, else None: what deploy.py would accept as evidence about it."""
+    """The newest audit of this row's model and file that is evidence about this very record
+    file (its content hash in the audit's record_sha256) under these evaluation settings,
+    else None: the check deploy.py makes (edgegate.gate.audit_binding_problem)."""
+    path = r.get("record_path")
+    if not path or not Path(path).exists():
+        return None
     for h in audits.get((r["model_sha256"], r["backend"], r["artifact_sha256"]), []):
-        if record_name(r) in h["records"] and h["eval_config_sha256"] == cfg_sha:
+        if audit_binding_problem(h, path, cfg_sha) is None:
             return h
     return None
 

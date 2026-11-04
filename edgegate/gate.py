@@ -92,6 +92,22 @@ def eval_config_sha256(policy):
     return hashlib.sha256(json.dumps(cfg, sort_keys=True).encode()).hexdigest()
 
 
+def audit_binding_problem(audit, record_path, cfg_sha):
+    """Why this audit record is not evidence about this measurement record file under these
+    evaluation settings, or None when it is. An audit binds by content: its record_sha256
+    must list the file's hash (so a record changed under the same name is not covered) and
+    its eval_config_sha256 must be the settings in force. deploy.py refuses on any problem;
+    compare_gates.py marks a build audited only when there is none."""
+    bound = set((audit.get("record_sha256") or {}).values())
+    if not bound or not audit.get("eval_config_sha256"):
+        return "is not bound to its records and settings (audited before that was recorded); audit again"
+    if sha256_file(record_path) not in bound:
+        return f"did not audit {record_path}; audit the records being deployed"
+    if audit["eval_config_sha256"] != cfg_sha:
+        return "audited other evaluation settings"
+    return None
+
+
 def _unset(value):
     return value in (None, "", "unset")
 

@@ -18,8 +18,6 @@ for r in runs/records/*/; do
     [ -f "build/$run/student.onnx" ] || continue
     "$PY" scripts/measure_candidates.py "$run" --table-only > "results/table_$run.md"
 done
-"$PY" scripts/compare_gates.py > results/compare_gates.md
-"$PY" scripts/dashboard.py --out results/dashboard.html > /dev/null
 # Addresses used to reach the devices (user@host or a private IPv4) are not part of
 # the evidence; older records carry the Pi's address as its label.
 # (four octets, so a version such as "tensorrt 10.3.0" is left alone)
@@ -28,9 +26,20 @@ done
 # (grep exits 1 when nothing is left to replace; that is the normal case, not a failure)
 # Paths inside records and audits are made relative to the repository.
 { grep -rl '/home/[a-z0-9_]*/edgegate/' results || true; } | xargs -r sed -i -E 's#/home/[a-z0-9_]+/edgegate/##g'
+# The scrub changed the bytes of some records, so each audit's record_sha256 is rewritten to
+# the hashes of the copies beside it (scripts/rehash_results_audits.py): the binding check
+# holds in results/ exactly as in runs/.
+"$PY" scripts/rehash_results_audits.py
+# The comparison and the dashboard are rebuilt from results/ after the scrub and rehash, so
+# they carry no addresses and bind audits the way a replay from results/ will.
+"$PY" scripts/compare_gates.py --records results/records --audits results/audits > results/compare_gates.md
+"$PY" scripts/dashboard.py --records results/records --audits results/audits --approvals results/approvals --out results/dashboard.html > /dev/null
 # deploy.py's refusal on s3, captured 11/3, is evidence too (logs/ is not in git)
 [ -f logs/deploy_s3_hold.txt ] && cp logs/deploy_s3_hold.txt results/deploy_s3_hold.txt
 # alert delivery reports (measure_delivery.py report): the push-server hop (10/30) and the phone hop (11/3)
 for f in runs/delivery_*.json; do [ -f "$f" ] && cp "$f" results/; done
+# snapshot_at: when the records were copied and the time the replay judges freshness against;
+# updated_at: when anything in results/ last changed (audits can be added to a snapshot later).
 date -u +%Y-%m-%dT%H:%M:%SZ > results/snapshot_at.txt
+cp results/snapshot_at.txt results/updated_at.txt
 echo "results/ written at $(cat results/snapshot_at.txt): $(find results -type f | wc -l) files, $(du -sh results | cut -f1)"
