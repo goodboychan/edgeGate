@@ -37,12 +37,16 @@ model after every retrain, quantization, compiler or device change.
 
 **In short.**
 - Our best student, s3, caught **25 of 26** arrivals on both chips (p95 19.5 ms on the Jetson, 15.9 ms on the Hailo-8)
-  and raised **4.24 false alerts an hour** against a limit of 1. HOLD on both; nothing deployed.
+  and raised **4.24 false alerts an hour** on the Jetson (4.59 on the Hailo-8) against a limit of 1. HOLD on both;
+  nothing deployed.
 - **Twelve builds broken on purpose were all held**, including `s4 w4`, which a false-alert-only gate would ship: it stays
   inside the false-alert limit (0.35 an hour) because it catches only 8 of 26 arrivals.
 - Four ways to decide, same records: always deploy ships 20, a false-alert-only gate ships 4, the rules ship 0, the
   rules plus Glimmer ship 0 (4 audited, 0 vetoed).
 - No build is approved for deployment.
+- **A swapped file does not run.** On the PASS path under a test policy (false-alert limit raised to 5, real policy
+  untouched), the Jetson runner refused a different model file against the same approval: `not starting: this model
+  file is not the approved one` ([`results/pass_path_test/`](results/pass_path_test/), [Positive control](#positive-control)).
 
 > EdgeGate teaches a package-at-the-door skill from one sentence (Muse Spark writes the spec, SAM 3.1 labels our own
 > recordings, a YOLOv8n student is distilled), compiles it for a Jetson Orin Nano and a Raspberry Pi 5 with a Hailo-8,
@@ -56,6 +60,16 @@ model after every retrain, quantization, compiler or device change.
 
 **Try it in 5 minutes** (no hardware, no key): [Quickstart](#quickstart-one-command-for-the-review) replays every
 verdict from the committed evidence; [Judge your own results](#judge-your-own-results) runs the gate on your records.
+
+**Follow one HOLD in the browser** (nothing to install): s3 on the Jetson.
+1. The measurement: [`trt_53b17a8db84c_2026-11-03T124704+0000.json`](results/records/s3/clean/trt_53b17a8db84c_2026-11-03T124704+0000.json)
+   (event_recall 0.962, false_alerts_per_h 4.24, measured on the Orin Nano).
+2. The rule it misses, fixed before any candidate was measured: `false_alerts_per_h = { max = 1.0 }`
+   ([`policies/package_entrance.toml`](policies/package_entrance.toml#L75)).
+3. The verdict on that record: `HOLD (false_alerts_per_h)`, row `s3 | clean | trt` of
+   [`compare_gates.md`](results/compare_gates.md), next to the other 19 builds.
+4. Glimmer's audit, bound to that record by its hash: [`s3_20261104T011706Z_r0.json`](results/audits/s3_20261104T011706Z_r0.json)
+   (HOLD on both chips, no veto).
 
 **Links** · Eval sessions on the Hugging Face Hub:
 [`chans/edgegate-package-entrance-eval`](https://huggingface.co/datasets/chans/edgegate-package-entrance-eval)
