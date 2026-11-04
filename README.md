@@ -173,7 +173,7 @@ expire after 24 h.
 
 ```bash
 pip install numpy opencv-python-headless mcp
-python3 -m unittest discover -s tests    # 103 tests, no hardware, no keys
+python3 -m unittest discover -s tests    # 104 tests, no hardware, no keys
 NOW=$(cat results/snapshot_at.txt)
 python3 scripts/compare_gates.py --records results/records --audits results/audits --now "$NOW"
 python3 scripts/dashboard.py --records results/records --audits results/audits --approvals results/approvals --now "$NOW" --out /tmp/dashboard.html
@@ -482,7 +482,7 @@ edgegate/        gate.py (rules, audit binding), events.py (detections -> arriva
 policies/        package_entrance.toml: the task, targets, eval set hash, event rule, thresholds
 scripts/         capture, labeling, training, export, compile, fault injection, measurement, audit,
                  deploy, live runner, replay, delivery measurement, comparison, dashboard, snapshot
-tests/           103 unit tests on synthetic data; audit_cases.py builds the synthetic audit cases
+tests/           104 unit tests on synthetic data; audit_cases.py builds the synthetic audit cases
 results/         the snapshot: every record and audit, the verdict tables, the comparison, the dashboard,
                  the delivery reports, the PASS-path test; snapshot_at.txt and updated_at.txt say when
 docs/            the pipeline diagram, the logo, the boxes photo, the README assets
@@ -606,6 +606,19 @@ evidence.
 - **Glimmer's veto was never needed.** The rules held every build before Glimmer saw it, so its effect as a veto is shown
   on the 5 synthetic cases only (30 of 30 expected device verdicts matched). One audit takes 3–8 min at FP8 on the GX10.
   A veto can still add a wrong HOLD; what it cannot do is lift a rule HOLD.
+- **The committed audits counted two out-of-scope arrivals in their slices.** Until 11/4 the audit's slice tool
+  (`edgegate/audit.py`) counted the two second packages in e03 that the gate leaves out of recall, so it showed 28
+  events where the gate scores 26: s3's night slice read 22 of 24, where the gate's events give 22 of 22, and the latest
+  s3 audit's answer repeats the 24. Found in an outside review and fixed after the audits; the slices now count them as
+  `out_of_scope`, with a regression test. No verdict changes: every audited build was already held by the rules, which a
+  veto cannot touch, and the synthetic cases have no second packages. The audits in `results/audits/` are kept as
+  recorded.
+- **The policy does not check sample size.** The rules compare observed values with the limits; a minimum number of
+  arrivals, coverage per condition, or a confidence bound on recall are not in the policy yet, so a small eval set
+  that happens to score well would pass.
+- **The approval is a local file, checked at start.** The runner refuses a missing, expired or edited approval and any
+  other model file or device when it starts; the approval is not signed, and a runner already started is not stopped
+  when its approval expires.
 - **The faults are the ones we chose.** Four kinds, all of which move the metrics past a limit. A fault that keeps every
   metric inside the limits passes, by design: the gate judges measurements, not intentions.
 - **The front end came last.** `teach.py` was written after every candidate had been measured; it proves that the

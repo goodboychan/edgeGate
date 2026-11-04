@@ -47,6 +47,18 @@ class SliceTest(unittest.TestCase):
         self.assertEqual(rows["day"]["false_alerts"], 3)
         self.assertEqual(rows["day"]["false_alerts_per_h"], 3.0)
 
+    def test_second_package_is_out_of_scope_as_in_the_gate(self):
+        # events.py leaves a second package out of recall; the slices must count the same events.
+        rec = cases.record("control", "trt")
+        before = {by: slice_rows(rec, by, [0.08, 0.15]) for by in ("lighting", "session", "size", "tag")}
+        first = rec["per_session"][0]["per_event"][0]
+        rec["per_session"][0]["per_event"].append({**first, "outcome": "missed", "second": True})
+        for by, rows in before.items():
+            after = slice_rows(rec, by, [0.08, 0.15])
+            for k, r in after.items():
+                self.assertEqual({**r, "out_of_scope": 0}, rows[k], (by, k))
+            self.assertEqual(sum(r["out_of_scope"] for r in after.values()), 1, by)
+
     def test_unknown_slice_and_backend(self):
         a = audit("control")
         self.assertIn("error", a.slice_metrics("trt", "color"))

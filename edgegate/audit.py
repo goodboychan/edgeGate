@@ -40,8 +40,10 @@ def _ratio(a, b):
 
 
 def slice_rows(record, by, size_edges):
-    """{slice: counts} for one record. Events count once per slice; tags can overlap."""
-    out = defaultdict(lambda: {"events": 0, "on_time": 0, "late": 0, "missed": 0})
+    """{slice: counts} for one record. Events count once per slice; tags can overlap.
+    A second package (an arrival while another is still there) is out of scope and not in
+    the gate's recall (edgegate/events.py), so it counts under out_of_scope, not in events."""
+    out = defaultdict(lambda: {"events": 0, "on_time": 0, "late": 0, "missed": 0, "out_of_scope": 0})
     hours = defaultdict(float)
     false = defaultdict(int)
     for s in record.get("per_session") or []:
@@ -57,6 +59,9 @@ def slice_rows(record, by, size_edges):
             else:
                 keys = [s.get("lighting", "unknown") if by == "lighting" else s["session"]]
             for k in keys:
+                if e.get("second"):
+                    out[k]["out_of_scope"] += 1
+                    continue
                 out[k]["events"] += 1
                 out[k][e["outcome"]] += 1
     for k in hours:
