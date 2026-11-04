@@ -9,7 +9,7 @@
 A package-at-the-door detector on a Jetson and a Hailo-8, and the gate that measures it on each chip and refuses to ship what misses the rules.</p>
 
 <p align="center">
-  <b>Demo video (3 min):</b> link added on submission day ·
+  <b>Demo video (3 min):</b> <a href="https://www.youtube.com/watch?v=J4OQVwTwqV8">youtube.com/watch?v=J4OQVwTwqV8</a> ·
   <a href="https://claude.ai/artifact/AJ8DSn9iHrBThySAk8GhPD"><b>Results page</b></a> ·
   <a href="results/"><b>Evidence</b></a> (every record and audit) ·
   <a href="https://huggingface.co/datasets/chans/edgegate-package-entrance-eval"><b>Eval sessions</b></a> on Hugging Face (people blurred) ·
