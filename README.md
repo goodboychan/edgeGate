@@ -29,9 +29,11 @@
 *Why a package at the door?* It is the smallest useful thing a home camera can do: say when a parcel has been left.
 It is easy to demo and hard to trust on a 3-watt chip at night, and that gap is what EdgeGate measures.
 
-**Measure on the device, then decide.** EdgeGate turns one sentence into a small vision model for two edge chips,
-measures every build on the chip it will run on, and ships only what passes a policy written before any evaluation.
-A build that misses the rules is held, with the reasons printed, and there is no override.
+**Measure on the device, then decide.** EdgeGate checks the gap between a model that runs in a demo and one that may be
+deployed on the device. It turns one sentence into a small vision model for two edge chips, measures every build on the
+chip it will run on, and ships only what passes a policy written before any evaluation. A build that misses the rules
+is held, with the reasons printed, and there is no override. It is for teams that must re-validate an edge vision
+model after every retrain, quantization, compiler or device change.
 
 **In short.**
 - Our best student, s3, caught **25 of 26** arrivals on both chips (p95 19.5 ms on the Jetson, 15.9 ms on the Hailo-8)
@@ -253,6 +255,17 @@ earlier measurements stay in [`results/audits/`](results/audits/) as evidence ab
 | **Muse Spark Open**, open weights on Baseten | `scripts/teach.py --base` | The same task spec on open weights |
 
 None of them decides what ships. The rules in `edgegate/gate.py` do, from measurements taken on the device.
+
+**What each one actually contributed, kept apart.**
+- **SAM 3.1:** the labels every student was trained on. Without it there is no student; this is the one model whose
+  contribution the results depend on.
+- **The device measurements and the deterministic rules:** every deployment verdict in this repository.
+- **Muse Glimmer:** an audit opinion with evidence ids and the possibility of a veto. On the real records it changed no
+  verdict, because the rules had already held every build; its veto is shown on synthetic cases only. The test that
+  would show its worth, a new failure case where a per-slice rule and the audit are compared on missed failures,
+  needless HOLDs and time, was not run.
+- **Muse Spark and Muse Voice Transcribe:** the task spec from one sentence, written after the candidates were measured.
+  The policy itself was written by hand.
 
 **What Glimmer did.** For s3 it called `gate_decisions` and `eval_coverage`, found both backends already held, proposed
 nothing, and wrote one paragraph per device with the evidence ids; five repeats on the same records (11/2) took
